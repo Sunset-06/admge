@@ -30,8 +30,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x00:  //NOP
             break;
 
-        case 0x01:  //LD BC, u16
+        case 0x01:  //LD BC, u16 - 3bytes
             // write u16 into BC
+            uint16_t u16 = cpu-> memory[++pc];
+            u16 = u16 | (memory[++pc] << 8);
+            cpu->bc = u16;
             break;
 
         case 0x02:  //LD BC, A 
@@ -53,6 +56,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x06:  //LD B, u8
             // Write u8 into B
             break;
+            
         case 0x07:  //RLCA
             // Rotate Left A
             break;
