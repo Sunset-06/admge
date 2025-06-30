@@ -1,5 +1,5 @@
 #include "cpu.h";
-
+#include "mem.h";
 /*
     Use Registers like this:
     Registers cpu = { 0 };
@@ -32,13 +32,14 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x01:  //LD BC, u16 - 3bytes
             // write u16 into BC
-            uint16_t u16 = cpu-> memory[++pc];
+            uint16_t u16 = memory[++pc];
             u16 = u16 | (memory[++pc] << 8);
             cpu->bc = u16;
             break;
 
         case 0x02:  //LD BC, A 
-            //write from A to BC    
+            //write from A to BC
+            cpu->bc = (cpu->bc & 0xFF00) | cpu->a;    
             break;
 
         case 0x03:  //INC BC
