@@ -21,7 +21,6 @@
     printf("SP: 0x%04X\n", cpu.sp);
     printf("PC: 0x%04X\n", cpu.pc);
 }*/
-
 void run_inst(uint16_t opcode, Registers *cpu){
     
     switch(opcode){
@@ -43,7 +42,12 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x03:  //INC BC
             //Increment value of BC by 1
             cpu->bc += 1;
-            // change the Z flag
+            break;
+
+        case 0x04:  //INC B
+            //Increment value of B by 1
+            cpu->b += 1;
+            //Change the Z flag
             if (cpu->b == 0) {
                 cpu->f |= FLAG_Z;
             } else {
@@ -57,17 +61,17 @@ void run_inst(uint16_t opcode, Registers *cpu){
             } else {
                 cpu->f &= ~FLAG_H;
             }
-
-            break;
-
-        case 0x04:  //INC B
-            //Increment value of B by 1
-            cpu->b += 1;
             break;
 
         case 0x05:  //DEC B
             // Decrease value of B by 1
             cpu->b -= 1;
+            // Change Z flag
+            if (cpu->b == 0) {
+                cpu->f |= FLAG_Z;
+            } else {
+                cpu->f &= ~FLAG_Z;
+            }
             break;
 
         case 0x06:  //LD B, u8

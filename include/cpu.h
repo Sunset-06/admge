@@ -40,8 +40,11 @@ typedef struct {
     };
 } Registers;
 
+// global CPU state
+extern Registers cpu;
 //stack pointer and program counter
 uint16_t sp;
 uint16_t pc;
 
+void modifyZeroFlag(uint8_t result);
 #endif 
