@@ -1,26 +1,8 @@
 #include "cpu.h";
 #include "mem.h";
-/*
-    Use Registers like this:
-    Registers cpu = { 0 };
 
-    cpu.a = 0x12;
-    cpu.f = 0x34;
-    cpu.b = 0x56;
-    cpu.c = 0x78;
-    cpu.h = 0x9A;
-    cpu.l = 0xBC;
-    cpu.sp = 0xFFFE;
-    cpu.pc = 0x0100;
+// H and C flag don't have a  proper function yet //
 
-    printf("A: 0x%02X\n", cpu.a);
-    printf("F: 0x%02X\n", cpu.f);
-    printf("AF: 0x%04X\n", cpu.af);
-    printf("BC: 0x%04X\n", cpu.bc);
-    printf("HL: 0x%04X\n", cpu.hl);
-    printf("SP: 0x%04X\n", cpu.sp);
-    printf("PC: 0x%04X\n", cpu.pc);
-}*/
 void run_inst(uint16_t opcode, Registers *cpu){
     
     switch(opcode){
@@ -46,15 +28,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x04:  //INC B
             //Increment value of B by 1
+            uint8_t original_b = cpu->b;
             cpu->b += 1;
-            //Change the Z flag
-            if (cpu->b == 0) {
-                cpu->f |= FLAG_Z;
-            } else {
-                cpu->f &= ~FLAG_Z;
-            }
-            // Clear N flag
-            cpu->f &= ~FLAG_N;
+            //Change Z and clear N
+            set_Z(cpu->b, *cpu);
+            clear_N(*cpu);
             // Change the H  flag
             if ((cpu->b & 0x0F) == 0x00) {
                 cpu->f |= FLAG_H;
@@ -66,12 +44,9 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x05:  //DEC B
             // Decrease value of B by 1
             cpu->b -= 1;
-            // Change Z flag
-            if (cpu->b == 0) {
-                cpu->f |= FLAG_Z;
-            } else {
-                cpu->f &= ~FLAG_Z;
-            }
+            // Change Z and set N flag
+            set_Z(cpu->b, *cpu);
+            set_N(*cpu);
             break;
 
         case 0x06:  //LD B, u8
@@ -81,6 +56,10 @@ void run_inst(uint16_t opcode, Registers *cpu){
             
         case 0x07:  //RLCA
             // Rotate Left A
+            uint8_t msb = (cpu->a >> 7) & 1;
+            // gotta set the c flag to msb here.  <----
+            cpu->a = cpu->a << 1;
+            cpu->a | msb;
             break;
 
         case 0x08:  //LD u16, SP     
