@@ -24,4 +24,8 @@ void clear_flags(Registers *cpu) {
     cpu->f = 0;  
 }
 
+void set_C(uint8_t val, Registers *cpu){
+    cpu->f = val;
+}
+
 // -------------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x07:  //RLCA
             // Rotate Left A
             uint8_t msb = (cpu->a >> 7) & 1;
-            // gotta set the c flag to msb here.  <----
+            set_C(msb, *cpu);
             cpu->a = cpu->a << 1;
             cpu->a | msb;
             break;
