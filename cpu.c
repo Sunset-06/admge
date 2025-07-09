@@ -1,6 +1,6 @@
 #include "cpu.h";
 
-// Change Zero Flag
+// Change Z
 void set_Z(uint8_t result, Registers *cpu) {
     if (result == 0) {
         cpu->f |= FLAG_Z;
@@ -9,23 +9,51 @@ void set_Z(uint8_t result, Registers *cpu) {
     }
 }
 
-// Clear Negative Flag
-void clear_N(Registers *cpu) {
-    cpu->f &= ~FLAG_N;
+// Change N
+void set_N(bool sub, Registers *cpu) {
+    if (sub)
+        cpu->f |= FLAG_N;
+    else
+        cpu->f &= ~FLAG_N;
 }
 
-// Set Negative flag
-void set_N(Registers *cpu) {
-    cpu->f |= FLAG_N;
+// Set H for ADD
+void set_H_add(uint8_t a, uint8_t b, Registers *cpu) {
+    if (((a & 0x0F) + (b & 0x0F)) > 0x0F)
+        cpu->f |= FLAG_H;
+    else
+        cpu->f &= ~FLAG_H;
 }
 
-// clear flag state
-void clear_flags(Registers *cpu) {
-    cpu->f = 0;  
+// Set H for SUB    
+void set_H_sub(uint8_t a, uint8_t b, Registers *cpu) {
+    if ((a & 0x0F) < (b & 0x0F))
+        cpu->f |= FLAG_H;
+    else
+        cpu->f &= ~FLAG_H;
 }
 
-void set_C(uint8_t val, Registers *cpu){
-    cpu->f = val;
+// Set C based on condition
+void set_C(bool condition, Registers *cpu) {
+    if (condition)
+        cpu->f |= FLAG_C;
+    else
+        cpu->f &= ~FLAG_C;
 }
 
+// Set C for ADD
+void set_C_add(uint16_t result, Registers *cpu) {
+    if (result > 0xFF)
+        cpu->f |= FLAG_C;
+    else
+        cpu->f &= ~FLAG_C;
+}
+
+// Set C for SUB
+void set_C_sub(uint8_t a, uint8_t b, Registers *cpu) {
+    if (a < b)
+        cpu->f |= FLAG_C;
+    else
+        cpu->f &= ~FLAG_C;
+}
 // -------------------------------------------------------------------------------------

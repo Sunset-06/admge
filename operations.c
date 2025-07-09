@@ -11,8 +11,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x01:  //LD BC, u16 - 3bytes
             // write u16 into BC
-            uint16_t u16 = memory[++pc];
-            u16 = u16 | (memory[++pc] << 8);
+            uint16_t u16 = memory[++cpu->pc];
+            u16 = u16 | (memory[++cpu->pc] << 8);
             cpu->bc = u16;
             break;
 
@@ -51,19 +51,23 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x06:  //LD B, u8
             // Write u8 into B
-            cpu->b = memory[++pc];
+            cpu->b = memory[++cpu->pc];
             break;
             
         case 0x07:  //RLCA
             // Rotate Left A
             uint8_t msb = (cpu->a >> 7) & 1;
-            set_C(msb, *cpu);
+            set_C(true, *cpu);
             cpu->a = cpu->a << 1;
             cpu->a | msb;
             break;
 
         case 0x08:  //LD u16, SP     
             // Copy SP & $FF at address u16 and SP >> 8 at address u16 + 1.
+            uint16_t u16 = memory[++cpu->pc];
+            u16 |= (memory[++cpu->pc] << 8);
+            memory[u16] = cpu->sp & 0xFF;
+            memory[u16 + 1] = (cpu->sp >> 8) & 0xFF;
             break;
 
         case 0x09:  //ADD HL, BC
