@@ -1,24 +1,27 @@
-#include "cpu.h";
-#include "mem.h";
+#include "cpu.h"
+#include "mem.h"
 
-// H and C flag don't have a  proper function yet //
+// TODO- Check set_Z implementation. You need to pass 1 to unset, which is reeally unintuitive
 
 void run_inst(uint16_t opcode, Registers *cpu){
-    
+    // temporary variables
+    uint16_t u16;
+    uint8_t u8;
+
     switch(opcode){
         case 0x00:  //NOP
             break;
 
         case 0x01:  //LD BC, u16 - 3bytes
             // write u16 into BC
-            uint16_t u16 = memory[++cpu->pc];
+            u16 = memory[++cpu->pc];
             u16 = u16 | (memory[++cpu->pc] << 8);
             cpu->bc = u16;
             break;
 
         case 0x02:  //LD BC, A 
-            //write from A to BC
-            cpu->bc = (cpu->bc & 0xFF00) | cpu->a;    
+            //write from A to byte pointed by BC
+            memory[cpu->bc] =  cpu->a;    
             break;
 
         case 0x03:  //INC BC
@@ -28,25 +31,20 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x04:  //INC B
             //Increment value of B by 1
-            uint8_t original_b = cpu->b;
+            set_H_add(cpu->b, 1, cpu);
             cpu->b += 1;
-            //Change Z and clear N
-            set_Z(cpu->b, *cpu);
-            clear_N(*cpu);
-            // Change the H  flag
-            if ((cpu->b & 0x0F) == 0x00) {
-                cpu->f |= FLAG_H;
-            } else {
-                cpu->f &= ~FLAG_H;
-            }
+            //Change Z, clear N, change H
+            set_Z(cpu->b, cpu);
+            set_N(0,cpu);
             break;
 
         case 0x05:  //DEC B
             // Decrease value of B by 1
+            set_H_sub(cpu->b, 1, cpu);
             cpu->b -= 1;
             // Change Z and set N flag
-            set_Z(cpu->b, *cpu);
-            set_N(*cpu);
+            set_Z(cpu->b, cpu);
+            set_N(cpu->b, cpu);
             break;
 
         case 0x06:  //LD B, u8
@@ -56,15 +54,18 @@ void run_inst(uint16_t opcode, Registers *cpu){
             
         case 0x07:  //RLCA
             // Rotate Left A
-            uint8_t msb = (cpu->a >> 7) & 1;
-            set_C(true, *cpu);
+            u8 = (cpu->a >> 7) & 1; // recording the msb
+            set_Z(1, cpu);   // passing 1 basically unsets it 
+            set_N(0, cpu); 
+            set_H(0, cpu);
+            set_C(1, cpu);
             cpu->a = cpu->a << 1;
-            cpu->a | msb;
+            cpu->a = cpu->a | u8;
             break;
 
         case 0x08:  //LD u16, SP     
             // Copy SP & $FF at address u16 and SP >> 8 at address u16 + 1.
-            uint16_t u16 = memory[++cpu->pc];
+            u16 = memory[++cpu->pc];
             u16 |= (memory[++cpu->pc] << 8);
             memory[u16] = cpu->sp & 0xFF;
             memory[u16 + 1] = (cpu->sp >> 8) & 0xFF;

@@ -1,4 +1,5 @@
 #include "mem.h"
+#include <string.h>
 
 uint8_t memory[MEMORY_SIZE];
 

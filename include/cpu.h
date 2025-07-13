@@ -43,4 +43,13 @@ typedef struct {
     uint16_t pc;
 } Registers;
 
+extern void set_Z(uint8_t result, Registers *cpu);
+extern void set_N(bool sub, Registers *cpu);
+extern void set_H(bool condition, Registers *cpu);
+extern void set_H_add(uint8_t a, uint8_t b, Registers *cpu);
+extern void set_H_sub(uint8_t a, uint8_t b, Registers *cpu);
+extern void set_C(bool condition, Registers *cpu);
+extern void set_C_add(uint16_t result, Registers *cpu);
+extern void set_C_sub(uint8_t a, uint8_t b, Registers *cpu);
+
 #endif 

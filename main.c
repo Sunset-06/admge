@@ -4,10 +4,10 @@
 
 int main(int argc, char *argv[]) {
     char* inputRom = argv[1];
-    LoadRom(inputRom);
-    
+    load_rom(inputRom);
+    /* 
     while(!quit_flag){
         fetch();
         execute();
-    }
+    } */
 }

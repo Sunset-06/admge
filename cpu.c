@@ -1,4 +1,4 @@
-#include "cpu.h";
+#include "cpu.h"
 
 // Change Z
 void set_Z(uint8_t result, Registers *cpu) {
@@ -10,11 +10,19 @@ void set_Z(uint8_t result, Registers *cpu) {
 }
 
 // Change N
-void set_N(bool sub, Registers *cpu) {
-    if (sub)
+void set_N(bool condition, Registers *cpu) {
+    if (condition)
         cpu->f |= FLAG_N;
     else
         cpu->f &= ~FLAG_N;
+}
+
+// Set H based on condition
+void set_H(bool condition, Registers *cpu) {
+    if (condition)
+        cpu->f |= FLAG_H;
+    else
+        cpu->f &= ~FLAG_H;
 }
 
 // Set H for ADD
