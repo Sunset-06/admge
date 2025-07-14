@@ -129,7 +129,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x12:  //LD DE, A
-            // Copy the value in register A into the byte pointed to by r16.
+            // Copy the value in register A into the byte pointed to by DE
+            memory[cpu->de] = cpu->a;
             break;
 
         case 0x13:  //INC DE
@@ -146,6 +147,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         
         case 0x16:  //LD D, u8
             // Load u8 into D
+            cpu->d = memory[++cpu->pc];
             break;
         
         case 0x17:  //RLA
@@ -161,7 +163,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x1A:  //LD A, DE
-            // Decrease value in D by 1
+            // Copy Byte pointed by DE into A
+            cpu->a = memory[cpu->de];
             break;
         
         case 0x1B:  //DEC DE
@@ -174,6 +177,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x1E:  //LD E, u8
+            // Copy u8 into E
+            cpu->e = memory[++cpu->pc];
             break;
 
         case 0x1F:  //RRA
@@ -186,6 +191,10 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x22:  //LD HL+, A
+            // Copy A into byte pointed by HL
+            // Then Increment HL
+            memory[cpu->hl] = cpu->a;
+            cpu->hl += 1;
             break;
 
         case 0x23:  //INC HL
@@ -198,6 +207,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x26:  //LD H, u8
+            // Copy u8 into H
+            cpu->h = memory[++cpu->pc];
             break;
 
         case 0x27:  //DAA
@@ -210,6 +221,10 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x2A:  //LD A, HL+
+            // Copy byte pointed by HL into A
+            // Increment HL
+            cpu->a = memory[cpu->hl];
+            cpu->hl += 1;
             break;
 
         case 0x2B:  //DEC HL
@@ -222,6 +237,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x2E:  //LD L, u8
+            // Copy u8 into L
+            cpu->l = memory[++cpu->pc];
             break;
 
         case 0x2F:  //CPL
