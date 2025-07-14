@@ -72,7 +72,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x09:  //ADD HL, BC
-            // Add value of BC  into HL
+            // Add value of BC into HL
+            set_N(0, cpu);
+            set_H_add(cpu->hl, cpu->bc, cpu);
+            cpu->hl += cpu->bc;
+            set_C_add(cpu->hl, cpu);
             break;
 
         case 0x0A:  //LD A, BC
