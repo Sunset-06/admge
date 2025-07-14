@@ -58,7 +58,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             set_Z(1, cpu);   // passing 1 basically unsets it 
             set_N(0, cpu); 
             set_H(0, cpu);
-            set_C(1, cpu);
+            set_C(u8, cpu);
             cpu->a = cpu->a << 1;
             cpu->a = cpu->a | u8;
             break;
@@ -81,26 +81,43 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x0A:  //LD A, BC
             // Write Byte pointed by BC into A
+            cpu->a = memory[cpu->bc];
             break;
         
         case 0x0B:  //DEC BC
             // Decrement value in BC by 1
+            cpu->bc -= 1;
             break;  
 
         case 0x0C:  //INC C
             // Increment value in C by 1
+            set_N(0, cpu);
+            set_H_add(cpu->c, 1,cpu);
+            cpu->c += 1;
+            set_Z(cpu->c, cpu);
             break;  
 
         case 0x0D:  //DEC C
             // Decrement value in C by 1
+            set_N(1, cpu);
+            set_H_sub(cpu->c, 1, cpu);
+            cpu->c -= 1;
+            set_Z(cpu->c, cpu);
             break;  
 
         case 0x0E:  //LD C, u8
             // Write u8 into C
+            cpu->c = memory[++cpu->pc];
             break;  
 
         case 0x0F:  //RRCA
             // Rotate Register A right
+            set_Z(1, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            u8 = cpu->a & 0x01; // recording lsb
+            set_C(u8, cpu);
+            cpu->a = (cpu->a >> 1) | (u8 << 7);
             break;
             
         case 0x10:  //STOP
