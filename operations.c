@@ -179,7 +179,9 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x18:  //JR i8
-            // Jump relative to i8
+            // Jump relative by i8 steps in pc
+            u8 = memory[++cpu->pc];
+            cpu->pc = cpu->pc + u8; 
             break;
         
         case 0x19:  //ADD HL, DE
@@ -196,12 +198,25 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
         
         case 0x1B:  //DEC DE
+            // decrement de
+            cpu->de -= 1;
             break;
 
         case 0x1C:  //INC E
+            // Increment e
+            set_Z(cpu->e + 1, cpu); 
+            set_N(0, cpu);  
+            set_H_add(cpu->e, 1, cpu);
+            cpu->e += 1;
             break;
 
         case 0x1D:  //DEC E
+            // decrement e
+            set_N(1, cpu);
+            set_H_sub(cpu->c, 1, cpu);
+            cpu->c -= 1;
+            set_Z(cpu->c, cpu);
+            break;  
             break;
 
         case 0x1E:  //LD E, u8
@@ -210,6 +225,15 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x1F:  //RRA
+            // Move lsb to carry
+            // Move carry  to msb
+            temp8 = (cpu->f & FLAG_C) ? 0x80 : 0x00; // bit in carry
+            u8 = cpu->a & 0x01; // lsb
+            cpu->a = (cpu->a >> 1) | temp8; // add carry to msb of a
+            set_Z(0, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);  
             break;
 
         case 0x20:  //JR NZ, i8
