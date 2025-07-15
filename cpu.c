@@ -1,6 +1,6 @@
 #include "cpu.h"
 
-// Change Z
+// Change Z based on result <- NOTE this is the exact opposite of all other flag functions
 void set_Z(uint8_t result, Registers *cpu) {
     if (result == 0) {
         cpu->f |= FLAG_Z;

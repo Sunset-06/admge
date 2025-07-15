@@ -7,6 +7,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
     // temporary variables
     uint16_t u16;
     uint8_t u8;
+    uint8_t temp8;
+    uint16_t temp16;
 
     switch(opcode){
         case 0x00:  //NOP
@@ -126,6 +128,9 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x11:  //LD DE, u16
             // Load u16 into DE
+            u16 = memory[++cpu->pc];
+            u16 = u16 | (memory[++cpu->pc] << 8);
+            cpu->de = u16;
             break;
 
         case 0x12:  //LD DE, A
@@ -135,14 +140,23 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x13:  //INC DE
             // Increment value in DE by 1
+            cpu->de += 1;
             break;
 
         case 0x14:  //INC D
             // Incremenrt value in D by 1
+            set_Z(cpu->d + 1, cpu);
+            set_N(0, cpu);  
+            set_H_add(cpu->d, 1, cpu);
+            cpu->d += 1;
             break;
 
         case 0x15:  //DEC D
             // Decrease value in D by 1
+            set_Z(cpu->d - 1, cpu);
+            set_N(1, cpu);  
+            set_H_sub(cpu->d, 1, cpu);
+            cpu->d -= 1;
             break;
         
         case 0x16:  //LD D, u8
@@ -152,6 +166,16 @@ void run_inst(uint16_t opcode, Registers *cpu){
         
         case 0x17:  //RLA
             // Roatate A left through carry
+            set_Z(1, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            // put msb into carry
+            // then put carry into lsb
+            u8 = (cpu->a >> 7) & 1; 
+            temp8 = (cpu->f & FLAG_C)? 1 : 0;
+            set_C(u8, cpu);
+            cpu->a = cpu->a << 1;
+            cpu->a = cpu->a | temp8;
             break;
 
         case 0x18:  //JR i8
@@ -160,6 +184,10 @@ void run_inst(uint16_t opcode, Registers *cpu){
         
         case 0x19:  //ADD HL, DE
             // Add value of DE to HL
+            set_N(0, cpu);
+            set_H_add16(cpu->hl, cpu->de, cpu);
+            set_C_add16(cpu->hl + cpu->de, cpu);
+            cpu->hl += cpu->de;
             break;
 
         case 0x1A:  //LD A, DE
@@ -188,6 +216,10 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x21:  //LD HL, u16
+            // Copy u16 into HL
+            u16 = memory[++cpu->pc];
+            u16 = u16 | (memory[++cpu->pc] << 8);
+            cpu->hl = u16;
             break;
 
         case 0x22:  //LD HL+, A
@@ -248,9 +280,17 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x31:  //LD SP, u16
+            // Load u16 into the SP
+            u16 = memory[++cpu->pc];
+            u16 = u16 | (memory[++cpu->pc] << 8);
+            cpu->sp = u16;
             break;
 
         case 0x32:  //LD HL-, A
+            // Load A into byte pointed by HL
+            // Decrement HL
+            memory[cpu->hl] = cpu->a;
+            cpu->hl -= 1;
             break;
 
         case 0x33:  //INC SP
