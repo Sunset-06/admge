@@ -165,7 +165,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
         
         case 0x17:  //RLA
-            // Roatate A left through carry
+            // Rotate A left through carry
             set_Z(1, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
