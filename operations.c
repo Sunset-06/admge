@@ -467,196 +467,261 @@ void run_inst(uint16_t opcode, Registers *cpu){
                 set_C(1, cpu);
             break;
 
+        // The next 64 instructions are all 8bit Load - except 0x76 HALT 
         case 0x40:  //LD B, B
+            cpu->b = cpu->b;
             break;
 
         case 0x41:  //LD B, C
+            cpu->b = cpu->c;
             break;
 
         case 0x42:  //LD B, D
+            cpu->b = cpu->d;
             break;
 
         case 0x43:  //LD B, E
+            cpu->b = cpu->e;
             break;
 
         case 0x44:  //LD B, H
+            cpu->b = cpu->h;
             break;
 
         case 0x45:  //LD B, L
+            cpu->b = cpu->l;
             break;
 
-        case 0x46:  //LD B, HL
+        case 0x46:  //LD B, [HL]
+            cpu->b = memory[cpu->hl];   
             break;
 
         case 0x47:  //LD B, A
+            cpu->b = cpu->a;
             break;
 
         case 0x48:  //LD C, B
+            cpu->c = cpu->b;
             break;
 
         case 0x49:  //LD C, C
+            cpu->c = cpu->c;
             break;
 
         case 0x4A:  //LD C, D
+            cpu->c = cpu->d;
             break;
 
         case 0x4B:  //LD C, E
+            cpu->c = cpu->e;
             break;
 
         case 0x4C:  //LD C, H
+            cpu->c = cpu->h;
             break;
 
         case 0x4D:  //LD C, L
+            cpu->c = cpu->l;
             break;
 
         case 0x4E:  //LD C, HL
+            cpu->c = memory[cpu->hl];
             break;
 
         case 0x4F:  //LD C, A
+            cpu->c = cpu->a;
             break;
 
         case 0x50:  //LD D, B
+            cpu->d = cpu->b;
             break;
 
         case 0x51:  //LD D, C
+            cpu->d = cpu->c;
             break;
 
         case 0x52:  //LD D, D
+            cpu->d = cpu->d;
             break;
 
         case 0x53:  //LD D, E
+            cpu->d = cpu->e;
             break;
 
         case 0x54:  //LD D, H
+            cpu->d = cpu->h;
             break;
 
         case 0x55:  //LD D, L
+            cpu->d = cpu->l;
             break;
 
         case 0x56:  //LD D, HL
+            cpu->d = memory[cpu->hl];
             break;
 
         case 0x57:  //LD D, A
+            cpu->d = cpu->a;
             break;
 
         case 0x58:  //LD E, B
+            cpu->e = cpu->b;
             break;
 
         case 0x59:  //LD E, C
+            cpu->e = cpu->c;
             break;
 
         case 0x5A:  //LD E, D
+            cpu->e = cpu->d;
             break;
 
         case 0x5B:  //LD E, E
+            cpu->e = cpu->e;
             break;
 
         case 0x5C:  //LD E, H
+            cpu->e = cpu->h;
             break;
 
         case 0x5D:  //LD E, L
+            cpu->e = cpu->l;
             break;
 
         case 0x5E:  //LD E, HL
+            cpu->e = memory[cpu->hl];
             break;
 
         case 0x5F:  //LD E, A
+            cpu->e = cpu->a;
             break;
 
         case 0x60:  //LD H, B
+            cpu->h = cpu->b;
             break;
 
         case 0x61:  //LD H, C
+            cpu->h = cpu->c;
             break;
 
         case 0x62:  //LD H, D
+            cpu->h = cpu->d;
             break;
 
         case 0x63:  //LD H, E
+            cpu->h = cpu->e;
             break;
 
         case 0x64:  //LD H, H
+            cpu->h = cpu->h;
             break;
 
         case 0x65:  //LD H, L
+            cpu->h = cpu->l;
             break;
 
         case 0x66:  //LD H, HL
+            cpu->h = memory[cpu->hl];
             break;
 
         case 0x67:  //LD H, A
+            cpu->h = cpu->a;
             break;
 
         case 0x68:  //LD L, B
+            cpu->l = cpu->b;
             break;
 
         case 0x69:  //LD L, C
+            cpu->l = cpu->c;
             break;
 
         case 0x6A:  //LD L, D
+            cpu->l = cpu->d;
             break;
 
         case 0x6B:  //LD L, E
+            cpu->l = cpu->e;
             break;
 
         case 0x6C:  //LD L, H
+            cpu->l = cpu->h;
             break;
 
         case 0x6D:  //LD L, L
+            cpu->l = cpu->l;
             break;
 
         case 0x6E:  //LD L, HL
+            cpu->l = memory[cpu->hl];
             break;
 
         case 0x6F:  //LD L, A
+            cpu->l = cpu->a;
             break;
 
         case 0x70:  //LD HL, B
+            memory[cpu->hl] = cpu->b;
             break;
 
         case 0x71:  //LD HL, C
+            memory[cpu->hl] = cpu->c;
             break;
 
         case 0x72:  //LD HL, D
+            memory[cpu->hl] = cpu->d;
             break;
 
         case 0x73:  //LD HL, E
+            memory[cpu->hl] = cpu->e;
             break;
 
         case 0x74:  //LD HL, H
+            memory[cpu->hl] = cpu->h;
             break;
 
         case 0x75:  //LD HL, L
+            memory[cpu->hl] = cpu->l;
             break;
 
         case 0x76:  //HALT
+            // HALT ------------------------- Recheck this one
             break;
 
         case 0x77:  //LD HL, A
+            memory[cpu->hl] = cpu->a;
             break;
 
         case 0x78:  //LD A, B
+            cpu->a = cpu->b;
             break;
 
         case 0x79:  //LD A, C
+            cpu->a = cpu->c;
             break;
 
         case 0x7A:  //LD A, D
+            cpu->a = cpu->d;
             break;
 
         case 0x7B:  //LD A, E
+            cpu->a = cpu->e;
             break;
 
         case 0x7C:  //LD A, H
+            cpu->a = cpu->h;
             break;
 
         case 0x7D:  //LD A, L
+            cpu->a = cpu->l;
             break;
 
         case 0x7E:  //LD A, HL
+            cpu->a = memory[cpu->hl];
             break;
 
         case 0x7F:  //LD A, A
+            cpu->a = cpu->a;
             break;
 
         case 0x80:  //ADD A, B
