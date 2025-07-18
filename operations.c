@@ -9,6 +9,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
     uint8_t u8;
     uint8_t temp8;
     uint16_t temp16;
+    int8_t offset;
 
     switch(opcode){
         case 0x00:  //NOP
@@ -180,8 +181,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x18:  //JR i8
             // Jump relative by i8 steps in pc
-            u8 = memory[++cpu->pc];
-            cpu->pc = cpu->pc + u8; 
+            offset = (int8_t) memory[++cpu->pc];
+            cpu->pc =+ offset; 
             break;
         
         case 0x19:  //ADD HL, DE
@@ -213,10 +214,9 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x1D:  //DEC E
             // decrement e
             set_N(1, cpu);
-            set_H_sub(cpu->c, 1, cpu);
-            cpu->c -= 1;
-            set_Z(cpu->c, cpu);
-            break;  
+            set_H_sub(cpu->e, 1, cpu);
+            cpu->e -= 1;
+            set_Z(cpu->e, cpu);
             break;
 
         case 0x1E:  //LD E, u8
@@ -237,6 +237,10 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x20:  //JR NZ, i8
+        // Jump by i8 steps if Z flag is NOT set
+            offset = (int8_t) memory[++cpu->pc];
+            if(!(cpu->f & FLAG_Z))
+                cpu->pc += offset;  
             break;
 
         case 0x21:  //LD HL, u16
@@ -254,12 +258,23 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x23:  //INC HL
+            // Don't confuse with 0x34 
+            // Increments HL
+            cpu->hl += 1;
             break;
 
         case 0x24:  //INC H
+            set_Z(cpu->h + 1, cpu); 
+            set_N(0, cpu);  
+            set_H_add(cpu->h, 1, cpu);
+            cpu->h += 1;
             break;
 
         case 0x25:  //DEC H
+            set_N(1, cpu);
+            set_H_sub(cpu->h, 1, cpu);
+            cpu->h -= 1;
+            set_Z(cpu->h, cpu);
             break;
 
         case 0x26:  //LD H, u8
@@ -268,12 +283,37 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x27:  //DAA
+        /*
+        If the subtract flag N is set:
+
+            - Initialize the adjustment to 0.
+            - If the half-carry flag H is set, then add $6 to the adjustment.
+            - If the carry flag is set, then add $60 to the adjustment.
+            - Subtract the adjustment from A.
+
+        If the subtract flag N is not set:
+
+            - Initialize the adjustment to 0.
+            - If the half-carry flag H is set or A & $F > $9, then add $6 to the adjustment.
+            - If the carry flag is set or A > $99, then add $60 to the adjustment and set the carry flag.
+            - Add the adjustment to A.
+        */
             break;
 
         case 0x28:  //JR Z, i8
+            // Jump by i8 steps if Z flag is set
+            offset = (int8_t) memory[++cpu->pc];
+            if(cpu->f & FLAG_Z)
+                cpu->pc += offset;
             break;
 
         case 0x29:  //ADD HL, HL
+            // Add HL to HL
+            u16 = cpu->hl;
+            cpu->hl = u16 + u16;
+            set_N(0, cpu);
+            set_H_add16(u16, u16,  cpu);
+            set_C_add16(u16, u16, cpu); 
             break;
 
         case 0x2A:  //LD A, HL+
@@ -284,6 +324,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x2B:  //DEC HL
+            // Decrement HL
+            cpu->hl -= 1;
             break;
 
         case 0x2C:  //INC L

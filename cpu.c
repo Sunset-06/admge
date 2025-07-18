@@ -72,8 +72,8 @@ void set_C(bool condition, Registers *cpu) {
 }
 
 // Set C for ADD
-void set_C_add(uint16_t result, Registers *cpu) {
-    if (result > 0xFF)
+void set_C_add(uint8_t a, uint8_t b, Registers *cpu) {
+    if ((uint16_t)a + (uint16_t)b > 0xFF)
         cpu->f |= FLAG_C;
     else
         cpu->f &= ~FLAG_C;
@@ -87,8 +87,8 @@ void set_C_sub(uint8_t a, uint8_t b, Registers *cpu) {
         cpu->f &= ~FLAG_C;
 }
 
-void set_C_add16(uint32_t result, Registers *cpu) {
-    if (result > 0xFFFF)
+void set_C_add16(uint16_t a, uint16_t b, Registers *cpu) {
+    if ((uint32_t)a + (uint32_t)b > 0xFFFF)
         cpu->f |= FLAG_C;
     else
         cpu->f &= ~FLAG_C;
