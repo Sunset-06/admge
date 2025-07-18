@@ -35,10 +35,9 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x04:  //INC B
             //Increment value of B by 1
             set_H_add(cpu->b, 1, cpu);
-            cpu->b += 1;
-            //Change Z, clear N, change H
-            set_Z(cpu->b, cpu);
             set_N(0,cpu);
+            cpu->b += 1;
+            set_Z(cpu->b, cpu);
             break;
 
         case 0x05:  //DEC B
@@ -146,10 +145,10 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x14:  //INC D
             // Incremenrt value in D by 1
-            set_Z(cpu->d + 1, cpu);
             set_N(0, cpu);  
             set_H_add(cpu->d, 1, cpu);
             cpu->d += 1;
+            set_Z(cpu->d, cpu);
             break;
 
         case 0x15:  //DEC D
@@ -204,11 +203,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x1C:  //INC E
-            // Increment e
-            set_Z(cpu->e + 1, cpu); 
+            // Increment e 
             set_N(0, cpu);  
             set_H_add(cpu->e, 1, cpu);
             cpu->e += 1;
+            set_Z(cpu->e, cpu);
             break;
 
         case 0x1D:  //DEC E
@@ -263,11 +262,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
             cpu->hl += 1;
             break;
 
-        case 0x24:  //INC H
-            set_Z(cpu->h + 1, cpu); 
+        case 0x24:  //INC H 
             set_N(0, cpu);  
             set_H_add(cpu->h, 1, cpu);
             cpu->h += 1;
+            set_Z(cpu->h, cpu);
             break;
 
         case 0x25:  //DEC H
@@ -328,10 +327,18 @@ void run_inst(uint16_t opcode, Registers *cpu){
             cpu->hl -= 1;
             break;
 
-        case 0x2C:  //INC L
+        case 0x2C:  //INC L 
+            set_N(0, cpu);  
+            set_H_add(cpu->l, 1, cpu);
+            cpu->l += 1;
+            set_Z(cpu->l, cpu);
             break;
 
         case 0x2D:  //DEC L
+            set_N(1, cpu);
+            set_H_sub(cpu->l, 1, cpu);
+            cpu->l -= 1;
+            set_Z(cpu->l, cpu);
             break;
 
         case 0x2E:  //LD L, u8
@@ -340,9 +347,17 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x2F:  //CPL
+            // Ones complement of A
+            set_N(1, cpu);
+            set_H(1, cpu);
+            cpu->a = ~cpu->a;
             break;
 
         case 0x30:  //JR NC, i8
+            // Jump by i8 steps if C flag is NOT set
+            offset = (int8_t) memory[++cpu->pc];
+            if(!(cpu->f & FLAG_C))
+                cpu->pc += offset;
             break;
 
         case 0x31:  //LD SP, u16
@@ -360,42 +375,96 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x33:  //INC SP
+            // Increment stack pointer
+            cpu->sp += 1;
             break;
 
-        case 0x34:  //INC HL
+        case 0x34:  //INC [HL]
+            // Increment byte pointed by HL
+            set_H_add(memory[cpu->hl], 1, cpu);
+            memory[cpu->hl] += 1;
+            set_Z(memory[cpu->hl], cpu);
+            set_N(0, cpu);
             break;
 
-        case 0x35:  //DEC HL
+        case 0x35:  //DEC [HL]
+            //  Decrement byte pointed by HL
+            set_H_sub(memory[cpu->hl], 1, cpu);
+            memory[cpu->hl] -= 1;
+            set_Z(memory[cpu->hl], cpu);
+            set_N(1, cpu);
             break;
 
-        case 0x36:  //LD HL, u8
+        case 0x36:  //LD [HL], u8
+            // Load u8 into byte pointed by HL
+            u8 =  memory[++cpu->pc];
+            memory[cpu->hl] = u8;
             break;
 
         case 0x37:  //SCF
+            // set C flag
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(1, cpu);
             break;
 
         case 0x38:  //JR C, i8
+            // Jump by i8 if C is set
+            offset = (int8_t) memory[++cpu->pc];
+            if(cpu->f & FLAG_C)
+                cpu->pc += offset;
             break;
 
         case 0x39:  //ADD HL, SP
+            // Add value in sp to hl
+            set_H_add16(cpu->hl, cpu->sp, cpu);
+            set_C_add16(cpu->hl, cpu->sp, cpu);
+            cpu->hl += cpu->sp;
+            set_N(0, cpu);
             break;
 
-        case 0x3A:  //LD A, HL-
+        case 0x3A:  //LD A, [HL-]
+            // Load byte pointed by HL
+            // Decrement HL
+            cpu->a = memory[cpu->hl];
+            cpu->hl -= 1;
             break;
 
         case 0x3B:  //DEC SP
+            // decrement SP
+            cpu->sp -= 1;
             break;
 
         case 0x3C:  //INC A
+            // Increment A
+            set_N(0, cpu);  
+            set_H_add(cpu->a, 1, cpu);
+            cpu->a += 1;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x3D:  //DEC A
+            // Decrement A
+            set_N(1, cpu);
+            set_H_sub(cpu->a, 1, cpu);
+            cpu->a -= 1;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x3E:  //LD A, u8
+            // Load u8 into A
+            u8 = memory[++cpu->pc];
+            cpu->a = u8;
             break;
 
         case 0x3F:  //CCF
+            // Complement Carry Flag
+            set_N(0, cpu);
+            set_H(0, cpu);
+            if(cpu->f & FLAG_C)
+                set_C(0, cpu);
+            else
+                set_C(1, cpu);
             break;
 
         case 0x40:  //LD B, B
