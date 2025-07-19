@@ -999,99 +999,259 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xA0:  //AND B
+            cpu->a = (cpu->a & cpu->b);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xA1:  //AND C
+            cpu->a = (cpu->a & cpu->c);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xA2:  //AND D
+            cpu->a = (cpu->a & cpu->d);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xA3:  //AND E
+            cpu->a = (cpu->a & cpu->e);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xA4:  //AND H
+            cpu->a = (cpu->a & cpu->h);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xA5:  //AND L
+            cpu->a = (cpu->a & cpu->l);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
-        case 0xA6:  //AND HL
+        case 0xA6:  //AND [HL]
+            cpu->a = (cpu->a & memory[cpu->hl]);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xA7:  //AND A
+            cpu->a = (cpu->a & cpu->a);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xA8:  //XOR B
+            cpu->a = (cpu->a ^ cpu->b);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xA9:  //XOR C
+            cpu->a = (cpu->a ^ cpu->c);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xAA:  //XOR D
+            cpu->a = (cpu->a ^ cpu->d);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xAB:  //XOR E
+            cpu->a = (cpu->a ^ cpu->e);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xAC:  //XOR H
+            cpu->a = (cpu->a ^ cpu->h);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xAD:  //XOR L
+            cpu->a = (cpu->a ^ cpu->l);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xAE:  //XOR HL
+            cpu->a = (cpu->a ^ memory[cpu->hl]);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xAF:  //XOR A
+            cpu->a = (cpu->a ^ cpu->a);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xB0:  //OR B
+            cpu->a = (cpu->a | cpu->b);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xB1:  //OR C
+            cpu->a = (cpu->a | cpu->c);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xB2:  //OR D
+            cpu->a = (cpu->a | cpu->d);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xB3:  //OR E
+            cpu->a = (cpu->a | cpu->e);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xB4:  //OR H
+            cpu->a = (cpu->a | cpu->h);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xB5:  //OR L
+            cpu->a = (cpu->a | cpu->l);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
-        case 0xB6:  //OR HL
+    case 0xB6:  //OR [HL]
+            cpu->a = (cpu->a | memory[cpu->hl]);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xB7:  //OR A
+            cpu->a = (cpu->a | cpu->a);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xB8:  //CP B
+            temp8 = cpu->a - cpu->b;
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->b, cpu);
+            set_C_sub(cpu->a, cpu->b, cpu);
             break;
 
         case 0xB9:  //CP C
+            temp8 = cpu->a - cpu->c;
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->c, cpu);
+            set_C_sub(cpu->a, cpu->c, cpu);
             break;
 
         case 0xBA:  //CP D
+            temp8 = cpu->a - cpu->d;
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->d, cpu);
+            set_C_sub(cpu->a, cpu->d, cpu);
             break;
 
         case 0xBB:  //CP E
+            temp8 = cpu->a - cpu->e;
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->e, cpu);
+            set_C_sub(cpu->a, cpu->e, cpu);
             break;
 
         case 0xBC:  //CP H
+            temp8 = cpu->a - cpu->h;
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->h, cpu);
+            set_C_sub(cpu->a, cpu->h, cpu);
             break;
 
         case 0xBD:  //CP L
+            temp8 = cpu->a - cpu->l;
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->l, cpu);
+            set_C_sub(cpu->a, cpu->l, cpu);
             break;
 
         case 0xBE:  //CP HL
+            temp8 = cpu->a - memory[cpu->hl];
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, memory[cpu->hl], cpu);
+            set_C_sub(cpu->a, memory[cpu->hl], cpu);
             break;
 
         case 0xBF:  //CP A
+            temp8 = cpu->a - cpu->a;
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->a, cpu);
+            set_C_sub(cpu->a, cpu->a, cpu);
             break;
 
         case 0xC0:  //RET NZ
