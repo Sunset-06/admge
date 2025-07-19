@@ -77,8 +77,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             // Add value of BC into HL
             set_N(0, cpu);
             set_H_add(cpu->hl, cpu->bc, cpu);
+            set_C_add(cpu->hl, cpu->bc, cpu);
             cpu->hl += cpu->bc;
-            set_C_add(cpu->hl, cpu);
             break;
 
         case 0x0A:  //LD A, BC
@@ -188,7 +188,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             // Add value of DE to HL
             set_N(0, cpu);
             set_H_add16(cpu->hl, cpu->de, cpu);
-            set_C_add16(cpu->hl + cpu->de, cpu);
+            set_C_add16(cpu->hl, cpu->de, cpu);
             cpu->hl += cpu->de;
             break;
 
@@ -723,101 +723,279 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x7F:  //LD A, A
             cpu->a = cpu->a;
             break;
+        
+        // The next 16 instructions are all ADD and ADC
 
         case 0x80:  //ADD A, B
+            set_N(0, cpu);
+            set_H_add(cpu->a, cpu->b, cpu);
+            set_C_add(cpu->a, cpu->b, cpu);
+            cpu->a += cpu->b;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x81:  //ADD A, C
+            set_N(0, cpu);
+            set_H_add(cpu->a, cpu->c, cpu);
+            set_C_add(cpu->a, cpu->c, cpu);
+            cpu->a += cpu->c;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x82:  //ADD A, D
+            set_N(0, cpu);
+            set_H_add(cpu->a, cpu->d, cpu);
+            set_C_add(cpu->a, cpu->d, cpu);
+            cpu->a += cpu->d;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x83:  //ADD A, E
+            set_N(0, cpu);
+            set_H_add(cpu->a, cpu->e, cpu);
+            set_C_add(cpu->a, cpu->e, cpu);
+            cpu->a += cpu->e;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x84:  //ADD A, H
+            set_N(0, cpu);
+            set_H_add(cpu->a, cpu->h, cpu);
+            set_C_add(cpu->a, cpu->h, cpu);
+            cpu->a += cpu->h;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x85:  //ADD A, L
+            set_N(0, cpu);
+            set_H_add(cpu->a, cpu->l, cpu);
+            set_C_add(cpu->a, cpu->l, cpu);
+            cpu->a += cpu->l;
+            set_Z(cpu->a, cpu);
             break;
 
-        case 0x86:  //ADD A, HL
+        case 0x86:  //ADD A, [HL]
+            set_N(0, cpu);
+            set_H_add(cpu->a, memory[cpu->hl], cpu);
+            set_C_add(cpu->a, memory[cpu->hl], cpu);
+            cpu->a += memory[cpu->hl];
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x87:  //ADD A, A
+            set_N(0, cpu);
+            set_H_add(cpu->a, cpu->a, cpu);
+            set_C_add(cpu->a, cpu->a, cpu);
+            cpu->a += cpu->a;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x88:  //ADC A, B
+            u8 = cpu->b + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x89:  //ADC A, C
+            u8 = cpu->c + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x8A:  //ADC A, D
+            u8 = cpu->d + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x8B:  //ADC A, E
+            u8 = cpu->e + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x8C:  //ADC A, H
+            u8 = cpu->h + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x8D:  //ADC A, L
+            u8 = cpu->l + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
-        case 0x8E:  //ADC A, HL
+        case 0x8E:  //ADC A, [HL]
+            u8 = memory[cpu->hl] + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x8F:  //ADC A, A
+            u8 = cpu->a + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x90:  //SUB B
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->b, cpu);
+            set_C_sub(cpu->a, cpu->b, cpu);
+            cpu->a -= cpu->b;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x91:  //SUB C
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->c, cpu);
+            set_C_sub(cpu->a, cpu->c, cpu);
+            cpu->a -= cpu->c;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x92:  //SUB D
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->d, cpu);
+            set_C_sub(cpu->a, cpu->d, cpu);
+            cpu->a -= cpu->d;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x93:  //SUB E
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->e, cpu);
+            set_C_sub(cpu->a, cpu->e, cpu);
+            cpu->a -= cpu->e;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x94:  //SUB H
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->h, cpu);
+            set_C_sub(cpu->a, cpu->h, cpu);
+            cpu->a -= cpu->h;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x95:  //SUB L
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->l, cpu);
+            set_C_sub(cpu->a, cpu->l, cpu);
+            cpu->a -= cpu->l;
+            set_Z(cpu->a, cpu);
             break;
 
-        case 0x96:  //SUB HL
+        case 0x96:  //SUB [HL]
+            set_N(1, cpu);
+            set_H_sub(cpu->a, memory[cpu->hl], cpu);
+            set_C_sub(cpu->a, memory[cpu->hl], cpu);
+            cpu->a -= memory[cpu->hl];
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x97:  //SUB A
+            set_N(1, cpu);
+            set_H_sub(cpu->a, cpu->a, cpu);
+            set_C_sub(cpu->a, cpu->a, cpu);
+            cpu->a -= cpu->a;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x98:  //SBC A, B
+            u8 = cpu->b + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x99:  //SBC A, C
+            u8 = cpu->c + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x9A:  //SBC A, D
+            u8 = cpu->d + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x9B:  //SBC A, E
+            u8 = cpu->e + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x9C:  //SBC A, H
+            u8 = cpu->h + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x9D:  //SBC A, L
+            u8 = cpu->l + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x9E:  //SBC A, HL
+            u8 = memory[cpu->hl] + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0x9F:  //SBC A, A
+            u8 = cpu->a + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0xA0:  //AND B
