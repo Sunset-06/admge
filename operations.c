@@ -239,7 +239,9 @@ void run_inst(uint16_t opcode, Registers *cpu){
         // Jump by i8 steps if Z flag is NOT set
             offset = (int8_t) memory[++cpu->pc];
             if(!(cpu->f & FLAG_Z))
-                cpu->pc += offset;  
+                cpu->pc += offset;
+            else
+                ++cpu->pc;  
             break;
 
         case 0x21:  //LD HL, u16
@@ -304,6 +306,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             offset = (int8_t) memory[++cpu->pc];
             if(cpu->f & FLAG_Z)
                 cpu->pc += offset;
+            else
+                ++cpu->pc;
             break;
 
         case 0x29:  //ADD HL, HL
@@ -358,6 +362,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             offset = (int8_t) memory[++cpu->pc];
             if(!(cpu->f & FLAG_C))
                 cpu->pc += offset;
+            else
+                ++cpu->pc;
             break;
 
         case 0x31:  //LD SP, u16
@@ -413,6 +419,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             offset = (int8_t) memory[++cpu->pc];
             if(cpu->f & FLAG_C)
                 cpu->pc += offset;
+            else
+                ++cpu->pc;
             break;
 
         case 0x39:  //ADD HL, SP
@@ -1273,6 +1281,12 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xC6:  //ADD A, u8
+            set_N(0, cpu);
+            u8 = memory[++cpu->pc];
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0xC7:  //RST 00H
@@ -1288,6 +1302,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xCB:  //Prefix CB
+            run_pref_inst(memory[++cpu->pc]);
             break;
 
         case 0xCC:  //CALL Z, u16
@@ -1297,6 +1312,12 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xCE:  //ADC A, u8
+            u8 = memory[++cpu->pc] + (cpu->f & FLAG_C);
+            set_N(0, cpu);
+            set_H_add(cpu->a, u8, cpu);
+            set_C_add(cpu->a, u8, cpu);
+            cpu->a += u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0xCF:  //RST 08H
@@ -1311,7 +1332,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xD2:  //JP NC, u16
             break;
 
-        case 0xD3:  //UNUSED
+        case 0xD3:  //HOLE
             break;
 
         case 0xD4:  //CALL NC, u16
@@ -1320,7 +1341,14 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xD5:  //PUSH DE
             break;
 
-        case 0xD6:  //SUB u8
+        case 0xD6:  //SUB A, u8
+            // Subtract u8 from A
+            set_N(1, cpu);
+            u8 = memory[++cpu->pc];
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sub(cpu->a, u8, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0xD7:  //RST 10H
@@ -1333,6 +1361,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xDA:  //JP C, u16
+            // Jump to u16 if C is set
+            if(cpu->f & FLAG_C)
+                cpu->pc = memory[++cpu->pc];
+            else
+                ++cpu->pc;
             break;
 
         case 0xDB:  //UNUSED
@@ -1341,10 +1374,16 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xDC:  //CALL C, u16
             break;
 
-        case 0xDD:  //UNUSED
+        case 0xDD:  //HOLE
             break;
 
         case 0xDE:  //SBC A, u8
+            u8 = memory[++cpu->pc] + (cpu->f & FLAG_C);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
+            cpu->a -= u8;
+            set_Z(cpu->a, cpu);
             break;
 
         case 0xDF:  //RST 18H
@@ -1368,13 +1407,20 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xE5:  //PUSH HL
             break;
 
-        case 0xE6:  //AND u8
+        case 0xE6:  //AND A, u8
+            cpu->a = (cpu->a & memory[++cpu->pc]);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xE7:  //RST 20H
             break;
 
         case 0xE8:  //ADD SP, i8
+            // 16bit ADD - signed i8 to sp
+
             break;
 
         case 0xE9:  //JP HL
@@ -1393,6 +1439,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xEE:  //XOR u8
+            cpu->a = (cpu->a ^ memory[++cpu->pc]);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xEF:  //RST 28H
@@ -1416,7 +1467,12 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xF5:  //PUSH AF
             break;
 
-        case 0xF6:  //OR u8
+        case 0xF6:  //OR A, u8
+            cpu->a = (cpu->a | memory[++cpu->pc]);
+            set_Z(cpu->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
             break;
 
         case 0xF7:  //RST 30H
@@ -1441,6 +1497,12 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xFE:  //CP u8
+            u8 = memory[++cpu->pc];
+            temp8 = cpu->a - u8;
+            set_Z(temp8, cpu);
+            set_N(1, cpu);
+            set_H_sub(cpu->a, u8, cpu);
+            set_C_sub(cpu->a, u8, cpu);
             break;
 
         case 0xFF:  //RST 38H
