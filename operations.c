@@ -1,6 +1,6 @@
 #include "cpu.h"
 #include "mem.h"
-
+#include "emu.h"
 // TODO- Check set_Z implementation. You need to pass 1 to unset, which is reeally unintuitive
 
 void run_inst(uint16_t opcode, Registers *cpu){
@@ -1263,15 +1263,30 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xC0:  //RET NZ
+            if (!(cpu->f & FLAG_Z)) {
+                uint8_t low = memory[cpu->sp++];
+                uint8_t high = memory[cpu->sp++];
+                cpu->pc = (high << 8) | low;
+                cycles = 20;
+            } else {
+                cycles = 8;
+            }
             break;
 
         case 0xC1:  //POP BC
             break;
 
         case 0xC2:  //JP NZ, u16
+        // Jump to u16 if Z is not set
+            if(!(cpu->f & FLAG_Z))
+                cpu->pc = memory[++cpu->pc];
+            else
+                ++cpu->pc;
             break;
 
         case 0xC3:  //JP u16
+            // Jump to u16
+            cpu->pc = memory[++cpu->pc];
             break;
 
         case 0xC4:  //CALL NZ, u16
@@ -1330,6 +1345,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xD2:  //JP NC, u16
+            // Jump to u16 if C is  NOT set
+            if(!(cpu->f & FLAG_C))
+                cpu->pc = memory[++cpu->pc];
+            else
+                ++cpu->pc;
             break;
 
         case 0xD3:  //HOLE
@@ -1424,6 +1444,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xE9:  //JP HL
+            // Jump to HL
+                cpu->pc = memory[cpu->hl];
             break;
 
         case 0xEA:  //LD u16, A
