@@ -1,15 +1,15 @@
 #include "cpu.h"
-#include "mem.h"
 #include "emu.h"
 // TODO- Check set_Z implementation. You need to pass 1 to unset, which is reeally unintuitive
 
-void run_inst(uint16_t opcode, Registers *cpu){
+void run_inst(uint16_t opcode, CPU *cpu){
     // temporary variables
     uint16_t u16;
     uint8_t u8;
     uint8_t temp8;
     uint16_t temp16;
     int8_t offset;
+    Registers *reg = &cpu->regs;
 
     switch(opcode){
         case 0x00:  //NOP
@@ -17,14 +17,14 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x01:  //LD BC, u16 - 3bytes
             // write u16 into BC
-            u16 = memory[++cpu->pc];
-            u16 = u16 | (memory[++cpu->pc] << 8);
+            u16 = cpu->memory[++cpu->pc];
+            u16 = u16 | (cpu->memory[++cpu->pc] << 8);
             cpu->bc = u16;
             break;
 
         case 0x02:  //LD BC, A 
             //write from A to byte pointed by BC
-            memory[cpu->bc] =  cpu->a;    
+            cpu->memory[cpu->bc] =  cpu->a;    
             break;
 
         case 0x03:  //INC BC
@@ -51,7 +51,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x06:  //LD B, u8
             // Write u8 into B
-            cpu->b = memory[++cpu->pc];
+            cpu->b = cpu->memory[++cpu->pc];
             break;
             
         case 0x07:  //RLCA
@@ -67,10 +67,10 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x08:  //LD u16, SP     
             // Copy SP & $FF at address u16 and SP >> 8 at address u16 + 1.
-            u16 = memory[++cpu->pc];
-            u16 |= (memory[++cpu->pc] << 8);
-            memory[u16] = cpu->sp & 0xFF;
-            memory[u16 + 1] = (cpu->sp >> 8) & 0xFF;
+            u16 = cpu->memory[++cpu->pc];
+            u16 |= (cpu->memory[++cpu->pc] << 8);
+            cpu->memory[u16] = cpu->sp & 0xFF;
+            cpu->memory[u16 + 1] = (cpu->sp >> 8) & 0xFF;
             break;
 
         case 0x09:  //ADD HL, BC
@@ -83,7 +83,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x0A:  //LD A, BC
             // Write Byte pointed by BC into A
-            cpu->a = memory[cpu->bc];
+            cpu->a = cpu->memory[cpu->bc];
             break;
         
         case 0x0B:  //DEC BC
@@ -109,7 +109,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x0E:  //LD C, u8
             // Write u8 into C
-            cpu->c = memory[++cpu->pc];
+            cpu->c = cpu->memory[++cpu->pc];
             break;  
 
         case 0x0F:  //RRCA
@@ -128,14 +128,14 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x11:  //LD DE, u16
             // Load u16 into DE
-            u16 = memory[++cpu->pc];
-            u16 = u16 | (memory[++cpu->pc] << 8);
+            u16 = cpu->memory[++cpu->pc];
+            u16 = u16 | (cpu->memory[++cpu->pc] << 8);
             cpu->de = u16;
             break;
 
         case 0x12:  //LD DE, A
             // Copy the value in register A into the byte pointed to by DE
-            memory[cpu->de] = cpu->a;
+            cpu->memory[cpu->de] = cpu->a;
             break;
 
         case 0x13:  //INC DE
@@ -161,7 +161,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         
         case 0x16:  //LD D, u8
             // Load u8 into D
-            cpu->d = memory[++cpu->pc];
+            cpu->d = cpu->memory[++cpu->pc];
             break;
         
         case 0x17:  //RLA
@@ -180,7 +180,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x18:  //JR i8
             // Jump relative by i8 steps in pc
-            offset = (int8_t) memory[++cpu->pc];
+            offset = (int8_t) cpu->memory[++cpu->pc];
             cpu->pc =+ offset; 
             break;
         
@@ -194,7 +194,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x1A:  //LD A, DE
             // Copy Byte pointed by DE into A
-            cpu->a = memory[cpu->de];
+            cpu->a = cpu->memory[cpu->de];
             break;
         
         case 0x1B:  //DEC DE
@@ -220,7 +220,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x1E:  //LD E, u8
             // Copy u8 into E
-            cpu->e = memory[++cpu->pc];
+            cpu->e = cpu->memory[++cpu->pc];
             break;
 
         case 0x1F:  //RRA
@@ -237,7 +237,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x20:  //JR NZ, i8
         // Jump by i8 steps if Z flag is NOT set
-            offset = (int8_t) memory[++cpu->pc];
+            offset = (int8_t) cpu->memory[++cpu->pc];
             if(!(cpu->f & FLAG_Z))
                 cpu->pc += offset;
             else
@@ -246,15 +246,15 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x21:  //LD HL, u16
             // Copy u16 into HL
-            u16 = memory[++cpu->pc];
-            u16 = u16 | (memory[++cpu->pc] << 8);
+            u16 = cpu->memory[++cpu->pc];
+            u16 = u16 | (cpu->memory[++cpu->pc] << 8);
             cpu->hl = u16;
             break;
 
         case 0x22:  //LD HL+, A
             // Copy A into byte pointed by HL
             // Then Increment HL
-            memory[cpu->hl] = cpu->a;
+            cpu->memory[cpu->hl] = cpu->a;
             cpu->hl += 1;
             break;
 
@@ -280,7 +280,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x26:  //LD H, u8
             // Copy u8 into H
-            cpu->h = memory[++cpu->pc];
+            cpu->h = cpu->memory[++cpu->pc];
             break;
 
         case 0x27:  //DAA
@@ -303,7 +303,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x28:  //JR Z, i8
             // Jump by i8 steps if Z flag is set
-            offset = (int8_t) memory[++cpu->pc];
+            offset = (int8_t) cpu->memory[++cpu->pc];
             if(cpu->f & FLAG_Z)
                 cpu->pc += offset;
             else
@@ -322,7 +322,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x2A:  //LD A, HL+
             // Copy byte pointed by HL into A
             // Increment HL
-            cpu->a = memory[cpu->hl];
+            cpu->a = cpu->memory[cpu->hl];
             cpu->hl += 1;
             break;
 
@@ -347,7 +347,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x2E:  //LD L, u8
             // Copy u8 into L
-            cpu->l = memory[++cpu->pc];
+            cpu->l = cpu->memory[++cpu->pc];
             break;
 
         case 0x2F:  //CPL
@@ -359,7 +359,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x30:  //JR NC, i8
             // Jump by i8 steps if C flag is NOT set
-            offset = (int8_t) memory[++cpu->pc];
+            offset = (int8_t) cpu->memory[++cpu->pc];
             if(!(cpu->f & FLAG_C))
                 cpu->pc += offset;
             else
@@ -368,15 +368,15 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x31:  //LD SP, u16
             // Load u16 into the SP
-            u16 = memory[++cpu->pc];
-            u16 = u16 | (memory[++cpu->pc] << 8);
+            u16 = cpu->memory[++cpu->pc];
+            u16 = u16 | (cpu->memory[++cpu->pc] << 8);
             cpu->sp = u16;
             break;
 
         case 0x32:  //LD HL-, A
             // Load A into byte pointed by HL
             // Decrement HL
-            memory[cpu->hl] = cpu->a;
+            cpu->memory[cpu->hl] = cpu->a;
             cpu->hl -= 1;
             break;
 
@@ -387,24 +387,24 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x34:  //INC [HL]
             // Increment byte pointed by HL
-            set_H_add(memory[cpu->hl], 1, cpu);
-            memory[cpu->hl] += 1;
-            set_Z(memory[cpu->hl], cpu);
+            set_H_add(cpu->memory[cpu->hl], 1, cpu);
+            cpu->memory[cpu->hl] += 1;
+            set_Z(cpu->memory[cpu->hl], cpu);
             set_N(0, cpu);
             break;
 
         case 0x35:  //DEC [HL]
             //  Decrement byte pointed by HL
-            set_H_sub(memory[cpu->hl], 1, cpu);
-            memory[cpu->hl] -= 1;
-            set_Z(memory[cpu->hl], cpu);
+            set_H_sub(cpu->memory[cpu->hl], 1, cpu);
+            cpu->memory[cpu->hl] -= 1;
+            set_Z(cpu->memory[cpu->hl], cpu);
             set_N(1, cpu);
             break;
 
         case 0x36:  //LD [HL], u8
             // Load u8 into byte pointed by HL
-            u8 =  memory[++cpu->pc];
-            memory[cpu->hl] = u8;
+            u8 =  cpu->memory[++cpu->pc];
+            cpu->memory[cpu->hl] = u8;
             break;
 
         case 0x37:  //SCF
@@ -416,7 +416,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x38:  //JR C, i8
             // Jump by i8 if C is set
-            offset = (int8_t) memory[++cpu->pc];
+            offset = (int8_t) cpu->memory[++cpu->pc];
             if(cpu->f & FLAG_C)
                 cpu->pc += offset;
             else
@@ -434,7 +434,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0x3A:  //LD A, [HL-]
             // Load byte pointed by HL
             // Decrement HL
-            cpu->a = memory[cpu->hl];
+            cpu->a = cpu->memory[cpu->hl];
             cpu->hl -= 1;
             break;
 
@@ -461,7 +461,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x3E:  //LD A, u8
             // Load u8 into A
-            u8 = memory[++cpu->pc];
+            u8 = cpu->memory[++cpu->pc];
             cpu->a = u8;
             break;
 
@@ -501,7 +501,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x46:  //LD B, [HL]
-            cpu->b = memory[cpu->hl];   
+            cpu->b = cpu->memory[cpu->hl];   
             break;
 
         case 0x47:  //LD B, A
@@ -533,7 +533,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x4E:  //LD C, HL
-            cpu->c = memory[cpu->hl];
+            cpu->c = cpu->memory[cpu->hl];
             break;
 
         case 0x4F:  //LD C, A
@@ -565,7 +565,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x56:  //LD D, HL
-            cpu->d = memory[cpu->hl];
+            cpu->d = cpu->memory[cpu->hl];
             break;
 
         case 0x57:  //LD D, A
@@ -597,7 +597,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x5E:  //LD E, HL
-            cpu->e = memory[cpu->hl];
+            cpu->e = cpu->memory[cpu->hl];
             break;
 
         case 0x5F:  //LD E, A
@@ -629,7 +629,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x66:  //LD H, HL
-            cpu->h = memory[cpu->hl];
+            cpu->h = cpu->memory[cpu->hl];
             break;
 
         case 0x67:  //LD H, A
@@ -661,7 +661,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x6E:  //LD L, HL
-            cpu->l = memory[cpu->hl];
+            cpu->l = cpu->memory[cpu->hl];
             break;
 
         case 0x6F:  //LD L, A
@@ -669,27 +669,27 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x70:  //LD HL, B
-            memory[cpu->hl] = cpu->b;
+            cpu->memory[cpu->hl] = cpu->b;
             break;
 
         case 0x71:  //LD HL, C
-            memory[cpu->hl] = cpu->c;
+            cpu->memory[cpu->hl] = cpu->c;
             break;
 
         case 0x72:  //LD HL, D
-            memory[cpu->hl] = cpu->d;
+            cpu->memory[cpu->hl] = cpu->d;
             break;
 
         case 0x73:  //LD HL, E
-            memory[cpu->hl] = cpu->e;
+            cpu->memory[cpu->hl] = cpu->e;
             break;
 
         case 0x74:  //LD HL, H
-            memory[cpu->hl] = cpu->h;
+            cpu->memory[cpu->hl] = cpu->h;
             break;
 
         case 0x75:  //LD HL, L
-            memory[cpu->hl] = cpu->l;
+            cpu->memory[cpu->hl] = cpu->l;
             break;
 
         case 0x76:  //HALT
@@ -697,7 +697,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x77:  //LD HL, A
-            memory[cpu->hl] = cpu->a;
+            cpu->memory[cpu->hl] = cpu->a;
             break;
 
         case 0x78:  //LD A, B
@@ -725,7 +725,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x7E:  //LD A, HL
-            cpu->a = memory[cpu->hl];
+            cpu->a = cpu->memory[cpu->hl];
             break;
 
         case 0x7F:  //LD A, A
@@ -784,9 +784,9 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x86:  //ADD A, [HL]
             set_N(0, cpu);
-            set_H_add(cpu->a, memory[cpu->hl], cpu);
-            set_C_add(cpu->a, memory[cpu->hl], cpu);
-            cpu->a += memory[cpu->hl];
+            set_H_add(cpu->a, cpu->memory[cpu->hl], cpu);
+            set_C_add(cpu->a, cpu->memory[cpu->hl], cpu);
+            cpu->a += cpu->memory[cpu->hl];
             set_Z(cpu->a, cpu);
             break;
 
@@ -853,7 +853,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x8E:  //ADC A, [HL]
-            u8 = memory[cpu->hl] + (cpu->f & FLAG_C);
+            u8 = cpu->memory[cpu->hl] + (cpu->f & FLAG_C);
             set_N(0, cpu);
             set_H_add(cpu->a, u8, cpu);
             set_C_add(cpu->a, u8, cpu);
@@ -920,9 +920,9 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0x96:  //SUB [HL]
             set_N(1, cpu);
-            set_H_sub(cpu->a, memory[cpu->hl], cpu);
-            set_C_sub(cpu->a, memory[cpu->hl], cpu);
-            cpu->a -= memory[cpu->hl];
+            set_H_sub(cpu->a, cpu->memory[cpu->hl], cpu);
+            set_C_sub(cpu->a, cpu->memory[cpu->hl], cpu);
+            cpu->a -= cpu->memory[cpu->hl];
             set_Z(cpu->a, cpu);
             break;
 
@@ -989,7 +989,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0x9E:  //SBC A, HL
-            u8 = memory[cpu->hl] + (cpu->f & FLAG_C);
+            u8 = cpu->memory[cpu->hl] + (cpu->f & FLAG_C);
             set_N(1, cpu);
             set_H_sub(cpu->a, u8, cpu);
             set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
@@ -1055,7 +1055,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xA6:  //AND [HL]
-            cpu->a = (cpu->a & memory[cpu->hl]);
+            cpu->a = (cpu->a & cpu->memory[cpu->hl]);
             set_Z(cpu->a, cpu);
             set_N(0, cpu);
             set_H(1, cpu);
@@ -1119,7 +1119,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xAE:  //XOR HL
-            cpu->a = (cpu->a ^ memory[cpu->hl]);
+            cpu->a = (cpu->a ^ cpu->memory[cpu->hl]);
             set_Z(cpu->a, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
@@ -1183,7 +1183,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
     case 0xB6:  //OR [HL]
-            cpu->a = (cpu->a | memory[cpu->hl]);
+            cpu->a = (cpu->a | cpu->memory[cpu->hl]);
             set_Z(cpu->a, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
@@ -1247,11 +1247,11 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xBE:  //CP HL
-            temp8 = cpu->a - memory[cpu->hl];
+            temp8 = cpu->a - cpu->memory[cpu->hl];
             set_Z(temp8, cpu);
             set_N(1, cpu);
-            set_H_sub(cpu->a, memory[cpu->hl], cpu);
-            set_C_sub(cpu->a, memory[cpu->hl], cpu);
+            set_H_sub(cpu->a, cpu->memory[cpu->hl], cpu);
+            set_C_sub(cpu->a, cpu->memory[cpu->hl], cpu);
             break;
 
         case 0xBF:  //CP A
@@ -1264,8 +1264,8 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0xC0:  //RET NZ
             if (!(cpu->f & FLAG_Z)) {
-                uint8_t low = memory[cpu->sp++];
-                uint8_t high = memory[cpu->sp++];
+                uint8_t low = cpu->memory[cpu->sp++];
+                uint8_t high = cpu->memory[cpu->sp++];
                 cpu->pc = (high << 8) | low;
                 cycles = 20;
             } else {
@@ -1279,14 +1279,14 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xC2:  //JP NZ, u16
         // Jump to u16 if Z is not set
             if(!(cpu->f & FLAG_Z))
-                cpu->pc = memory[++cpu->pc];
+                cpu->pc = cpu->memory[++cpu->pc];
             else
                 ++cpu->pc;
             break;
 
         case 0xC3:  //JP u16
             // Jump to u16
-            cpu->pc = memory[++cpu->pc];
+            cpu->pc = cpu->memory[++cpu->pc];
             break;
 
         case 0xC4:  //CALL NZ, u16
@@ -1297,7 +1297,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0xC6:  //ADD A, u8
             set_N(0, cpu);
-            u8 = memory[++cpu->pc];
+            u8 = cpu->memory[++cpu->pc];
             set_H_add(cpu->a, u8, cpu);
             set_C_add(cpu->a, u8, cpu);
             cpu->a += u8;
@@ -1317,7 +1317,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xCB:  //Prefix CB
-            run_pref_inst(memory[++cpu->pc]);
+            run_pref_inst(cpu->memory[++cpu->pc]);
             break;
 
         case 0xCC:  //CALL Z, u16
@@ -1327,7 +1327,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xCE:  //ADC A, u8
-            u8 = memory[++cpu->pc] + (cpu->f & FLAG_C);
+            u8 = cpu->memory[++cpu->pc] + (cpu->f & FLAG_C);
             set_N(0, cpu);
             set_H_add(cpu->a, u8, cpu);
             set_C_add(cpu->a, u8, cpu);
@@ -1347,7 +1347,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xD2:  //JP NC, u16
             // Jump to u16 if C is  NOT set
             if(!(cpu->f & FLAG_C))
-                cpu->pc = memory[++cpu->pc];
+                cpu->pc = cpu->memory[++cpu->pc];
             else
                 ++cpu->pc;
             break;
@@ -1364,7 +1364,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xD6:  //SUB A, u8
             // Subtract u8 from A
             set_N(1, cpu);
-            u8 = memory[++cpu->pc];
+            u8 = cpu->memory[++cpu->pc];
             set_H_sub(cpu->a, u8, cpu);
             set_C_sub(cpu->a, u8, cpu);
             cpu->a -= u8;
@@ -1383,12 +1383,12 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xDA:  //JP C, u16
             // Jump to u16 if C is set
             if(cpu->f & FLAG_C)
-                cpu->pc = memory[++cpu->pc];
+                cpu->pc = cpu->memory[++cpu->pc];
             else
                 ++cpu->pc;
             break;
 
-        case 0xDB:  //UNUSED
+        case 0xDB:  //HOLE
             break;
 
         case 0xDC:  //CALL C, u16
@@ -1398,7 +1398,7 @@ void run_inst(uint16_t opcode, Registers *cpu){
             break;
 
         case 0xDE:  //SBC A, u8
-            u8 = memory[++cpu->pc] + (cpu->f & FLAG_C);
+            u8 = cpu->memory[++cpu->pc] + (cpu->f & FLAG_C);
             set_N(1, cpu);
             set_H_sub(cpu->a, u8, cpu);
             set_C_sbc(cpu->a, u8, cpu->f & FLAG_C, cpu);
@@ -1418,17 +1418,17 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xE2:  //LD C, A
             break;
 
-        case 0xE3:  //UNUSED
+        case 0xE3:  //HOLE
             break;
 
-        case 0xE4:  //UNUSED
+        case 0xE4:  //HOLE
             break;
 
         case 0xE5:  //PUSH HL
             break;
 
         case 0xE6:  //AND A, u8
-            cpu->a = (cpu->a & memory[++cpu->pc]);
+            cpu->a = (cpu->a & cpu->memory[++cpu->pc]);
             set_Z(cpu->a, cpu);
             set_N(0, cpu);
             set_H(1, cpu);
@@ -1445,23 +1445,23 @@ void run_inst(uint16_t opcode, Registers *cpu){
 
         case 0xE9:  //JP HL
             // Jump to HL
-                cpu->pc = memory[cpu->hl];
+                cpu->pc = cpu->memory[cpu->hl];
             break;
 
         case 0xEA:  //LD u16, A
             break;
 
-        case 0xEB:  //UNUSED
+        case 0xEB:  //HOLE
             break;
 
-        case 0xEC:  //UNUSED
+        case 0xEC:  //HOLE
             break;
 
-        case 0xED:  //UNUSED
+        case 0xED:  //HOLE
             break;
 
         case 0xEE:  //XOR u8
-            cpu->a = (cpu->a ^ memory[++cpu->pc]);
+            cpu->a = (cpu->a ^ cpu->memory[++cpu->pc]);
             set_Z(cpu->a, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
@@ -1483,14 +1483,14 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xF3:  //DI
             break;
 
-        case 0xF4:  //UNUSED
+        case 0xF4:  //HOLE
             break;
 
         case 0xF5:  //PUSH AF
             break;
 
         case 0xF6:  //OR A, u8
-            cpu->a = (cpu->a | memory[++cpu->pc]);
+            cpu->a = (cpu->a | cpu->memory[++cpu->pc]);
             set_Z(cpu->a, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
@@ -1512,14 +1512,14 @@ void run_inst(uint16_t opcode, Registers *cpu){
         case 0xFB:  //EI
             break;
 
-        case 0xFC:  //UNUSED
+        case 0xFC:  //HOLE
             break;
 
-        case 0xFD:  //UNUSED
+        case 0xFD:  //HOLE
             break;
 
         case 0xFE:  //CP u8
-            u8 = memory[++cpu->pc];
+            u8 = cpu->memory[++cpu->pc];
             temp8 = cpu->a - u8;
             set_Z(temp8, cpu);
             set_N(1, cpu);

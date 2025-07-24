@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 
+#define MEMORY_SIZE 0x10000
 
 #define FLAG_Z 0x80
 #define FLAG_N 0x40
@@ -38,10 +39,34 @@ typedef struct {
         };
         uint16_t hl;
     };
+
+    bool ime;
+    bool halted;
+    bool stopped;
+} Registers;
+
+typedef struct {
+    Registers regs;
+
     //stack pointer and program counter
     uint16_t sp;
     uint16_t pc;
-} Registers;
+
+    uint8_t memory[MEMORY_SIZE];
+
+    bool ime;
+    uint8_t ie;  // Interrupt Enable
+    uint8_t iflag; // Interrupt Flag (IF)
+
+    bool halted;
+    bool stopped;
+
+    uint16_t div;
+    uint8_t tima, tma, tac;
+
+    uint64_t cycles;
+} CPU;
+
 
 extern void set_Z(uint8_t result, Registers *cpu);
 
