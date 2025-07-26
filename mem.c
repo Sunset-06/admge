@@ -18,7 +18,7 @@ void load_rom(CPU *cpu, const char* filename) {
     fclose(romFile);
 }
 
-int8_t read8(CPU *cpu, uint16_t addr) {
+uint8_t read8(CPU *cpu, uint16_t addr) {
     if (addr >= 0xE000 && addr <= 0xFDFF) {
         // Echo RAM maps to WRAM (0xC000 - 0xDDFF)
         return cpu->memory[addr - 0x2000];

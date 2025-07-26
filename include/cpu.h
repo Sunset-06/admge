@@ -88,9 +88,9 @@ extern void set_C_sbc(uint8_t a, uint8_t b, bool carry, Registers *cpu);
 extern void clear_flags(Registers *cpu);
 
 // memory functions
-extern void read8(uint16_t addr);
-extern void write8(uint16_t addr, uint8_t value);
-extern void read16(uint16_t addr);
-extern void write16(uint16_t addr, uint16_t value);
+extern uint8_t read8(CPU *cpu, uint16_t addr);
+extern void write8(CPU *cpu, uint16_t addr, uint8_t value);
+extern uint16_t read16(CPU *cpu, uint16_t addr);
+extern void write16(CPU *cpu, uint16_t addr, uint16_t value);
 
 #endif 

@@ -17,14 +17,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0x01:  //LD BC, u16 
             // write u16 into BC
-            u16 = cpu->memory[++cpu->pc];
-            u16 = u16 | (cpu->memory[++cpu->pc] << 8);
-            reg->bc = u16;
+            reg->bc = read16(cpu, cpu->pc + 1);
+            cpu->pc += 2; // Skipping over the 'address' bytes
             break;
 
         case 0x02:  //LD BC, A 
             //write from A to byte pointed by BC
-            cpu->memory[reg->bc] =  reg->a;    
+            write8(cpu, reg->bc, reg->a);    
             break;
 
         case 0x03:  //INC BC
@@ -51,7 +50,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0x06:  //LD B, u8
             // Write u8 into B
-            reg->b = cpu->memory[++cpu->pc];
+            reg->b = read8(cpu, ++cpu->pc);
             break;
             
         case 0x07:  //RLCA
@@ -83,7 +82,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0x0A:  //LD A, BC
             // Write Byte pointed by BC into A
-            reg->a = cpu->memory[reg->bc];
+            reg->a = read8(cpu, reg->bc);
             break;
         
         case 0x0B:  //DEC BC
@@ -109,7 +108,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0x0E:  //LD C, u8
             // Write u8 into C
-            reg->c = cpu->memory[++cpu->pc];
+            reg->c = read8(cpu, ++cpu->pc);
             break;  
 
         case 0x0F:  //RRCA
@@ -128,14 +127,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0x11:  //LD DE, u16
             // Load u16 into DE
-            u16 = cpu->memory[++cpu->pc];
-            u16 = u16 | (cpu->memory[++cpu->pc] << 8);
-            reg->de = u16;
+            reg->de = read16(cpu, cpu->pc+1);
+            cpu->pc += 2;
             break;
 
         case 0x12:  //LD DE, A
             // Copy the value in register A into the byte pointed to by DE
-            cpu->memory[reg->de] = reg->a;
+            write8(cpu,reg->de,reg->a);
             break;
 
         case 0x13:  //INC DE
@@ -161,7 +159,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
         
         case 0x16:  //LD D, u8
             // Load u8 into D
-            reg->d = cpu->memory[++cpu->pc];
+            reg->d = read8(cpu, ++cpu->pc);
             break;
         
         case 0x17:  //RLA
@@ -180,7 +178,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0x18:  //JR i8
             // Jump relative by i8 steps in pc
-            offset = (int8_t) cpu->memory[++cpu->pc];
+            offset = (int8_t) read8(cpu, ++cpu->pc);
             cpu->pc =+ offset; 
             break;
         
@@ -194,7 +192,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0x1A:  //LD A, DE
             // Copy Byte pointed by DE into A
-            reg->a = cpu->memory[reg->de];
+            reg->a = read8(cpu, reg->de);
             break;
         
         case 0x1B:  //DEC DE
@@ -220,7 +218,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0x1E:  //LD E, u8
             // Copy u8 into E
-            reg->e = cpu->memory[++cpu->pc];
+            reg->e = read8(cpu, ++cpu->pc);
             break;
 
         case 0x1F:  //RRA

@@ -7,8 +7,8 @@
 
 extern uint8_t quit_flag;
 
-void init_memory();
-void load_rom(const char* filename);
+void init_memory(CPU *cpu);
+void load_rom(CPU *cpu, const char* filename);
 
 
 #endif  
