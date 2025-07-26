@@ -67,7 +67,7 @@ typedef struct {
     uint64_t cycles;
 } CPU;
 
-
+// flag functions
 extern void set_Z(uint8_t result, Registers *cpu);
 
 extern void set_N(bool sub, Registers *cpu);
@@ -86,5 +86,11 @@ extern void set_C_add16(uint16_t a, uint16_t b, Registers *cpu);
 extern void set_C_sbc(uint8_t a, uint8_t b, bool carry, Registers *cpu);
 
 extern void clear_flags(Registers *cpu);
+
+// memory functions
+extern void read8(uint16_t addr);
+extern void write8(uint16_t addr, uint8_t value);
+extern void read16(uint16_t addr);
+extern void write16(uint16_t addr, uint16_t value);
 
 #endif 

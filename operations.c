@@ -15,7 +15,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
         case 0x00:  //NOP
             break;
 
-        case 0x01:  //LD BC, u16 - 3bytes
+        case 0x01:  //LD BC, u16 
             // write u16 into BC
             u16 = cpu->memory[++cpu->pc];
             u16 = u16 | (cpu->memory[++cpu->pc] << 8);
