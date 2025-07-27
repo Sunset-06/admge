@@ -3,7 +3,7 @@ A simple emulator for the original GameBoy (and hopefully CGB too) in C.
 
 Massive WIP, so this project will take time.
 
-So far, I'm focusing on getting all instructions working.(38/500 done)
+So far, I'm focusing on getting all instructions working. There's about 500 of them, and I've completed about half so far.
 
 The current interpreter just uses one massive switch statement:
 

@@ -12,7 +12,7 @@
 #define FLAG_H 0x20
 #define FLAG_C 0x10
 
-// The registers a,f,b,c,d,s,h,l
+// The registers a,f,b,c,d,e,h,l
 
 typedef struct {
     union {
@@ -56,7 +56,7 @@ typedef struct {
 
     bool ime;
     uint8_t ie;  // Interrupt Enable
-    uint8_t iflag; // Interrupt Flag (IF)
+    uint8_t iflag; // Interrupt Flag 
 
     bool halted;
     bool stopped;
