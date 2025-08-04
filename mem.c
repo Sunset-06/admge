@@ -23,6 +23,9 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
         // Echo RAM maps to WRAM (0xC000 - 0xDDFF)
         return cpu->memory[addr - 0x2000];
     }
+    if (addr >= 0x8000 && addr <= 0x9FFF)
+        return ppu_read(&cpu->ppu, addr);
+
     return cpu->memory[addr];
 }
 
