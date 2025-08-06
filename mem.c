@@ -1,5 +1,6 @@
 #include "emu.h"
 #include "cpu.h"
+#include "ppu.h"
 #include <string.h>
 
 uint8_t memory[MEMORY_SIZE];
@@ -23,8 +24,10 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
         // Echo RAM maps to WRAM (0xC000 - 0xDDFF)
         return cpu->memory[addr - 0x2000];
     }
-    if (addr >= 0x8000 && addr <= 0x9FFF)
-        return ppu_read(&cpu->ppu, addr);
+    if ((addr >= 0x8000 && addr <= 0x9FFF) || // VRAM
+        (addr >= 0xFE00 && addr <= 0xFE9F) || // OAM
+        (addr >= 0xFF40 && addr <= 0xFF4B))   // LCD registers
+        return ppu_read(&cpu->ppu, addr); // Send it over to the ppu function
 
     return cpu->memory[addr];
 }

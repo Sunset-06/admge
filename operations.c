@@ -19,16 +19,19 @@ void run_inst(uint16_t opcode, CPU *cpu){
             // write u16 into BC
             reg->bc = read16(cpu, cpu->pc + 1);
             cpu->pc += 2; // Skipping over the 'address' bytes
+            cpu->cycles += 3; 
             break;
 
         case 0x02:  //LD BC, A 
             //write from A to byte pointed by BC
-            write8(cpu, reg->bc, reg->a);    
+            write8(cpu, reg->bc, reg->a);
+            cpu->cycles += 2;    
             break;
 
         case 0x03:  //INC BC
             //Increment value of BC by 1
             reg->bc += 1;
+            cpu->cycles += 2;
             break;
 
         case 0x04:  //INC B
@@ -37,6 +40,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_N(0,cpu);
             reg->b += 1;
             set_Z(reg->b, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x05:  //DEC B
@@ -46,11 +50,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
             // Change Z and set N flag
             set_Z(reg->b, cpu);
             set_N(reg->b, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x06:  //LD B, u8
             // Write u8 into B
             reg->b = read8(cpu, ++cpu->pc);
+            cpu->cycles += 2;
             break;
             
         case 0x07:  //RLCA
@@ -62,6 +68,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_C(u8, cpu);
             reg->a = reg->a << 1;
             reg->a = reg->a | u8;
+            cpu->cycles += 1;
             break;
 
         case 0x08:  //LD u16, SP     
@@ -69,6 +76,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             u16 = read16(cpu, cpu->pc+1);
             cpu->pc+=2;
             write16(cpu, u16, cpu->sp);
+            cpu->cycles += 5;
             break;
 
         case 0x09:  //ADD HL, BC
@@ -77,16 +85,19 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_add(reg->hl, reg->bc, cpu);
             set_C_add(reg->hl, reg->bc, cpu);
             reg->hl += reg->bc;
+            cpu->cycles += 2;
             break;
 
         case 0x0A:  //LD A, BC
             // Write Byte pointed by BC into A
             reg->a = read8(cpu, reg->bc);
+            cpu->cycles += 2;
             break;
         
         case 0x0B:  //DEC BC
             // Decrement value in BC by 1
             reg->bc -= 1;
+            cpu->cycles += 2;
             break;  
 
         case 0x0C:  //INC C
@@ -95,6 +106,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_add(reg->c, 1,cpu);
             reg->c += 1;
             set_Z(reg->c, cpu);
+            cpu->cycles += 1;
             break;  
 
         case 0x0D:  //DEC C
@@ -103,11 +115,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_sub(reg->c, 1, cpu);
             reg->c -= 1;
             set_Z(reg->c, cpu);
+            cpu->cycles += 1;
             break;  
 
         case 0x0E:  //LD C, u8
             // Write u8 into C
             reg->c = read8(cpu, ++cpu->pc);
+            cpu->cycles += 2;
             break;  
 
         case 0x0F:  //RRCA
@@ -118,26 +132,31 @@ void run_inst(uint16_t opcode, CPU *cpu){
             u8 = reg->a & 0x01; // recording lsb
             set_C(u8, cpu);
             reg->a = (reg->a >> 1) | (u8 << 7);
+            cpu->cycles += 1;
             break;
             
         case 0x10:  //STOP
             // STOP - Check ths one before implementing
+            cpu->cycles += 1;
             break;
 
         case 0x11:  //LD DE, u16
             // Load u16 into DE
             reg->de = read16(cpu, cpu->pc+1);
             cpu->pc += 2;
+            cpu->cycles += 3;
             break;
 
         case 0x12:  //LD DE, A
             // Copy the value in register A into the byte pointed to by DE
             write8(cpu,reg->de,reg->a);
+            cpu->cycles += 2;
             break;
 
         case 0x13:  //INC DE
             // Increment value in DE by 1
             reg->de += 1;
+            cpu->cycles += 2;
             break;
 
         case 0x14:  //INC D
@@ -146,6 +165,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_add(reg->d, 1, cpu);
             reg->d += 1;
             set_Z(reg->d, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x15:  //DEC D
@@ -154,11 +174,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_N(1, cpu);  
             set_H_sub(reg->d, 1, cpu);
             reg->d -= 1;
+            cpu->cycles += 1;
             break;
         
         case 0x16:  //LD D, u8
             // Load u8 into D
             reg->d = read8(cpu, ++cpu->pc);
+            cpu->cycles += 2;
             break;
         
         case 0x17:  //RLA
@@ -173,12 +195,14 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_C(u8, cpu);
             reg->a = reg->a << 1;
             reg->a = reg->a | temp8;
+            cpu->cycles += 1;
             break;
 
         case 0x18:  //JR i8
             // Jump relative by i8 steps in pc
             offset = (int8_t) read8(cpu, ++cpu->pc);
-            cpu->pc =+ offset; 
+            cpu->pc =+ offset;
+            cpu->cycles += 3; 
             break;
         
         case 0x19:  //ADD HL, DE
@@ -187,16 +211,19 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_add16(reg->hl, reg->de, cpu);
             set_C_add16(reg->hl, reg->de, cpu);
             reg->hl += reg->de;
+            cpu->cycles += 2;
             break;
 
         case 0x1A:  //LD A, DE
             // Copy Byte pointed by DE into A
             reg->a = read8(cpu, reg->de);
+            cpu->cycles += 2;
             break;
         
         case 0x1B:  //DEC DE
             // decrement de
             reg->de -= 1;
+            cpu->cycles += 2;
             break;
 
         case 0x1C:  //INC E
@@ -205,6 +232,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_add(reg->e, 1, cpu);
             reg->e += 1;
             set_Z(reg->e, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x1D:  //DEC E
@@ -213,11 +241,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_sub(reg->e, 1, cpu);
             reg->e -= 1;
             set_Z(reg->e, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x1E:  //LD E, u8
             // Copy u8 into E
             reg->e = read8(cpu, ++cpu->pc);
+            cpu->cycles += 2;
             break;
 
         case 0x1F:  //RRA
@@ -229,22 +259,28 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_Z(0, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
-            set_C(u8, cpu);  
+            set_C(u8, cpu);
+            cpu->cycles += 1;  
             break;
 
         case 0x20:  //JR NZ, i8
         // Jump by i8 steps if Z flag is NOT set
             offset = (int8_t) read8(cpu, ++cpu->pc); 
-            if(!(reg->f & FLAG_Z))
+            if(!(reg->f & FLAG_Z)){
                 cpu->pc += offset;
-            else
-                ++cpu->pc;  
+                cpu->cycles += 5;
+            }
+            else{
+                ++cpu->pc;
+                cpu->cycles += 3;
+            }  
             break;
 
         case 0x21:  //LD HL, u16
             // Copy u16 into HL
             reg->hl = read16(cpu, cpu->pc+1);
             cpu->pc += 2;
+            cpu->cycles += 3;
             break;
 
         case 0x22:  //LD HL+, A
@@ -252,12 +288,14 @@ void run_inst(uint16_t opcode, CPU *cpu){
             // Then Increment HL
             write8(cpu, reg->hl, reg->a);
             reg->hl += 1;
+            cpu->cycles += 2;
             break;
 
         case 0x23:  //INC HL
             // Don't confuse with 0x34 
             // Increments HL
             reg->hl += 1;
+            cpu->cycles += 2;
             break;
 
         case 0x24:  //INC H 
@@ -265,6 +303,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_add(reg->h, 1, cpu);
             reg->h += 1;
             set_Z(reg->h, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x25:  //DEC H
@@ -272,11 +311,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_sub(reg->h, 1, cpu);
             reg->h -= 1;
             set_Z(reg->h, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x26:  //LD H, u8
             // Copy u8 into H
             reg->h = read8(cpu, ++cpu->pc);
+            cpu->cycles += 2;
             break;
 
         case 0x27:  //DAA
@@ -295,15 +336,44 @@ void run_inst(uint16_t opcode, CPU *cpu){
             - If the carry flag is set or A > $99, then add $60 to the adjustment and set the carry flag.
             - Add the adjustment to A.
         */
+            uint8_t adjustment = 0;
+
+            if (reg->f & FLAG_N) {
+                uint8_t adjustment = 0;
+                if (reg->f & FLAG_H)
+                    adjustment |= 0x06;
+                if (reg->f & FLAG_C)
+                    adjustment |= 0x60;
+                    
+                reg->a -= adjustment;
+            } else {
+                if (reg->f & FLAG_H || (reg->a & 0x0F) > 0x09)
+                    adjustment |= 0x06;
+                if (reg->f & FLAG_C || reg->a > 0x99){
+                    adjustment |= 0x60;
+                    set_C(1, cpu);
+                }
+                reg->a += adjustment;
+            }
+
+            // Update flags
+            set_Z(reg->a, cpu);
+            set_H(0, cpu);
+
+            cpu->cycles += 1;
             break;
 
         case 0x28:  //JR Z, i8
             // Jump by i8 steps if Z flag is set
             offset = (int8_t) read8(cpu, ++cpu->pc);
-            if(reg->f & FLAG_Z)
+            if(reg->f & FLAG_Z){
                 cpu->pc += offset;
-            else
+                cpu->cycles += 3;
+            }
+            else{
                 ++cpu->pc;
+                cpu->cycles += 2;
+            }
             break;
 
         case 0x29:  //ADD HL, HL
@@ -312,7 +382,8 @@ void run_inst(uint16_t opcode, CPU *cpu){
             reg->hl = u16 + u16;
             set_N(0, cpu);
             set_H_add16(u16, u16,  cpu);
-            set_C_add16(u16, u16, cpu); 
+            set_C_add16(u16, u16, cpu);
+            cpu->cycles += 2; 
             break;
 
         case 0x2A:  //LD A, HL+
@@ -320,11 +391,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
             // Increment HL
             reg->a = read8(cpu, reg->hl);
             reg->hl += 1;
+            cpu->cycles += 2;
             break;
 
         case 0x2B:  //DEC HL
             // Decrement HL
             reg->hl -= 1;
+            cpu->cycles += 2;
             break;
 
         case 0x2C:  //INC L 
@@ -332,6 +405,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_add(reg->l, 1, cpu);
             reg->l += 1;
             set_Z(reg->l, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x2D:  //DEC L
@@ -339,11 +413,13 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_H_sub(reg->l, 1, cpu);
             reg->l -= 1;
             set_Z(reg->l, cpu);
+            cpu->cycles += 1;
             break;
 
         case 0x2E:  //LD L, u8
             // Copy u8 into L
             reg->l = read8(cpu, ++cpu->pc);
+            cpu->cycles += 2;
             break;
 
         case 0x2F:  //CPL
@@ -351,6 +427,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             set_N(1, cpu);
             set_H(1, cpu);
             reg->a = ~reg->a;
+            cpu->cycles += 1;
             break;
 
         case 0x30:  //JR NC, i8

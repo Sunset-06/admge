@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "cpu.h"
 
-// Screen dimensions for the Game Boy
+/* For memory, the ppu uses the VRAM (Graphics data) and the OAM (Sprite Data)*/
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 144
 
@@ -17,7 +17,7 @@ typedef struct {
     uint8_t oam[OAM_SIZE];   // Sprite attribute table
 
     // LCD Registers
-    uint8_t lcdc; // LCD Control
+    uint8_t lcdc; // LCDControl.  All 8 bits do something, Check PanDocs for reference
     uint8_t stat; // LCD Status
     uint8_t scy;  // Scroll Y
     uint8_t scx;  // Scroll X
@@ -33,7 +33,9 @@ typedef struct {
     int mode_cycles;
     int scanline;
 
-    // Framebuffer (RGB or grayscale pixels)
+    /*The framebuffer gets updated when the Scanlines are finshed.
+      This happens when when the scanline reaches line 144. This is kept track of by the ly register.
+      The PPU then triggers a VBlank interrupt, which causes the framebuffer to update*/
     uint32_t framebuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
 } PPU;
 
@@ -46,8 +48,5 @@ void ppu_step(PPU *ppu, CPU *cpu, int cycles);
 // Expose VRAM and OAM read/write functions
 uint8_t ppu_read(PPU *ppu, uint16_t addr);
 void ppu_write(PPU *ppu, uint16_t addr, uint8_t value);
-
-// Draw the final frame to screen
-void ppu_render_frame(PPU *ppu, SDL_Surface *surface);
 
 #endif

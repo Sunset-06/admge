@@ -8,13 +8,13 @@ void ppu_init(PPU *ppu) {
 void ppu_step(PPU *ppu, CPU *cpu, int cycles) {
     ppu->mode_cycles += cycles;
 
-    // Very simplified timing state machine
+    // Scanlines take 456 cycles
     if (ppu->mode_cycles >= 456) {
         ppu->mode_cycles -= 456;
         ppu->ly++;
 
         if (ppu->ly == 144) {
-            // VBlank starts
+            // VBlank triggered
             cpu->iflag |= 0x01; // Set VBlank interrupt
         } else if (ppu->ly > 153) {
             ppu->ly = 0;
@@ -29,7 +29,6 @@ uint8_t ppu_read(PPU *ppu, uint16_t addr) {
         return ppu->oam[addr - 0xFE00];
     }
 
-    // Add more handling for registers (like LCDC, STAT, etc.)
     return 0xFF;
 }
 
@@ -40,5 +39,4 @@ void ppu_write(PPU *ppu, uint16_t addr, uint8_t value) {
         ppu->oam[addr - 0xFE00] = value;
     }
 
-    // You can add cases here for LCDC, BGP, etc.
 }

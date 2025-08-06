@@ -4,6 +4,23 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include "ppu.h"
+
+/* A Note about the Clock and Cycles
+    Every op will take a certain amount of m-cycles
+        For Example: 0x01 LD r16, u16 has:
+            fetch
+            read
+            read
+    However evry m-cycle takes 4 of actual clock cycles, abstacted away.
+    So that means that LD r16, u16 has:
+        3 m-cycles
+        12 clock cycles
+
+    The clock cycles are what the PPU will step based on.
+    So the 'accurate-enough' approach is counting the m-cycles and multiplying by 4.
+    This is what i'll be doing.
+*/
 
 #define MEMORY_SIZE 0x10000
 
@@ -47,6 +64,7 @@ typedef struct {
 
 typedef struct {
     Registers regs;
+    PPU ppu;
 
     //stack pointer and program counter
     uint16_t sp;
