@@ -8,5 +8,10 @@ int main(int argc, char *argv[]) {
     while(!quit_flag){
         fetch();
         execute();
+        // After instruction executes
+        if (cpu->ime_enable) {
+            cpu->ime = true;
+            cpu->ime_enable = false;
+        }
     } */
 }

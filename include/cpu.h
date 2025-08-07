@@ -56,10 +56,6 @@ typedef struct {
         };
         uint16_t hl;
     };
-
-    bool ime;
-    bool halted;
-    bool stopped;
 } Registers;
 
 typedef struct {
@@ -110,5 +106,9 @@ extern uint8_t read8(CPU *cpu, uint16_t addr);
 extern void write8(CPU *cpu, uint16_t addr, uint8_t value);
 extern uint16_t read16(CPU *cpu, uint16_t addr);
 extern void write16(CPU *cpu, uint16_t addr, uint16_t value);
+
+extern void stack_push(CPU *cpu, uint16_t value);
+extern uint16_t stack_pop16(CPU *cpu);
+
 
 #endif 

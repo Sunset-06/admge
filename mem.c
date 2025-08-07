@@ -49,6 +49,23 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
 
 void write16(CPU *cpu, uint16_t addr, uint16_t value) {
     // Little-endian: lower byte first
-    write8(cpu, addr, value & 0xFF);         // Lower byte
-    write8(cpu, addr + 1, (value >> 8) & 0xFF); // Upper byte
+    write8(cpu, addr, value & 0xFF);
+    write8(cpu, addr + 1, (value >> 8) & 0xFF); 
+}
+
+// ------------------------ STACK Functions ---------------------------//
+
+void stack_push(CPU *cpu, uint16_t value) {
+    cpu->sp -= 1;
+    write8(cpu, cpu->sp, (value >> 8) & 0xFF);
+    cpu->sp -= 1;
+    write8(cpu, cpu->sp, value & 0xFF);        
+}
+
+uint16_t stack_pop(CPU *cpu) {
+    uint8_t low = read8(cpu, cpu->sp);
+    cpu->sp += 1;
+    uint8_t high = read8(cpu, cpu->sp);
+    cpu->sp += 1;
+    return (high << 8) | low;
 }
