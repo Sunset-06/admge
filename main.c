@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
     /* 
     while(!quit_flag){
         fetch();
-        execute();
+        run_pref_inst();
         // After instruction executes
         if (cpu->ime_enable) {
             cpu->ime = true;

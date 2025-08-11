@@ -1582,7 +1582,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
             break;
 
         case 0xCB:  //Prefix CB
-            run_pref_inst(read8(cpu, ++cpu->pc));
+            run_pref_inst(cpu);
             break;
 
         case 0xCC:  //CALL Z, u16
