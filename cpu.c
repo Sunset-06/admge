@@ -1,4 +1,5 @@
 #include "cpu.h"
+#define BOOT_ROM "../bootrom/bootix_dmg.bin"
 
 // Change Z based on result <- NOTE this is the exact opposite of all other flag functions
 void set_Z(uint8_t result, CPU *cpu) {
@@ -107,3 +108,58 @@ void clear_flags(CPU *cpu) {
 }
 
 // -------------------------------------------------------------------------------------
+
+bool load_bootrom(CPU *cpu) {
+    FILE *bootrom_file = fopen(BOOT_ROM, "rb");
+    if (bootrom_file == NULL) {
+        printf("Error: Could not load boot ROM.\n");
+        return false;
+    }
+
+    fread(cpu->memory, 1, 0x0100, bootrom_file);  //[0x0000 to 0x00FF]
+
+    fclose(bootrom_file);
+    return true;
+}
+
+
+
+void start_cpu(CPU *cpu) {
+    cpu->regs.af = 0x01B0;  // A and F initial values 
+    cpu->regs.bc = 0x0013;  // B and C initial values
+    cpu->regs.de = 0x00D8;  // D and E initial values
+    cpu->regs.hl = 0x014D;  // H and L initial values
+
+    // Stack pointer and program counter
+    cpu->sp = 0xFFFE;
+    cpu->pc = 0x0000;  
+
+    // Initialize memory
+    for (int i = 0; i < MEMORY_SIZE; ++i) {
+        cpu->memory[i] = 0x00;
+    }
+
+    // Load the boot ROM 
+    if (!load_bootrom(cpu)) {
+        printf("Bootrom failed !!!! Aborting.");
+        return;
+    }
+
+    // PPU initialization 
+    ppu_init(&cpu->ppu);  
+
+    // Interrupts and states
+    cpu->ime = false;  
+    cpu->ie = 0x00;  
+    cpu->iflag = 0x00;  
+
+    cpu->halted = false;
+    cpu->stopped = false;
+
+    cpu->div = 0x00;  
+    cpu->tima = 0x00; 
+    cpu->tma = 0x00;  
+    cpu->tac = 0x00;    
+
+    cpu->cycles = 0; 
+}

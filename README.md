@@ -16,3 +16,5 @@ Ooh boy I can't wait to implement the prefixed ones.
 Once it reaches a point where I can test it, i'll use the approach that ends up being faster.
 
 For now, all the instructions are in `operations.c`.
+
+There's a bootrom in this repo, shamelessly sourced from [Hacktix](https://github.com/Hacktix/Bootix) 

@@ -19,7 +19,7 @@ void ppu_step(PPU *ppu, CPU *cpu, int cycles) {
         } else if (ppu->ly > 153) {
             ppu->ly = 0;
         }
-    }
+    }   
 }
 
 uint8_t ppu_read(PPU *ppu, uint16_t addr) {
