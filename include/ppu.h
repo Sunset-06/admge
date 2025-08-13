@@ -43,7 +43,7 @@ typedef struct {
 void ppu_init(PPU *ppu);
 
 // Update the PPU per CPU cycle
-void ppu_step(PPU *ppu, CPU *cpu, int cycles);
+void ppu_step(PPU *ppu, CPU *cpu, uint16_t cycles);
 
 // Expose VRAM and OAM read/write functions
 uint8_t ppu_read(PPU *ppu, uint16_t addr);

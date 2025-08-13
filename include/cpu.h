@@ -22,6 +22,9 @@
     This is what i'll be doing.
 */
 
+/* So DIV is the main clock, it just accumulates CPU cycles, and most things use it for timing
+
+*/
 #define MEMORY_SIZE 0x10000
 
 #define FLAG_Z 0x80
@@ -75,40 +78,46 @@ typedef struct {
     bool halted;
     bool stopped;
 
+    //timers
     uint16_t div;
     uint8_t tima, tma, tac;
 
     uint64_t cycles;
 } CPU;
 
-// flag functions
-extern void set_Z(uint8_t result, Registers *cpu);
+// --------------------- flag functions
+extern void set_Z(uint8_t result, CPU *cpu);
 
-extern void set_N(bool sub, Registers *cpu);
+extern void set_N(bool sub, CPU *cpu);
 
-extern void set_H(bool condition, Registers *cpu);
-extern void set_H_add(uint8_t a, uint8_t b, Registers *cpu);
-extern void set_H_sub(uint8_t a, uint8_t b, Registers *cpu);
-extern void set_H_add16(uint16_t a, uint16_t b, Registers *cpu);
-extern void set_H_inc(uint8_t before, Registers *cpu);
-extern void set_H_dec(uint8_t before, Registers *cpu);
+extern void set_H(bool condition, CPU *cpu);
+extern void set_H_add(uint8_t a, uint8_t b, CPU *cpu);
+extern void set_H_sub(uint8_t a, uint8_t b, CPU *cpu);
+extern void set_H_add16(uint16_t a, uint16_t b, CPU *cpu);
+extern void set_H_inc(uint8_t before, CPU *cpu);
+extern void set_H_dec(uint8_t before, CPU *cpu);
 
-extern void set_C(bool condition, Registers *cpu);
-extern void set_C_add(uint8_t a, uint8_t b, Registers *cpu);
-extern void set_C_sub(uint8_t a, uint8_t b, Registers *cpu);
-extern void set_C_add16(uint16_t a, uint16_t b, Registers *cpu);
-extern void set_C_sbc(uint8_t a, uint8_t b, bool carry, Registers *cpu);
+extern void set_C(bool condition, CPU *cpu);
+extern void set_C_add(uint8_t a, uint8_t b, CPU *cpu);
+extern void set_C_sub(uint8_t a, uint8_t b, CPU *cpu);
+extern void set_C_add16(uint16_t a, uint16_t b, CPU *cpu);
+extern void set_C_sbc(uint8_t a, uint8_t b, bool carry, CPU *cpu);
 
-extern void clear_flags(Registers *cpu);
+extern void clear_flags(CPU *cpu);
 
-// memory functions
+// --------------------- memory functions
 extern uint8_t read8(CPU *cpu, uint16_t addr);
 extern void write8(CPU *cpu, uint16_t addr, uint8_t value);
 extern uint16_t read16(CPU *cpu, uint16_t addr);
 extern void write16(CPU *cpu, uint16_t addr, uint16_t value);
 
 extern void stack_push(CPU *cpu, uint16_t value);
-extern uint16_t stack_pop16(CPU *cpu);
+extern uint16_t stack_pop(CPU *cpu);
 
+// --------------------- cpu functions
+extern void start_cpu(CPU *cpu);
 
+// --------------------- instructions
+extern void run_inst(uint16_t opcode, CPU *cpu);
+extern void run_pref_inst(CPU *cpu);
 #endif 

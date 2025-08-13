@@ -5,7 +5,8 @@ void ppu_init(PPU *ppu) {
     memset(ppu, 0, sizeof(PPU));
 }
 
-void ppu_step(PPU *ppu, CPU *cpu, int cycles) {
+void ppu_step(PPU *ppu, CPU * cpu, uint16_t cycles) {
+    //PPU *ppu = cpu->ppu;
     ppu->mode_cycles += cycles;
 
     // Scanlines take 456 cycles
