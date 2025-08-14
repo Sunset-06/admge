@@ -1,5 +1,6 @@
 #include "screen.h"
 #include <SDL2/SDL.h>
+#include "cpu.h"
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -19,16 +20,10 @@ bool sdl_init(int scale) {
         SCREEN_HEIGHT * scale,
         SDL_WINDOW_SHOWN
     );
-    if (!window) {
-        SDL_Log("Window could not be created! SDL_Error: %s", SDL_GetError());
-        return false;
-    }
+    if (!window) return false;
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-        SDL_Log("Renderer could not be created! SDL_Error: %s", SDL_GetError());
-        return false;
-    }
+    if (!renderer) return false;
 
     texture = SDL_CreateTexture(
         renderer,
@@ -36,22 +31,25 @@ bool sdl_init(int scale) {
         SDL_TEXTUREACCESS_STREAMING,
         SCREEN_WIDTH, SCREEN_HEIGHT
     );
-    if (!texture) {
-        SDL_Log("Texture could not be created! SDL_Error: %s", SDL_GetError());
-        return false;
-    }
+    if (!texture) return false;
 
     return true;
 }
 
-void sdl_draw(PPU *ppu) {
-    SDL_UpdateTexture(texture, NULL, ppu->framebuffer, SCREEN_WIDTH * sizeof(uint32_t));
+void sdl_draw_scanline(PPU *ppu, int line) {
+    SDL_Rect rect = { 0, line, SCREEN_WIDTH, 1 };
+    SDL_UpdateTexture(texture, &rect,
+                      &ppu->framebuffer[line * SCREEN_WIDTH],
+                      SCREEN_WIDTH * sizeof(uint32_t));
+}
+
+void sdl_present() {
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
 }
 
-void sdl_destroy(void) {
+void sdl_destroy() {
     if (texture) SDL_DestroyTexture(texture);
     if (renderer) SDL_DestroyRenderer(renderer);
     if (window) SDL_DestroyWindow(window);

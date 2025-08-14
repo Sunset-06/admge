@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
-#include "ppu.h"
 
 /* A Note about the Clock and Cycles
     Every op will take a certain amount of m-cycles
@@ -22,9 +21,10 @@
     This is what i'll be doing.
 */
 
-/* So DIV is the main clock, it just accumulates CPU cycles, and most things use it for timing
-
+/* 
+    So DIV is the main clock, it just accumulates CPU cycles, and most things use it for timing
 */
+
 #define MEMORY_SIZE 0x10000
 
 #define FLAG_Z 0x80
@@ -32,8 +32,42 @@
 #define FLAG_H 0x20
 #define FLAG_C 0x10
 
-// The registers a,f,b,c,d,e,h,l
+#define SCREEN_WIDTH 160
+#define SCREEN_HEIGHT 144
 
+#define VRAM_SIZE 0x2000  // 8KB
+#define OAM_SIZE 0xA0     // 160 bytes
+
+/* Struct for the PPU */
+typedef struct {
+    uint8_t vram[VRAM_SIZE]; // Tile and BG map data
+    uint8_t oam[OAM_SIZE];   // Sprite attribute table
+
+    // LCD Registers
+    uint8_t lcdc; // LCDControl.  All 8 bits do something, Note to self: Check PanDocs for reference
+    uint8_t stat; // LCD Status
+    uint8_t scy;  // Scroll Y
+    uint8_t scx;  // Scroll X
+    uint8_t ly;   // LCD Y-coordinate
+    uint8_t lyc;  // LY Compare
+    uint8_t wy;   // Window Y
+    uint8_t wx;   // Window X
+    uint8_t bgp;  // BG Palette
+    uint8_t obp0; // Object Palette 0
+    uint8_t obp1; // Object Palette 1
+
+    // PPU timing
+    int mode_cycles;
+    int scanline;
+
+    /*The framebuffer gets updated when the Scanlines are finshed.
+      This happens when when the scanline reaches line 144. This is kept track of by the ly register.
+      The PPU then triggers a VBlank interrupt, which causes the framebuffer to update*/
+    uint32_t framebuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
+} PPU;
+
+
+/* Struct for the Registers a,f,b,c,d,e,h,l */
 typedef struct {
     union {
         struct {
@@ -61,6 +95,8 @@ typedef struct {
     };
 } Registers;
 
+
+/* The main CPU struct */
 typedef struct {
     Registers regs;
     PPU ppu;
@@ -116,8 +152,17 @@ extern uint16_t stack_pop(CPU *cpu);
 
 // --------------------- cpu functions
 extern void start_cpu(CPU *cpu);
+extern void cpu_step(CPU *cpu);
 
 // --------------------- instructions
 extern void run_inst(uint16_t opcode, CPU *cpu);
 extern void run_pref_inst(CPU *cpu);
+
+// --------------------- ppu functions
+
+extern void ppu_init(PPU *ppu);
+extern void ppu_step(PPU *ppu, CPU *cpu, uint16_t cycles);
+extern uint8_t ppu_read(PPU *ppu, uint16_t addr);
+extern void ppu_write(PPU *ppu, uint16_t addr, uint8_t value);
+
 #endif 

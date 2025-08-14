@@ -1,6 +1,5 @@
 #include "emu.h"
 #include "cpu.h"
-#include "ppu.h"
 #include <string.h>
 
 uint8_t memory[MEMORY_SIZE];
@@ -32,7 +31,7 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
     return cpu->memory[addr];
 }
 
-uint16_t read16(struct CPU* cpu, uint16_t addr) {
+uint16_t read16(CPU *cpu, uint16_t addr) {
     // Little-endian: lower byte first
     return read8(cpu, addr) | (read8(cpu, addr + 1) << 8);
 }

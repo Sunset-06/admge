@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "ppu.h": "c"
+        "ppu.h": "c",
+        "string.h": "c"
     }
 }

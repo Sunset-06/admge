@@ -6,7 +6,7 @@ void run_pref_inst(CPU *cpu){
     Registers *reg = &cpu->regs;
     uint8_t u8;
     uint8_t temp8;
-    uint16_t u16;
+    //uint16_t u16;
 
     switch (opcode)
     {
@@ -153,7 +153,7 @@ void run_pref_inst(CPU *cpu){
 
         case 0x0E:  //RRC [HL]
             uint8_t lsb = read8(cpu, reg->hl) & 0x01;
-            u8 = read_memory(cpu, reg->hl);
+            u8 = read8(cpu, reg->hl);
             u8 = (u8 >> 1) | (lsb << 7);
             write8(cpu, reg->hl, u8);     
             set_Z(u8, cpu);

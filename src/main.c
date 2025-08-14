@@ -1,20 +1,25 @@
-#include "include/emu.h"
-#include "include/cpu.h"
+#include "emu.h"
+#include "cpu.h"
+
+
+bool ime_enable = false;
+bool quit_flag = false;
 
 int main(int argc, char *argv[]) {
     /* Intializating everything */
-    uint8_t quit_flag = 0;
-    bool ime_enable = 0;
+    if(argc != 1){
+        printf("Wrong start, use it like this: admge path/to/your/rom\n Aborting...");
+        return 1;
+    }
+
     CPU cpu;
-    PPU ppu;
     char* inputRom = argv[1];
     
-    load_rom(cpu, inputRom);
-    start_cpu(&cpu);
-    ppu_init(&ppu);
+    load_rom(&cpu, inputRom);
+    start_cpu(&cpu); // This initializes Registers, CPU and PPU.
     
     while(!quit_flag){
-        
+        cpu_step(&cpu);
         if (ime_enable) {
             cpu.ime = true;
             ime_enable = false;

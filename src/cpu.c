@@ -56,6 +56,39 @@ void start_cpu(CPU *cpu) {
     cpu->cycles = 0; 
 }
 
+/*Update all timers. Yet to decode DMG Timer behaviours, so this is just a generated function fornow*/
+void update_timers(CPU *cpu, uint16_t tcycles) {
+    // Update DIV - the main timer
+    cpu->div += tcycles;
+
+    if (cpu->tac & 0x04) {
+        // Which bit of div controls TIMA increments
+        int bit;
+        switch (cpu->tac & 0x03) {
+            case 0: bit = 9;  break; // 4096 Hz   (DIV bit 9)
+            case 1: bit = 3;  break; // 262144 Hz (DIV bit 3)
+            case 2: bit = 5;  break; // 65536 Hz  (DIV bit 5)
+            case 3: bit = 7;  break; // 16384 Hz  (DIV bit 7)
+        }
+
+        // Detect falling edge of selected DIV bit
+        static int prev_bit = 0;
+        for (int i = 0; i < tcycles; i++) {
+            int curr_bit = (cpu->div >> bit) & 1;
+            if (prev_bit == 1 && curr_bit == 0) {
+                cpu->tima++;
+                if (cpu->tima == 0) {
+                    cpu->tima = cpu->tma;
+                    cpu->iflag |= (1 << 2); 
+                }
+            }
+            prev_bit = curr_bit;
+            cpu->div++;
+        }
+    }
+}
+
+
 /* Basically the main function that drives the emu. In every step, fetch opcode
     1. Fetch opcode from memory
     2. Execute the instruction 
@@ -75,39 +108,6 @@ void cpu_step(CPU *cpu) {
 
     //handle_interrupts(cpu);
 }
-
-void update_timers(CPU *cpu, uint16_t tcycles) {
-    // Update DIV (free running counter)
-    cpu->div += tcycles;
-
-    // Timer enabled?
-    if (cpu->tac & 0x04) {
-        // Which bit of div controls TIMA increments
-        int bit;
-        switch (cpu->tac & 0x03) {
-            case 0: bit = 9;  break; // 4096 Hz   (DIV bit 9)
-            case 1: bit = 3;  break; // 262144 Hz (DIV bit 3)
-            case 2: bit = 5;  break; // 65536 Hz  (DIV bit 5)
-            case 3: bit = 7;  break; // 16384 Hz  (DIV bit 7)
-        }
-
-        // Detect falling edge of selected DIV bit
-        static int prev_bit = 0;
-        for (int i = 0; i < tcycles; i++) {
-            int curr_bit = (cpu->div >> bit) & 1;
-            if (prev_bit == 1 && curr_bit == 0) {
-                cpu->tima++;
-                if (cpu->tima == 0) {
-                    cpu->tima = cpu->tma;
-                    cpu->iflag |= (1 << 2); // Timer interrupt
-                }
-            }
-            prev_bit = curr_bit;
-            cpu->div++;
-        }
-    }
-}
-
 
 // Change Z based on result <- NOTE this is the exact opposite of all other flag functions
 void set_Z(uint8_t result, CPU *cpu) {

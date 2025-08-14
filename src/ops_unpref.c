@@ -7,7 +7,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
     uint16_t u16;
     uint8_t u8;
     uint8_t temp8;
-    uint16_t temp16;
+    //uint16_t temp16;
     int8_t offset;
     Registers *reg = &cpu->regs;
 
@@ -1841,7 +1841,7 @@ void run_inst(uint16_t opcode, CPU *cpu){
 
         case 0xF0:  //LDH A, u8
             u8 = read8(cpu, ++cpu->pc);
-            reg->a = read8(cpu, 0xFF00 + offset);
+            reg->a = read8(cpu, 0xFF00 + u8);
             cpu->cycles += 3;
             break;
 

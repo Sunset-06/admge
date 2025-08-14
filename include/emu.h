@@ -4,8 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include "cpu.h"
 
-extern uint8_t quit_flag;
+extern bool quit_flag;
 extern bool ime_enable;
 
 extern void init_memory(CPU *cpu);

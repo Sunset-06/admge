@@ -3,12 +3,12 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "ppu.h"
+#include "cpu.h"
 
-bool sdl_init(int scale);
-
-void sdl_draw(PPU *ppu);
-
-void sdl_destroy(void);
+extern bool sdl_init(int scale);
+//void sdl_draw(PPU *ppu);
+extern void sdl_draw_scanline(PPU *ppu, int line);
+extern void sdl_present();
+extern void sdl_destroy(void);
 
 #endif
