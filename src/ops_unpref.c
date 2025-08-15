@@ -2,7 +2,7 @@
 #include "emu.h"
 // TODO- Check set_Z implementation. You need to pass 1 to unset, which is reeally unintuitive
 
-void run_inst(uint16_t opcode, CPU *cpu){
+void run_inst(uint8_t opcode, CPU *cpu){
     // temporary variables
     uint16_t u16;
     uint8_t u8;

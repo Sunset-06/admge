@@ -6,14 +6,14 @@ static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
 
-bool sdl_init(int scale) {
+bool init_screen(int scale) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         SDL_Log("SDL could not initialize! SDL_Error: %s", SDL_GetError());
         return false;
     }
 
     window = SDL_CreateWindow(
-        "DMG Emu",
+        "AdmgE",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         SCREEN_WIDTH * scale,
@@ -44,6 +44,7 @@ void sdl_draw_scanline(PPU *ppu, int line) {
 }
 
 void sdl_present() {
+    printf("Presenting...\n");
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);

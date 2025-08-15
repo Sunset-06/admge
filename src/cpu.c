@@ -1,5 +1,5 @@
 #include "cpu.h"
-#define BOOT_ROM "../bootrom/bootix_dmg.bin"
+#define BOOT_ROM "./bootrom/bootix_dmg.bin"
 
 // helper for start_cpu()
 bool load_bootrom(CPU *cpu) {
@@ -17,6 +17,7 @@ bool load_bootrom(CPU *cpu) {
 
 // initializes emu state
 void start_cpu(CPU *cpu) {
+    printf("Starting CPU init\n");
     cpu->regs.af = 0x01B0;  // A and F initial values 
     cpu->regs.bc = 0x0013;  // B and C initial values
     cpu->regs.de = 0x00D8;  // D and E initial values
@@ -54,6 +55,7 @@ void start_cpu(CPU *cpu) {
     cpu->tac = 0x00;    
 
     cpu->cycles = 0; 
+    printf("CPU init finished!\n");
 }
 
 /*Update all timers. Yet to decode DMG Timer behaviours, so this is just a generated function fornow*/
@@ -97,12 +99,15 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
 */
 void cpu_step(CPU *cpu) {
     // Fetch, decode, execute - then increment pc, cause the instructions increment it for bytes.
+    printf("Starting a step.\n");
     uint8_t opcode = read8(cpu, cpu->pc);
+    printf("Current op: %d \n", opcode);
     run_inst(opcode, cpu);
     cpu->pc++;
 
     // 2. Convert to t-cycles - then update timers and ppu
     uint16_t tcycles = cpu->cycles * 4;
+    printf("TCycles: %d \n", tcycles);
     update_timers(cpu, tcycles);
     ppu_step(&cpu->ppu, cpu, tcycles);
 

@@ -40,8 +40,6 @@
 
 /* Struct for the PPU */
 typedef struct {
-    uint8_t vram[VRAM_SIZE]; // Tile and BG map data
-    uint8_t oam[OAM_SIZE];   // Sprite attribute table
 
     // LCD Registers
     uint8_t lcdc; // LCDControl.  All 8 bits do something, Note to self: Check PanDocs for reference
@@ -141,7 +139,7 @@ extern void set_C_sbc(uint8_t a, uint8_t b, bool carry, CPU *cpu);
 
 extern void clear_flags(CPU *cpu);
 
-// --------------------- memory functions
+// --------------------- memory bus functions
 extern uint8_t read8(CPU *cpu, uint16_t addr);
 extern void write8(CPU *cpu, uint16_t addr, uint8_t value);
 extern uint16_t read16(CPU *cpu, uint16_t addr);
@@ -155,14 +153,15 @@ extern void start_cpu(CPU *cpu);
 extern void cpu_step(CPU *cpu);
 
 // --------------------- instructions
-extern void run_inst(uint16_t opcode, CPU *cpu);
+extern void run_inst(uint8_t opcode, CPU *cpu);
 extern void run_pref_inst(CPU *cpu);
 
 // --------------------- ppu functions
 
 extern void ppu_init(PPU *ppu);
 extern void ppu_step(PPU *ppu, CPU *cpu, uint16_t cycles);
-extern uint8_t ppu_read(PPU *ppu, uint16_t addr);
-extern void ppu_write(PPU *ppu, uint16_t addr, uint8_t value);
+extern uint8_t ppu_read(CPU *cpu, uint8_t addr);
+extern void ppu_write(CPU *cpu, uint16_t addr, uint16_t value);
+extern void render_scanline(PPU *ppu, CPU *cpu);
 
 #endif 

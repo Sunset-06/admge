@@ -1,8 +1,7 @@
 #include "emu.h"
 #include "cpu.h"
+#include <stdio.h>
 #include <string.h>
-
-uint8_t memory[MEMORY_SIZE];
 
 void init_memory(CPU *cpu) {
     memset(cpu->memory, 0, MEMORY_SIZE);
@@ -14,32 +13,56 @@ void load_rom(CPU *cpu, const char* filename) {
         printf("Error reading ROM. Please check ROM file\n");
         return;
     }
-    fread(cpu->memory, 1, 0x8000, romFile); //Stores the ROM to index: 0 to 0x7FFF
+    fread(cpu->memory, 1, 0x8000, romFile); // 0x0000 - 0x7FFF
     fclose(romFile);
 }
 
 uint8_t read8(CPU *cpu, uint16_t addr) {
-    if (addr >= 0xE000 && addr <= 0xFDFF) {
-        // Echo RAM maps to WRAM (0xC000 - 0xDDFF)
+    // Echo RAM: E000–FDFF mirrors C000–DDFF
+    if (addr >= 0xE000 && addr <= 0xFDFF)
         return cpu->memory[addr - 0x2000];
-    }
-    if ((addr >= 0x8000 && addr <= 0x9FFF) || // VRAM
-        (addr >= 0xFE00 && addr <= 0xFE9F) || // OAM
-        (addr >= 0xFF40 && addr <= 0xFF4B))   // LCD registers
-        return ppu_read(&cpu->ppu, addr); // Send it over to the ppu function
+
+    // OAM: FE00–FE9F
+    if (addr >= 0xFE00 && addr <= 0xFE9F)
+        return cpu->memory[addr];
+
+    // Unusable memory: FEA0–FEFF
+    if (addr >= 0xFEA0 && addr <= 0xFEFF)
+        return 0xFF;
+
+    // PPU registers: FF40–FF4B
+    if (addr >= 0xFF40 && addr <= 0xFF4B)
+        return ppu_read(&cpu->ppu, cpu, addr);
 
     return cpu->memory[addr];
 }
 
 uint16_t read16(CPU *cpu, uint16_t addr) {
-    // Little-endian: lower byte first
     return read8(cpu, addr) | (read8(cpu, addr + 1) << 8);
 }
 
 void write8(CPU *cpu, uint16_t addr, uint8_t value) {
+    // Echo RAM
     if (addr >= 0xE000 && addr <= 0xFDFF) {
-        // Echo RAM
+        cpu->memory[addr] = value;
         cpu->memory[addr - 0x2000] = value;
+        return;
+    }
+
+        // OAM: FE00–FE9F
+    if (addr >= 0xFE00 && addr <= 0xFE9F) {
+        cpu->memory[addr] = value;
+        return;
+    }
+
+    // Unusable memory: FEA0–FEFF
+    if (addr >= 0xFEA0 && addr <= 0xFEFF) {
+        return; // Ignore writes
+    }
+
+    // PPU registers: FF40–FF4B
+    if (addr >= 0xFF40 && addr <= 0xFF4B) {
+        ppu_write(&cpu->ppu, cpu, addr, value);
         return;
     }
 
@@ -47,24 +70,23 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
 }
 
 void write16(CPU *cpu, uint16_t addr, uint16_t value) {
-    // Little-endian: lower byte first
     write8(cpu, addr, value & 0xFF);
-    write8(cpu, addr + 1, (value >> 8) & 0xFF); 
+    write8(cpu, addr + 1, (value >> 8) & 0xFF);
 }
 
 // ------------------------ STACK Functions ---------------------------//
 
 void stack_push(CPU *cpu, uint16_t value) {
-    cpu->sp -= 1;
+    cpu->sp--;
     write8(cpu, cpu->sp, (value >> 8) & 0xFF);
-    cpu->sp -= 1;
-    write8(cpu, cpu->sp, value & 0xFF);        
+    cpu->sp--;
+    write8(cpu, cpu->sp, value & 0xFF);
 }
 
 uint16_t stack_pop(CPU *cpu) {
     uint8_t low = read8(cpu, cpu->sp);
-    cpu->sp += 1;
+    cpu->sp++;
     uint8_t high = read8(cpu, cpu->sp);
-    cpu->sp += 1;
+    cpu->sp++;
     return (high << 8) | low;
 }
