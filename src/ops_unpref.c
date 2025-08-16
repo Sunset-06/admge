@@ -7,7 +7,6 @@ void run_inst(uint8_t opcode, CPU *cpu){
     uint16_t u16;
     uint8_t u8;
     uint8_t temp8;
-    //uint16_t temp16;
     int8_t offset;
     Registers *reg = &cpu->regs;
 

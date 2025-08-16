@@ -32,7 +32,7 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
 
     // PPU registers: FF40–FF4B
     if (addr >= 0xFF40 && addr <= 0xFF4B)
-        return ppu_read(&cpu->ppu, cpu, addr);
+        return ppu_read(cpu, addr);
 
     return cpu->memory[addr];
 }
@@ -49,7 +49,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
         return;
     }
 
-        // OAM: FE00–FE9F
+    // OAM: FE00–FE9F
     if (addr >= 0xFE00 && addr <= 0xFE9F) {
         cpu->memory[addr] = value;
         return;
@@ -62,7 +62,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
 
     // PPU registers: FF40–FF4B
     if (addr >= 0xFF40 && addr <= 0xFF4B) {
-        ppu_write(&cpu->ppu, cpu, addr, value);
+        ppu_write(cpu, addr, value);
         return;
     }
 

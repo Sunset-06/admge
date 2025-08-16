@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
-
+#include <pthread.h>
 static const uint32_t GAMEBOY_COLORS[4] = {
     0xFFFFFFFF, // White
     0xFFAAAAAA, // Light Gray
@@ -34,12 +34,14 @@ void ppu_init(PPU *ppu) {
     }
 }
 
-void ppu_step(PPU *ppu, CPU *cpu, uint16_t cycles) {
-    ppu->mode_cycles += cycles;
-
+void ppu_step(PPU *ppu, CPU *cpu) {
+    printf("CPU cycles: %ld\n", cpu->cycles);
+    ppu->mode_cycles += cpu->cycles*4;
+    printf("tcycles: %d\n\n", ppu->mode_cycles);
     // Each scanline takes 456 cycles
-    if (ppu->mode_cycles >= 456) {
+    if(ppu->mode_cycles >= 456) {
         ppu->mode_cycles -= 456;
+        printf("Decremented 456, new cycles: %d\n", ppu->mode_cycles);  
         ppu->ly++;
 
         if (ppu->ly < 144) {

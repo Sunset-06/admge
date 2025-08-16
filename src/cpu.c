@@ -3,6 +3,7 @@
 
 // helper for start_cpu()
 bool load_bootrom(CPU *cpu) {
+    printf("\nLoading bootrom: %s\n",BOOT_ROM);
     FILE *bootrom_file = fopen(BOOT_ROM, "rb");
     if (bootrom_file == NULL) {
         printf("Error: Could not load boot ROM.\n");
@@ -106,11 +107,9 @@ void cpu_step(CPU *cpu) {
     cpu->pc++;
 
     // 2. Convert to t-cycles - then update timers and ppu
-    uint16_t tcycles = cpu->cycles * 4;
-    printf("TCycles: %d \n", tcycles);
-    update_timers(cpu, tcycles);
-    ppu_step(&cpu->ppu, cpu, tcycles);
-
+    update_timers(cpu, cpu->cycles*4);
+    ppu_step(&cpu->ppu, cpu);
+    cpu->cycles = 0;
     //handle_interrupts(cpu);
 }
 
