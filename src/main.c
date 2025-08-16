@@ -17,7 +17,11 @@ int main(int argc, char *argv[]) {
     CPU cpu;
     char* inputRom = argv[1];
     start_cpu(&cpu); // This initializes Registers, CPU and PPU.
-    load_rom(&cpu, inputRom);
+    if(!load_rom(&cpu, inputRom)){
+        printf("Aborting...");
+        return 1;
+    }
+    
     init_screen(4);
 
     while(!quit_flag){

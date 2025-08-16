@@ -1517,7 +1517,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xC3:  //JP u16
             // Jump to u16
-            cpu->pc = read8(cpu, ++cpu->pc);
+            cpu->pc = read16(cpu, ++cpu->pc);
             cpu->cycles += 4;
             break;
 

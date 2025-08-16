@@ -37,6 +37,14 @@ bool init_screen(int scale) {
 }
 
 void sdl_draw_scanline(PPU *ppu, int line) {
+    printf("\n\n\n Attempting to draw scanline\n\n\n");
+    
+    for (int x = 0; x < SCREEN_WIDTH; x++) {
+        uint32_t pixel = ppu->framebuffer[line * SCREEN_WIDTH + x];
+        printf("%08X ", pixel);  
+    }
+    printf("\n\n\n\n");
+
     SDL_Rect rect = { 0, line, SCREEN_WIDTH, 1 };
     SDL_UpdateTexture(texture, &rect,
                       &ppu->framebuffer[line * SCREEN_WIDTH],

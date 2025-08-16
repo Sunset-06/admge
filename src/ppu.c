@@ -44,6 +44,7 @@ void ppu_step(PPU *ppu, CPU *cpu) {
         printf("Decremented 456, new cycles: %d\n", ppu->mode_cycles);  
         ppu->ly++;
 
+        printf("ly: %d\n", ppu->ly);
         if (ppu->ly < 144) {
             render_scanline(ppu, cpu);
             sdl_draw_scanline(ppu, ppu->ly);
@@ -83,6 +84,8 @@ void ppu_write(CPU *cpu, uint16_t addr, uint16_t value) {
 void render_scanline(PPU *ppu, CPU *cpu) {
     int row_start = ppu->ly * SCREEN_WIDTH;
 
+    printf("rendering scanline : %d\n\n", row_start);
+    
     uint16_t tile_map_base = (ppu->lcdc & 0x08) ? 0x9C00 : 0x9800;
     bool signed_indexing = !(ppu->lcdc & 0x10);
     uint16_t tile_data_base = signed_indexing ? 0x8800 : 0x8000;

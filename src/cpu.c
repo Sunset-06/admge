@@ -1,20 +1,4 @@
 #include "cpu.h"
-#define BOOT_ROM "./bootrom/bootix_dmg.bin"
-
-// helper for start_cpu()
-bool load_bootrom(CPU *cpu) {
-    printf("\nLoading bootrom: %s\n",BOOT_ROM);
-    FILE *bootrom_file = fopen(BOOT_ROM, "rb");
-    if (bootrom_file == NULL) {
-        printf("Error: Could not load boot ROM.\n");
-        return false;
-    }
-
-    fread(cpu->memory, 1, 0x0100, bootrom_file);  //[0x0000 to 0x00FF]
-
-    fclose(bootrom_file);
-    return true;
-}
 
 // initializes emu state
 void start_cpu(CPU *cpu) {
@@ -31,12 +15,6 @@ void start_cpu(CPU *cpu) {
     // Initialize memory
     for (int i = 0; i < MEMORY_SIZE; ++i) {
         cpu->memory[i] = 0x00;
-    }
-
-    // Load the boot ROM 
-    if (!load_bootrom(cpu)) {
-        printf("Bootrom failed !!!! Aborting.");
-        return;
     }
 
     // initializes ppu state
@@ -104,6 +82,7 @@ void cpu_step(CPU *cpu) {
     uint8_t opcode = read8(cpu, cpu->pc);
     printf("Current op: %d \n", opcode);
     run_inst(opcode, cpu);
+    printf("Cycle post inst %ld \n", cpu->cycles);
     cpu->pc++;
 
     // 2. Convert to t-cycles - then update timers and ppu

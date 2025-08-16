@@ -8,8 +8,9 @@
 
 extern bool quit_flag;
 extern bool ime_enable;
+extern bool bootrom_flag;
 
 extern void init_memory(CPU *cpu);
-extern void load_rom(CPU *cpu, const char* filename);
+extern bool load_rom(CPU *cpu, const char* filename);
 
 #endif  

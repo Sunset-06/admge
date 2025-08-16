@@ -3,21 +3,39 @@
 #include <stdio.h>
 #include <string.h>
 
+#define BOOT_ROM "./bootrom/bootix_dmg.bin"
+
 void init_memory(CPU *cpu) {
     memset(cpu->memory, 0, MEMORY_SIZE);
 }
 
-void load_rom(CPU *cpu, const char* filename) {
+bool load_rom(CPU *cpu, const char* filename) {
+    printf("\nLoading bootrom: %s\n",BOOT_ROM);
+    FILE *bootromFile = fopen(BOOT_ROM, "rb");
+    if (bootromFile == NULL) {
+        printf("Error: Could not load boot ROM.\n");
+        return false;
+    }
+
     FILE* romFile = fopen(filename, "rb");
     if (!romFile) {
         printf("Error reading ROM. Please check ROM file\n");
-        return;
+        return false;
     }
+
+    fread(cpu->bootrom, 1, 0x0100, bootromFile);
     fread(cpu->memory, 1, 0x8000, romFile); // 0x0000 - 0x7FFF
+
+    fclose(bootromFile);
     fclose(romFile);
+    return true;
 }
 
 uint8_t read8(CPU *cpu, uint16_t addr) {
+    // for reading from the bootrom
+    if (addr < 0x0100 && cpu->bootrom_flag)
+        return cpu->bootrom[addr];
+
     // Echo RAM: E000–FDFF mirrors C000–DDFF
     if (addr >= 0xE000 && addr <= 0xFDFF)
         return cpu->memory[addr - 0x2000];
@@ -42,6 +60,13 @@ uint16_t read16(CPU *cpu, uint16_t addr) {
 }
 
 void write8(CPU *cpu, uint16_t addr, uint8_t value) {
+    // switching from bootrom to memory at FF50
+    if (addr == 0xFF50 && cpu->bootrom_flag) {
+        cpu->bootrom_flag = false;
+        return;
+    }
+
+    
     // Echo RAM
     if (addr >= 0xE000 && addr <= 0xFDFF) {
         cpu->memory[addr] = value;

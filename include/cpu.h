@@ -26,6 +26,7 @@
 */
 
 #define MEMORY_SIZE 0x10000
+#define BOOTROM_SIZE 0x100
 
 #define FLAG_Z 0x80
 #define FLAG_N 0x40
@@ -111,6 +112,8 @@ typedef struct {
 
     bool halted;
     bool stopped;
+    bool bootrom_flag;
+    uint8_t bootrom[BOOTROM_SIZE];
 
     //timers
     uint16_t div;
