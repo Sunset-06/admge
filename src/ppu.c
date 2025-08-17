@@ -35,7 +35,6 @@ void ppu_init(PPU *ppu) {
 }
 
 void ppu_step(PPU *ppu, CPU *cpu) {
-    printf("CPU cycles: %ld\n\n", cpu->cycles);
     ppu->mode_cycles += cpu->cycles*4;
     // Each scanline takes 456 cycles
     if(ppu->mode_cycles >= 456) {
@@ -99,7 +98,7 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
         case 0xFF41: ppu->stat = value; break;
         case 0xFF42: ppu->scy  = value; break;
         case 0xFF43: ppu->scx  = value; break;
-        case 0xFF44: ppu->ly   = 0;     break; // <- This one is read only
+        //case 0xFF44: ppu->ly   = 0;     break; // <- This one is read only
         case 0xFF45: ppu->lyc  = value; break;
         case 0xFF47: ppu->bgp  = value; break;
         case 0xFF48: ppu->obp0 = value; break;
@@ -122,39 +121,33 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
 }
 
 void render_scanline(PPU *ppu, CPU *cpu) {
-    int row_start = ppu->ly * SCREEN_WIDTH;
+    if (!(ppu->lcdc & 0x80)) return; // Display disabled
+    if (!(ppu->lcdc & 0x01)) return; // BG disabled
+
+
+    uint16_t tile_map_base = 0x9800;  // Fixed for boot ROM
+    uint16_t tile_data_base = 0x8000; // Unsigned indexing
     
-    uint16_t tile_map_base = (ppu->lcdc & 0x08) ? 0x9C00 : 0x9800;
-    bool signed_indexing = !(ppu->lcdc & 0x10);
-    uint16_t tile_data_base = signed_indexing ? 0x8800 : 0x8000;
-
-    uint8_t scrolled_y = (ppu->scy + ppu->ly) & 0xFF;
+    uint8_t scrolled_y = (ppu->scy + ppu->ly) % 256; 
     uint8_t tile_row = scrolled_y / 8;
-
+    
     for (int x = 0; x < SCREEN_WIDTH; x++) {
-        uint8_t scrolled_x = (ppu->scx + x) & 0xFF;
+        uint8_t scrolled_x = (ppu->scx + x) % 256;
         uint8_t tile_col = scrolled_x / 8;
-
+        
         uint16_t tile_index_addr = tile_map_base + (tile_row * 32) + tile_col;
-        uint8_t tile_number =  read8(cpu, tile_index_addr);//cpu->memory[tile_index_addr];
-
-        uint16_t tile_addr;
-        if (signed_indexing) {
-            tile_addr = tile_data_base + (((int8_t)tile_number + 128) * 16);
-        } else {
-            tile_addr = tile_data_base + (tile_number * 16);
-        }
-
-        uint8_t tile_line = (scrolled_y % 8) * 2;
-        uint8_t byte1 = read8(cpu, tile_addr + tile_line); //cpu->memory[tile_addr + tile_line];
-        uint8_t byte2 = read8(cpu, tile_addr + tile_line + 1); //cpu->memory[tile_addr + tile_line + 1];
-
+        uint8_t tile_number = cpu->memory[tile_index_addr];
+        
+        uint16_t tile_addr = tile_data_base + (tile_number * 16);
+        
+        uint8_t tile_line = scrolled_y % 8;
+        uint8_t byte1 = cpu->memory[tile_addr + tile_line*2];
+        uint8_t byte2 = cpu->memory[tile_addr + tile_line*2 + 1];
+        
         uint8_t bit = 7 - (scrolled_x % 8);
         uint8_t color_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
-        uint8_t palette_shade = (ppu->bgp >> (color_id * 2)) & 0x03;
-        printf("\ntile=%02X byte1=%02X byte2=%02X color_id=%d shade=%d\n",
-        tile_number, byte1, byte2, color_id, palette_shade);
-
-        ppu->framebuffer[row_start + x] = GAMEBOY_COLORS[palette_shade];
+        uint8_t shade = (ppu->bgp >> (color_id * 2)) & 0x03;
+        
+        ppu->framebuffer[ppu->ly * SCREEN_WIDTH + x] = GAMEBOY_COLORS[shade];
     }
 }

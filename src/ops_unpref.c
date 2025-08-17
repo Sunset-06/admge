@@ -51,7 +51,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             reg->b -= 1;
             // Change Z and set N flag
             set_Z(reg->b, cpu);
-            set_N(reg->b, cpu);
+            set_N(1, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
@@ -222,7 +222,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0x18:  //JR i8
             // Jump relative by i8 steps in pc
             offset = (int8_t) read8(cpu, cpu->pc+1);
-            cpu->pc =+ offset;
+            cpu->pc += offset;
             cpu->pc += 2;
             cpu->cycles += 3; 
             break;
@@ -1706,7 +1706,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0xC3:  //JP u16
             // Jump to u16
             cpu->pc = read16(cpu, cpu->pc+1);
-            cpu->pc += 3;
+            //cpu->pc += 3;
             cpu->cycles += 4;
             break;
 
@@ -2015,7 +2015,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xE9:  //JP HL
             // Jump to HL
-            cpu->pc = read8(cpu, reg->hl);
+            cpu->pc = reg->hl;
             cpu->cycles += 1; 
             break;
 

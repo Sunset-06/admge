@@ -33,17 +33,22 @@ bool load_rom(CPU *cpu, const char* filename) {
 }
 
 uint8_t read8(CPU *cpu, uint16_t addr) {
-    // VRAM access blocked during mode 3
-    if ((addr >= 0x8000 && addr <= 0x9FFF) && 
-        ((cpu->ppu.stat & 0x03) == 0x03)) {
-        return 0xFF;
+    if (addr >= 0xFF10 && addr <= 0xFF3F) return 0xFF; // NO Sound 
+    if (addr == 0xFF00) return 0xCF; // No buttons
+
+    if (cpu->bootrom_flag && addr < 0x0100) {
+        return cpu->bootrom[addr];
     }
 
-    // Boot ROM handling
-    if (cpu->bootrom_flag) {
-        if (addr < 0x0100) return cpu->bootrom[addr];
-        if (addr < 0x8000) return cpu->memory[addr]; 
+    // VRAM access control
+    if (addr >= 0x8000 && addr <= 0x9FFF) {
+        // Only block if display is enabled AND in mode 3
+        if ((cpu->ppu.lcdc & 0x80) && ((cpu->ppu.stat & 0x03) == 0x03)) {
+            return 0xFF;
+        }
+        return cpu->memory[addr];
     }
+
 
     // Echo RAM
     if (addr >= 0xE000 && addr <= 0xFDFF) {
@@ -74,11 +79,6 @@ uint16_t read16(CPU *cpu, uint16_t addr) {
 }
 
 void write8(CPU *cpu, uint16_t addr, uint8_t value) {
-    // VRAM access blocked during mode 3
-    if ((addr >= 0x8000 && addr <= 0x9FFF) && 
-        ((cpu->ppu.stat & 0x03) == 0x03)) {
-        return;
-    }
 
     // Boot ROM disable
     if (addr == 0xFF50 && cpu->bootrom_flag) {

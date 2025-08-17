@@ -384,5 +384,12 @@ void run_pref_inst(CPU *cpu){
             cpu->cycles += 2;
             break;
 
+        case 0x6F:  // BIT 5,A
+            uint8_t bit = (reg->a >> 5) & 1;
+            reg->f = (reg->f & FLAG_C) | (bit ? 0 : FLAG_Z) | FLAG_H;
+            cpu->pc += 1;
+            cpu->cycles += 2;
+            break;
+
     }
 }

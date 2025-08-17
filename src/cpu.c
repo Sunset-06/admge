@@ -41,7 +41,7 @@ void start_cpu(CPU *cpu) {
 void update_timers(CPU *cpu, uint16_t tcycles) {
     // Update DIV - the main timer
     cpu->div += tcycles;
-
+/* 
     if (cpu->tac & 0x04) {
         // Which bit of div controls TIMA increments
         int bit;
@@ -66,7 +66,7 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
             prev_bit = curr_bit;
             cpu->div++;
         }
-    }
+    } */
 }
 
 
@@ -84,8 +84,6 @@ void cpu_step(CPU *cpu) {
     run_inst(opcode, cpu);
     printf("hl post inst %02x \n", cpu->regs.hl);
     printf("sp post inst %02x \n", cpu->sp);
-
-    // 2. Convert to t-cycles - then update timers and ppu
     update_timers(cpu, cpu->cycles*4);
     ppu_step(&cpu->ppu, cpu);
     cpu->cycles = 0;
