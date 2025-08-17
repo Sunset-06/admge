@@ -2,7 +2,7 @@
 #include "emu.h"
 
 void run_pref_inst(CPU *cpu){
-    uint16_t opcode = (cpu, ++cpu->pc);
+    uint16_t opcode = read8(cpu, ++cpu->pc);
     Registers *reg = &cpu->regs;
     uint8_t u8;
     uint8_t temp8;
@@ -17,6 +17,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -27,6 +28,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -37,6 +39,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -47,6 +50,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -57,6 +61,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -67,6 +72,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -78,6 +84,7 @@ void run_pref_inst(CPU *cpu){
             set_H(0, cpu);
             set_C((u8 & 0x01) != 0, cpu);
             write8(cpu, reg->hl, u8);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -88,6 +95,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -98,6 +106,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -108,6 +117,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -118,6 +128,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
         
@@ -128,6 +139,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -138,6 +150,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -148,6 +161,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -160,6 +174,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);                         
             set_H(0, cpu);                         
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;  
             break;
 
@@ -170,6 +185,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -180,6 +196,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -190,6 +207,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -200,6 +218,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -210,6 +229,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -220,6 +240,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
         
@@ -230,6 +251,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -241,6 +263,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 4;
             break;
         
@@ -251,6 +274,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
         
@@ -262,6 +286,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -273,6 +298,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
         
@@ -284,6 +310,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -295,6 +322,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -306,6 +334,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -317,6 +346,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
         
@@ -329,6 +359,7 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(temp8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -340,7 +371,18 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
+            cpu->pc += 1;
             cpu->cycles += 2;
             break;
+        
+
+
+        case 0x7C:  //BIT 7, H
+            u8 = (cpu->regs.h >> 7) & 1;
+            reg->f = (reg->f & FLAG_C) | (u8 ? 0 : FLAG_Z) | FLAG_H;
+            cpu->pc += 1;
+            cpu->cycles += 2;
+            break;
+
     }
 }

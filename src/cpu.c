@@ -85,8 +85,6 @@ void cpu_step(CPU *cpu) {
     printf("hl post inst %02x \n", cpu->regs.hl);
     printf("sp post inst %02x \n", cpu->sp);
 
-    cpu->pc++;
-
     // 2. Convert to t-cycles - then update timers and ppu
     update_timers(cpu, cpu->cycles*4);
     ppu_step(&cpu->ppu, cpu);
