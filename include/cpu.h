@@ -163,8 +163,8 @@ extern void run_pref_inst(CPU *cpu);
 
 extern void ppu_init(PPU *ppu);
 extern void ppu_step(PPU *ppu, CPU *cpu);
-extern uint8_t ppu_read(CPU *cpu, uint8_t addr);
-extern void ppu_write(CPU *cpu, uint16_t addr, uint16_t value);
+extern uint8_t ppu_read(CPU *cpu, uint16_t addr);
+extern void ppu_write(CPU *cpu, uint16_t addr, uint8_t value);
 extern void render_scanline(PPU *ppu, CPU *cpu);
 
 #endif 

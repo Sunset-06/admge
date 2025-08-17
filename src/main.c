@@ -2,10 +2,21 @@
 #include "cpu.h"
 #include "screen.h"
 
-// epic function to make it not crash because im to lazy to poll inputs
-
 bool ime_enable = false;
 bool quit_flag = false;
+
+void dump_vram(CPU *cpu, const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    if (!file) {
+        printf("Failed to open %s for writing\n", filename);
+        return;
+    }
+
+    // Dump entire VRAM (0x8000–0x9FFF)
+    fwrite(&cpu->memory[0x8000], 1, 0x2000, file);
+    fclose(file);
+    printf("VRAM dumped to %s\n", filename);
+}
 
 int main(int argc, char *argv[]) {
     /* Intializating everything */
@@ -32,6 +43,9 @@ int main(int argc, char *argv[]) {
             } else if (event.type == SDL_KEYDOWN) {
                 if (event.key.keysym.sym == SDLK_ESCAPE) {
                     quit_flag = true;  
+                }
+                if (event.key.keysym.sym == SDLK_SPACE) {
+                    dump_vram(&cpu, "dump.bin");
                 }
             }
         }

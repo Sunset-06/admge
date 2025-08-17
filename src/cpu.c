@@ -19,7 +19,7 @@ void start_cpu(CPU *cpu) {
 
     // initializes ppu state
     ppu_init(&cpu->ppu);  
-
+    cpu->bootrom_flag = true;
     // Interrupts and states
     cpu->ime = false;  
     cpu->ie = 0x00;  
@@ -80,9 +80,11 @@ void cpu_step(CPU *cpu) {
     // Fetch, decode, execute - then increment pc, cause the instructions increment it for bytes.
     printf("Starting a step.\n");
     uint8_t opcode = read8(cpu, cpu->pc);
-    printf("Current op: %d \n", opcode);
+    printf("Current op: %02x \n", opcode);
     run_inst(opcode, cpu);
-    printf("Cycle post inst %ld \n", cpu->cycles);
+    printf("hl post inst %02x \n", cpu->regs.hl);
+    printf("sp post inst %02x \n", cpu->sp);
+
     cpu->pc++;
 
     // 2. Convert to t-cycles - then update timers and ppu

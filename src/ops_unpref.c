@@ -72,7 +72,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0x08:  //LD u16, SP     
             // Copy SP & $FF at address u16 and SP >> 8 at address u16 + 1.
-            u16 = read16(cpu, cpu->pc+1);
+            u16 = read16(cpu, ++cpu->pc+1);
             cpu->pc+=2;
             write16(cpu, u16, cpu->sp);
             cpu->cycles += 5;
@@ -483,12 +483,12 @@ void run_inst(uint8_t opcode, CPU *cpu){
             cpu->cycles += 3;
             break;
 
-        case 0x36:  //LD [HL], u8
-            // Load u8 into byte pointed by HL
-            u8 =  read8(cpu, ++cpu->pc);
-            write8(cpu, reg->hl, u8);
-            cpu->cycles += 3;
-            break;
+            case 0x36:  //LD [HL], u8
+                // Load u8 into byte pointed by HL
+                u8 =  read8(cpu, ++cpu->pc);
+                write8(cpu, reg->hl, u8);
+                cpu->cycles += 3;
+                break;
 
         case 0x37:  //SCF
             // set C flag
@@ -1597,11 +1597,11 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xCD:  //CALL u16
-            u16 = read16(cpu, cpu->pc);
+            u16 = read16(cpu, ++cpu->pc);
             cpu->pc += 2;
             stack_push(cpu, cpu->pc);
             cpu->pc = u16;
-            cpu->cycles += 5;
+            cpu->cycles += 6;
             break;
 
         case 0xCE:  //ADC A, u8

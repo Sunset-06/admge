@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define BOOT_ROM "./bootrom/bootix_dmg.bin"
+//#define BOOT_ROM "./bootrom/bootix_dmg.bin"
+#define BOOT_ROM "./bootrom/dmg_boot.bin"
 
 void init_memory(CPU *cpu) {
     memset(cpu->memory, 0, MEMORY_SIZE);
@@ -16,7 +17,7 @@ bool load_rom(CPU *cpu, const char* filename) {
         printf("Error: Could not load boot ROM.\n");
         return false;
     }
-
+    
     FILE* romFile = fopen(filename, "rb");
     if (!romFile) {
         printf("Error reading ROM. Please check ROM file\n");
@@ -32,25 +33,38 @@ bool load_rom(CPU *cpu, const char* filename) {
 }
 
 uint8_t read8(CPU *cpu, uint16_t addr) {
-    // for reading from the bootrom
-    if (addr < 0x0100 && cpu->bootrom_flag)
-        return cpu->bootrom[addr];
-
-    // Echo RAM: E000–FDFF mirrors C000–DDFF
-    if (addr >= 0xE000 && addr <= 0xFDFF)
-        return cpu->memory[addr - 0x2000];
-
-    // OAM: FE00–FE9F
-    if (addr >= 0xFE00 && addr <= 0xFE9F)
-        return cpu->memory[addr];
-
-    // Unusable memory: FEA0–FEFF
-    if (addr >= 0xFEA0 && addr <= 0xFEFF)
+    // VRAM access blocked during mode 3
+    if ((addr >= 0x8000 && addr <= 0x9FFF) && 
+        ((cpu->ppu.stat & 0x03) == 0x03)) {
         return 0xFF;
+    }
 
-    // PPU registers: FF40–FF4B
-    if (addr >= 0xFF40 && addr <= 0xFF4B)
+    // Boot ROM handling
+    if (cpu->bootrom_flag) {
+        if (addr < 0x0100) return cpu->bootrom[addr];
+        if (addr < 0x8000) return cpu->memory[addr]; 
+    }
+
+    // Echo RAM
+    if (addr >= 0xE000 && addr <= 0xFDFF) {
+        return cpu->memory[addr - 0x2000];
+    }
+
+    // OAM access blocked during modes 2+3
+    if ((addr >= 0xFE00 && addr <= 0xFE9F) && 
+        ((cpu->ppu.stat & 0x03) >= 0x02)) {
+        return 0xFF;
+    }
+
+    // Unusable memory
+    if (addr >= 0xFEA0 && addr <= 0xFEFF) {
+        return 0xFF;
+    }
+
+    // PPU registers
+    if (addr >= 0xFF40 && addr <= 0xFF4B) {
         return ppu_read(cpu, addr);
+    }
 
     return cpu->memory[addr];
 }
@@ -60,32 +74,36 @@ uint16_t read16(CPU *cpu, uint16_t addr) {
 }
 
 void write8(CPU *cpu, uint16_t addr, uint8_t value) {
-    // switching from bootrom to memory at FF50
+    // VRAM access blocked during mode 3
+    if ((addr >= 0x8000 && addr <= 0x9FFF) && 
+        ((cpu->ppu.stat & 0x03) == 0x03)) {
+        return;
+    }
+
+    // Boot ROM disable
     if (addr == 0xFF50 && cpu->bootrom_flag) {
         cpu->bootrom_flag = false;
         return;
     }
 
-    
     // Echo RAM
     if (addr >= 0xE000 && addr <= 0xFDFF) {
-        cpu->memory[addr] = value;
         cpu->memory[addr - 0x2000] = value;
         return;
     }
 
-    // OAM: FE00–FE9F
-    if (addr >= 0xFE00 && addr <= 0xFE9F) {
-        cpu->memory[addr] = value;
+    // OAM access blocked during modes 2+3
+    if ((addr >= 0xFE00 && addr <= 0xFE9F) && 
+        ((cpu->ppu.stat & 0x03) >= 0x02)) {
         return;
     }
 
-    // Unusable memory: FEA0–FEFF
+    // Unusable memory
     if (addr >= 0xFEA0 && addr <= 0xFEFF) {
-        return; // Ignore writes
+        return;
     }
 
-    // PPU registers: FF40–FF4B
+    // PPU registers
     if (addr >= 0xFF40 && addr <= 0xFF4B) {
         ppu_write(cpu, addr, value);
         return;
@@ -102,16 +120,12 @@ void write16(CPU *cpu, uint16_t addr, uint16_t value) {
 // ------------------------ STACK Functions ---------------------------//
 
 void stack_push(CPU *cpu, uint16_t value) {
-    cpu->sp--;
-    write8(cpu, cpu->sp, (value >> 8) & 0xFF);
-    cpu->sp--;
-    write8(cpu, cpu->sp, value & 0xFF);
+    cpu->sp -= 2;
+    write16(cpu, cpu->sp, value);
 }
 
 uint16_t stack_pop(CPU *cpu) {
-    uint8_t low = read8(cpu, cpu->sp);
-    cpu->sp++;
-    uint8_t high = read8(cpu, cpu->sp);
-    cpu->sp++;
-    return (high << 8) | low;
+    uint16_t value = read16(cpu, cpu->sp);
+    cpu->sp += 2;
+    return value;
 }
