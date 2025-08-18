@@ -82,6 +82,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
 
     // Boot ROM disable
     if (addr == 0xFF50 && cpu->bootrom_flag) {
+        printf("Disabling bootrom");
         cpu->bootrom_flag = false;
         return;
     }

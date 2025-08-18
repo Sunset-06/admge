@@ -34,7 +34,6 @@ void start_cpu(CPU *cpu) {
     cpu->tac = 0x00;    
 
     cpu->cycles = 0; 
-    printf("CPU init finished!\n");
 }
 
 /*Update all timers. Yet to decode DMG Timer behaviours, so this is just a generated function fornow*/
@@ -82,8 +81,7 @@ void cpu_step(CPU *cpu) {
     uint8_t opcode = read8(cpu, cpu->pc);
     printf("Current op: %02x \n", opcode);
     run_inst(opcode, cpu);
-    printf("hl post inst %02x \n", cpu->regs.hl);
-    printf("sp post inst %02x \n", cpu->sp);
+    printf("pc post inst %02x \n\n", cpu->pc);
     update_timers(cpu, cpu->cycles*4);
     ppu_step(&cpu->ppu, cpu);
     cpu->cycles = 0;

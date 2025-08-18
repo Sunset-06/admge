@@ -157,7 +157,7 @@ extern void cpu_step(CPU *cpu);
 
 // --------------------- instructions
 extern void run_inst(uint8_t opcode, CPU *cpu);
-extern void run_pref_inst(CPU *cpu);
+extern void run_pref_inst(CPU *cpu, uint8_t opcode);
 
 // --------------------- ppu functions
 

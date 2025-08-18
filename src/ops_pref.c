@@ -1,8 +1,7 @@
 #include "cpu.h"
 #include "emu.h"
 
-void run_pref_inst(CPU *cpu){
-    uint16_t opcode = read8(cpu, ++cpu->pc);
+void run_pref_inst(CPU *cpu, uint8_t opcode){
     Registers *reg = &cpu->regs;
     uint8_t u8;
     uint8_t temp8;
@@ -17,8 +16,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x01:  //RLC C
@@ -28,8 +25,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x02:  //RLC D
@@ -39,8 +34,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x03:  //RLC E
@@ -50,8 +43,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x04:  //RLC H
@@ -61,8 +52,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x05:  //RLC L
@@ -72,8 +61,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x06:  //RLC [HL]
@@ -84,7 +71,6 @@ void run_pref_inst(CPU *cpu){
             set_H(0, cpu);
             set_C((u8 & 0x01) != 0, cpu);
             write8(cpu, reg->hl, u8);
-            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -95,8 +81,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x08:  //RRC B
@@ -106,8 +90,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x09:  //RRC C
@@ -117,8 +99,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x0A:  //RRC D
@@ -128,8 +108,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
         
         case 0x0B:  //RRC E
@@ -139,8 +117,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x0C:  //RRC H
@@ -150,8 +126,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x0D:  //RRC L
@@ -161,8 +135,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x0E:  //RRC [HL]
@@ -173,8 +145,7 @@ void run_pref_inst(CPU *cpu){
             set_Z(u8, cpu);
             set_N(0, cpu);                         
             set_H(0, cpu);                         
-            set_C(u8, cpu);
-            cpu->pc += 1;
+            set_C(lsb, cpu);
             cpu->cycles += 2;  
             break;
 
@@ -185,8 +156,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x10:  //RL B
@@ -196,19 +165,15 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x11:  //RL C
             u8 = (reg->c >> 7) & 1;
             reg->c = (reg->c << 1) | ((reg->f & FLAG_C)? 1 : 0);
-            set_Z(reg->b, cpu);
+            set_Z(reg->c, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x12:  //RL D
@@ -218,8 +183,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x13:  //RL E
@@ -229,8 +192,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x14:  //RL H
@@ -240,8 +201,6 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
         
         case 0x15:  //RL L
@@ -251,103 +210,87 @@ void run_pref_inst(CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x16:  //RL [HL]
             temp8 = read8(cpu, reg->hl);
             u8 = (temp8 >> 7) & 1;
             temp8 = (temp8 << 1) | ((reg->f & FLAG_C)? 1 : 0);
+            write8(cpu, reg->hl, temp8);
             set_Z(temp8, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 4;
+            cpu->cycles += 2;
             break;
         
         case 0x17:  //RL A
-            u8 = reg->a & 0x01;
+            u8 = (reg->a >> 7) & 1;
             reg->a = (reg->a << 1) | ((reg->f & FLAG_C)? 1 : 0);
             set_Z(reg->a, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
         
         case 0x18:  //RR B
             temp8 = (reg->f & FLAG_C) ? 0x80 : 0x00; // bit in carry
             u8 = reg->b & 0x01; // lsb
             reg->b = (reg->b >> 1) | temp8; // add carry to the msb
-            set_Z(0, cpu);
+            set_Z(reg->b, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x19:  //RR C 
             temp8 = (reg->f & FLAG_C) ? 0x80 : 0x00; // bit in carry
             u8 = reg->c & 0x01; // lsb
             reg->c = (reg->c >> 1) | temp8; // add carry to the msb
-            set_Z(0, cpu);
+            set_Z(reg->c, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
         
         case 0x1A:  //RR D
             temp8 = (reg->f & FLAG_C) ? 0x80 : 0x00; // bit in carry
             u8 = reg->d & 0x01; // lsb
             reg->d = (reg->d >> 1) | temp8; // add carry to the msb
-            set_Z(0, cpu);
+            set_Z(reg->d, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x1B:  //RR E
             temp8 = (reg->f & FLAG_C) ? 0x80 : 0x00; 
             u8 = reg->e & 0x01; 
             reg->e = (reg->e >> 1) | temp8; 
-            set_Z(0, cpu);
+            set_Z(reg->e, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x1C:  //RR H
             temp8 = (reg->f & FLAG_C) ? 0x80 : 0x00; 
             u8 = reg->h & 0x01; 
             reg->h = (reg->h >> 1) | temp8; 
-            set_Z(0, cpu);
+            set_Z(reg->h, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
 
         case 0x1D:  //RR L
             temp8 = (reg->f & FLAG_C) ? 0x80 : 0x00;
             u8 = reg->l & 0x01; 
             reg->l = (reg->l >> 1) | temp8; 
-            set_Z(0, cpu);
+            set_Z(reg->l, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
             break;
         
         case 0x1E:  //RR [HL] 
@@ -355,11 +298,10 @@ void run_pref_inst(CPU *cpu){
             temp8 = u8 & 0x01;
             u8 = (u8 >> 1) | (reg->f & FLAG_C) ? 0x80 : 0x00;
             write8(cpu, reg->hl, u8);  
-            set_Z(0, cpu);
+            set_Z(u8, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(temp8, cpu);
-            cpu->pc += 1;
             cpu->cycles += 2;
             break;
 
@@ -367,28 +309,461 @@ void run_pref_inst(CPU *cpu){
             temp8 = (reg->f & FLAG_C) ? 0x80 : 0x00; 
             u8 = reg->a & 0x01; 
             reg->a = (reg->a >> 1) | temp8; 
-            set_Z(0, cpu);
+            set_Z(reg->a, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
-            cpu->pc += 1;
-            cpu->cycles += 2;
+            break;
+
+
+        
+        case 0x40:  // BIT 0,B
+            u8 = ((reg->b) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
             break;
         
+        case 0x41:  // BIT 0,C
+            u8 = ((reg->c) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x42:  // BIT 0,D
+            u8 = ((reg->d) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x43:  // BIT 0,E
+            u8 = ((reg->e) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x44:  // BIT 0,H
+            u8 = ((reg->h) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x45:  // BIT 0,L
+            u8 = ((reg->l) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x46:  // BIT 0,HL
+            u8 = ((read8(cpu, reg->hl)) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x47:  // BIT 0,A
+            u8 = ((reg->a) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x48:  // BIT 1,B
+            u8 = ((reg->a >> 1) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x49:  // BIT 1,C
+            u8 = ((reg->c >> 1) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x4A:  // BIT 1,D
+            u8 = ((reg->d >> 1) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x4B:  // BIT 1,E
+            u8 = ((reg->e >> 1) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x4C:  // BIT 1,H
+            u8 = ((reg->h >> 1) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x4D:  // BIT 1,L
+            u8 = ((reg->l >> 1) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x4E:  // BIT 1,HL
+            u8 = ((read8(cpu, reg->hl) >> 1) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x4F:  // BIT 1,A
+            u8 = ((reg->a >> 1) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+        
+        case 0x50:  // BIT 2,B
+            u8 = ((reg->a >> 2) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;  
+        
+        case 0x51:  // BIT 2,C
+            u8 = ((reg->c >> 2) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x52:  // BIT 2,D
+            u8 = ((reg->d >> 2) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x53:  // BIT 2,E
+            u8 = ((reg->e >> 2) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x54:  // BIT 2,H
+            u8 = ((reg->h >> 2) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x55:  // BIT 2,L
+            u8 = ((reg->l >> 2) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x56:  // BIT 2,HL
+            u8 = ((read8(cpu, reg->hl) >> 2) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x57:  // BIT 2,A
+            u8 = ((reg->a >> 2) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x58:  // BIT 3,B
+            u8 = ((reg->b >> 3) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x59:  // BIT 3,C
+            u8 = ((reg->c >> 3) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x5A:  // BIT 3,D
+            u8 = ((reg->d >> 3) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x5B:  // BIT 3,E
+            u8 = ((reg->e >> 3) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;  
+                    
+        case 0x5C:  // BIT 3,H
+            u8 = ((reg->h >> 3) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x5D:  // BIT 3,L
+            u8 = ((reg->l >> 3) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x5E:  // BIT 3,HL
+            u8 = ((read8(cpu, reg->hl) >> 3) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x5F:  // BIT 3,A
+            u8 = ((reg->a >> 3) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x60:  // BIT 4,B
+            u8 = ((reg->b >> 4) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x61:  // BIT 4,C
+            u8 = ((reg->c >> 4) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x62:  // BIT 4,D
+            u8 = ((reg->d >> 4) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x63:  // BIT 4,E
+            u8 = ((reg->e >> 4) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x64:  // BIT 4,H
+            u8 = ((reg->h >> 4) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x65:  // BIT 4,L
+            u8 = ((reg->l >> 4) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+                    
+        case 0x66:  // BIT 4,HL
+            u8 = ((read8(cpu, reg->hl) >> 4) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
 
+                    
+        case 0x67:  // BIT 4,A
+            u8 = ((reg->a >> 4) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
 
-        case 0x7C:  //BIT 7, H
-            u8 = (cpu->regs.h >> 7) & 1;
-            reg->f = (reg->f & FLAG_C) | (u8 ? 0 : FLAG_Z) | FLAG_H;
-            cpu->pc += 1;
-            cpu->cycles += 2;
+        case 0x68:  // BIT 5,B
+            u8 = ((reg->b >> 5) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x69:  // BIT 5,C
+            u8 = ((reg->c >> 5) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x6A:  // BIT 5,D
+            u8 = ((reg->d >> 5) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x6B:  // BIT 5,E
+            u8 = ((reg->e >> 5) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x6C:  // BIT 5,H
+            u8 = ((reg->h >> 5) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x6D:  // BIT 5,L
+            u8 = ((reg->l >> 5) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x6E:  // BIT 5,HL
+            u8 = ((read8(cpu, reg->hl) >> 5) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
             break;
 
         case 0x6F:  // BIT 5,A
-            uint8_t bit = (reg->a >> 5) & 1;
-            reg->f = (reg->f & FLAG_C) | (bit ? 0 : FLAG_Z) | FLAG_H;
-            cpu->pc += 1;
-            cpu->cycles += 2;
+            u8 = ((reg->a >> 5) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x70:  // BIT 6,B
+            u8 = ((reg->b >> 6) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x71:  // BIT 6,C
+            u8 = ((reg->c >> 6) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x72:  // BIT 6,D
+            u8 = ((reg->d >> 6) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x73:  // BIT 6,E
+            u8 = ((reg->e >> 6) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x74:  // BIT 6,H
+            u8 = ((reg->h >> 6) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x75:  // BIT 6,L
+            u8 = ((reg->l >> 6) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x76:  // BIT 6,HL
+            u8 = ((read8(cpu, reg->hl) >> 6) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x77:  // BIT 6,A
+            u8 = ((reg->a >> 6) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x78:  //BIT 7, B
+            u8 = ((reg->b >> 7) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x79:  //BIT 7, C
+            u8 = ((reg->c >> 7) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x7A:  //BIT 7, D
+            u8 = ((reg->d >> 7) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x7B:  //BIT 7, E
+            u8 = ((reg->e >> 7) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x7C:  //BIT 7, H
+            u8 = ((reg->h >> 7) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x7D:  //BIT 7, L
+            u8 = ((reg->l >> 7) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x7E:  //BIT 7, HL
+            u8 = ((read8(cpu, reg->hl) >> 7) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
+            break;
+
+        case 0x7F:  //BIT 7, A
+            u8 = ((reg->a >> 7) & 1);
+            set_Z(u8, cpu);
+            set_N(0, cpu);
+            set_H(1, cpu);
             break;
 
     }

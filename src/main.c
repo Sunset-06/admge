@@ -18,6 +18,18 @@ void dump_vram(CPU *cpu, const char *filename) {
     printf("VRAM dumped to %s\n", filename);
 }
 
+void dump_header(CPU *cpu, const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    if (!file) {
+        printf("Failed to open %s for writing\n", filename);
+        return;
+    }
+
+    fwrite(&cpu->memory[0x0100], 1, 0x50, file);
+    fclose(file);
+    printf("Header dumped to %s\n", filename);
+}
+
 int main(int argc, char *argv[]) {
     /* Intializating everything */
     if(argc != 2){
@@ -46,6 +58,7 @@ int main(int argc, char *argv[]) {
                 }
                 if (event.key.keysym.sym == SDLK_SPACE) {
                     dump_vram(&cpu, "dump.bin");
+                    dump_header(&cpu, "header.bin");
                 }
             }
         }

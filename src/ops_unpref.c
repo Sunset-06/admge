@@ -12,6 +12,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
     switch(opcode){
         case 0x00:  //NOP
+            cpu->pc += 1;
             break;
 
         case 0x01:  //LD BC, u16 
@@ -87,8 +88,8 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0x09:  //ADD HL, BC
             // Add value of BC into HL
             set_N(0, cpu);
-            set_H_add(reg->hl, reg->bc, cpu);
-            set_C_add(reg->hl, reg->bc, cpu);
+            set_H_add16(reg->hl, reg->bc, cpu);
+            set_C_add16(reg->hl, reg->bc, cpu);
             reg->hl += reg->bc;
             cpu->pc += 1;
             cpu->cycles += 2;
@@ -294,15 +295,16 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0x20:  //JR NZ, i8
         // Jump by i8 steps if Z flag is NOT set
+            printf("Z currently: %d\n ", (reg->f & FLAG_Z));
             offset = (int8_t) read8(cpu, cpu->pc+1); 
+            cpu->pc += 2;
             if(!(reg->f & FLAG_Z)){
-                cpu->pc += offset;
+                cpu->pc += offset;  
                 cpu->cycles += 3;
             }
             else{
                 cpu->cycles += 2;
             }  
-            cpu->pc += 2;
             break;
 
         case 0x21:  //LD HL, u16
@@ -1651,11 +1653,12 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xBE:  //CP HL
-            temp8 = reg->a - read8(cpu, reg->hl);
+            uint8_t val = read8(cpu, reg->hl);
+            temp8 = reg->a - val;
             set_Z(temp8, cpu);
             set_N(1, cpu);
-            set_H_sub(reg->a, read8(cpu, reg->hl), cpu);
-            set_C_sub(reg->a, read8(cpu, reg->hl), cpu);
+            set_H_sub(reg->a, val, cpu);
+            set_C_sub(reg->a, val, cpu);
             cpu->pc += 1;
             cpu->cycles += 2;
             break;
@@ -1693,7 +1696,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0xC2:  //JP NZ, u16
         // Jump to u16 if Z is not set
             if(!(reg->f & FLAG_Z)){
-                cpu->pc = read8(cpu, cpu->pc+1);
+                cpu->pc = read16(cpu, cpu->pc+1);
                 cpu->cycles += 4;
             }
             else{
@@ -1764,7 +1767,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xCA:  //JP Z, u16
             if(reg->f & FLAG_Z){
-                cpu->pc = read8(cpu, cpu->pc+1);
+                cpu->pc = read16(cpu, cpu->pc+1);
                 cpu->cycles += 4;
             }
             else{
@@ -1775,7 +1778,10 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xCB:  //Prefix CB
-            run_pref_inst(cpu);
+            uint8_t opcode = read8(cpu, ++cpu->pc);
+            run_pref_inst(cpu, opcode);
+            cpu->pc += 1;
+            cpu->cycles += 2;
             break;
 
         case 0xCC:  //CALL Z, u16
@@ -1952,6 +1958,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0xE0:  //LDH u8, A
             u8 = read8(cpu, cpu->pc+1);
             write8(cpu, 0xFF00 + u8, reg->a);
+            printf("Got a write to: %04x\n\n\n\n\n\n\n\n", 0xFF00+u8);
             cpu->pc += 2;
             cpu->cycles += 3;
             break;
