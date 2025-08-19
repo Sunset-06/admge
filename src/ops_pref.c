@@ -1,6 +1,55 @@
 #include "cpu.h"
 #include "emu.h"
 
+// helper: get pointer to register by index
+static inline uint8_t* get_register(CPU *cpu, int reg_index) {
+    switch (reg_index) {
+        case 0: return &cpu->regs.b;
+        case 1: return &cpu->regs.c;
+        case 2: return &cpu->regs.d;
+        case 3: return &cpu->regs.e;
+        case 4: return &cpu->regs.h;
+        case 5: return &cpu->regs.l;
+        case 7: return &cpu->regs.a;
+        default: return NULL; // index 6 means (HL), handled separately
+    }
+}
+
+void execute_RES(CPU *cpu, uint8_t opcode) {
+    int bit = (opcode - 0x80) / 8;   // which bit to reset (0–7)
+    int reg_index = (opcode - 0x80) % 8; // which register/(HL)
+
+    if (reg_index == 6) {
+        // (HL) case: memory access
+        uint8_t val = read8(cpu, cpu->regs.hl);
+        val &= ~(1 << bit);
+        write8(cpu, cpu->regs.hl, val);
+        cpu->cycles += 4;
+    } else {
+        uint8_t *reg = get_register(cpu, reg_index);
+        *reg &= ~(1 << bit);
+        cpu->cycles += 2;
+    }
+}
+
+void execute_SET(CPU *cpu, uint8_t opcode) {
+    int bit = (opcode - 0xC0) / 8;      // which bit to set (0–7)
+    int reg_index = (opcode - 0xC0) % 8; // which register/(HL)
+
+    if (reg_index == 6) {
+        // (HL) case: memory access
+        uint8_t val = read8(cpu, cpu->regs.hl);
+        val |= (1 << bit);
+        write8(cpu, cpu->regs.hl, val);
+        cpu->cycles += 4;
+    } else {
+        uint8_t *reg = get_register(cpu, reg_index);
+        *reg |= (1 << bit);
+        cpu->cycles += 2;
+    }
+}
+
+
 void run_pref_inst(CPU *cpu, uint8_t opcode){
     Registers *reg = &cpu->regs;
     uint8_t u8;
@@ -315,7 +364,297 @@ void run_pref_inst(CPU *cpu, uint8_t opcode){
             set_C(u8, cpu);
             break;
 
+        case 0x20:  // SLA B
+            u8 = (reg->b >> 7) & 1;
+            reg->b = (reg->b << 1);
+            set_Z(reg->b, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
 
+        case 0x21:  // SLA C
+            u8 = (reg->c >> 7) & 1;
+            reg->c = (reg->c << 1);
+            set_Z(reg->c, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x22:  // SLA D
+            u8 = (reg->d >> 7) & 1;
+            reg->d = (reg->d << 1);
+            set_Z(reg->d, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x23:  // SLA E
+            u8 = (reg->e >> 7) & 1;
+            reg->e = (reg->e << 1);
+            set_Z(reg->e, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x24:  // SLA H
+            u8 = (reg->h >> 7) & 1;
+            reg->h = (reg->h << 1);
+            set_Z(reg->h, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x25:  // SLA L
+            u8 = (reg->l >> 7) & 1;
+            reg->l = (reg->l << 1);
+            set_Z(reg->l, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x26:  // SLA (HL)
+            temp8 = read8(cpu, reg->hl);
+            u8 = (temp8 >> 7) & 1;
+            temp8 = (temp8 << 1);
+            write8(cpu, reg->hl, temp8);
+            set_Z(temp8, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            cpu->cycles += 2;
+            break;
+
+        case 0x27:  // SLA A
+            u8 = (reg->a >> 7) & 1;
+            reg->a = (reg->a << 1);
+            set_Z(reg->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x28:  // SRA B
+            u8 = reg->b & 1;
+            reg->b = (reg->b >> 1) | (reg->b & 0x80);
+            set_Z(reg->b, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x29:  // SRA C
+            u8 = reg->c & 1;
+            reg->c = (reg->c >> 1) | (reg->c & 0x80);
+            set_Z(reg->c, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x2A:  // SRA D
+            u8 = reg->d & 1;
+            reg->d = (reg->d >> 1) | (reg->d & 0x80);
+            set_Z(reg->d, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x2B:  // SRA E
+            u8 = reg->e & 1;
+            reg->e = (reg->e >> 1) | (reg->e & 0x80);
+            set_Z(reg->e, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x2C:  // SRA H
+            u8 = reg->h & 1;
+            reg->h = (reg->h >> 1) | (reg->h & 0x80);
+            set_Z(reg->h, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x2D:  // SRA L
+            u8 = reg->l & 1;
+            reg->l = (reg->l >> 1) | (reg->l & 0x80);
+            set_Z(reg->l, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x2E:  // SRA (HL)
+            temp8 = read8(cpu, reg->hl);
+            u8 = temp8 & 1;
+            temp8 = (temp8 >> 1) | (temp8 & 0x80);
+            write8(cpu, reg->hl, temp8);
+            set_Z(temp8, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            cpu->cycles += 2;
+            break;
+
+        case 0x2F:  // SRA A
+            u8 = reg->a & 1;
+            reg->a = (reg->a >> 1) | (reg->a & 0x80);
+            set_Z(reg->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+        
+        case 0x30:  // SWAP B
+            reg->b = ((reg->b << 4) | (reg->b >> 4)) & 0xFF;
+            set_Z(reg->b, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
+            break;
+
+        case 0x31:  // SWAP C
+            reg->c = ((reg->c << 4) | (reg->c >> 4)) & 0xFF;
+            set_Z(reg->c, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
+            break;
+
+        case 0x32:  // SWAP D
+            reg->d = ((reg->d << 4) | (reg->d >> 4)) & 0xFF;
+            set_Z(reg->d, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
+            break;
+
+        case 0x33:  // SWAP E
+            reg->e = ((reg->e << 4) | (reg->e >> 4)) & 0xFF;
+            set_Z(reg->e, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
+            break;
+
+        case 0x34:  // SWAP H
+            reg->h = ((reg->h << 4) | (reg->h >> 4)) & 0xFF;
+            set_Z(reg->h, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
+            break;
+
+        case 0x35:  // SWAP L
+            reg->l = ((reg->l << 4) | (reg->l >> 4)) & 0xFF;
+            set_Z(reg->l, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
+            break;
+
+        case 0x36:  // SWAP (HL)
+            temp8 = read8(cpu, reg->hl);
+            temp8 = ((temp8 << 4) | (temp8 >> 4)) & 0xFF;
+            write8(cpu, reg->hl, temp8);
+            set_Z(temp8, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
+            cpu->cycles += 2;
+            break;
+
+        case 0x37:  // SWAP A
+            reg->a = ((reg->a << 4) | (reg->a >> 4)) & 0xFF;
+            set_Z(reg->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(0, cpu);
+            break;
+
+        case 0x38:  // SRL B
+            u8 = reg->b & 1;
+            reg->b = (reg->b >> 1);
+            set_Z(reg->b, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x39:  // SRL C
+            u8 = reg->c & 1;
+            reg->c = (reg->c >> 1);
+            set_Z(reg->c, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x3A:  // SRL D
+            u8 = reg->d & 1;
+            reg->d = (reg->d >> 1);
+            set_Z(reg->d, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+
+        case 0x3B:  // SRL E
+            u8 = reg->e & 1;
+            reg->e = (reg->e >> 1);
+            set_Z(reg->e, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x3C:  // SRL H
+            u8 = reg->h & 1;
+            reg->h = (reg->h >> 1);
+            set_Z(reg->h, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x3D:  // SRL L
+            u8 = reg->l & 1;
+            reg->l = (reg->l >> 1);
+            set_Z(reg->l, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x3E:  // SRL HL
+            temp8 = read8(cpu, reg->hl);
+            u8 = temp8 & 1;
+            temp8 = (temp8 >> 1);
+            write8(cpu, reg->hl, temp8);
+            set_Z(temp8, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
+
+        case 0x3F:  // SRL A
+            u8 = reg->a & 1;
+            reg->a = (reg->a >> 1);
+            set_Z(reg->a, cpu);
+            set_N(0, cpu);
+            set_H(0, cpu);
+            set_C(u8, cpu);
+            break;
         
         case 0x40:  // BIT 0,B
             u8 = ((reg->b) & 1);
@@ -764,6 +1103,14 @@ void run_pref_inst(CPU *cpu, uint8_t opcode){
             set_Z(u8, cpu);
             set_N(0, cpu);
             set_H(1, cpu);
+            break;
+        
+        case 0x80 ... 0xBF:  // RES instructions
+            execute_RES(cpu, opcode);
+            break;
+
+        case 0xC0 ... 0xFF:  // SET instructions
+            execute_SET(cpu, opcode);
             break;
 
     }

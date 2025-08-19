@@ -4,6 +4,20 @@
 
 bool ime_enable = false;
 bool quit_flag = false;
+bool bootrom_flag = true;
+
+
+char serial_log[65536];  
+size_t serial_len = 0;
+
+void dump_serial_log(const char *filename) {
+    FILE *f = fopen(filename, "w");
+    if (!f) return;
+
+    fwrite(serial_log, 1, serial_len, f);
+    fclose(f);
+}
+
 
 void dump_vram(CPU *cpu, const char *filename) {
     FILE *file = fopen(filename, "wb");
@@ -32,10 +46,13 @@ void dump_header(CPU *cpu, const char *filename) {
 
 int main(int argc, char *argv[]) {
     /* Intializating everything */
-    if(argc != 2){
-        printf("Wrong start, use it like this:\n admge path/to/your/rom\n Aborting...");
+    if(argc < 2){
+        printf("Wrong start, use it like this:\n admge path/to/your/rom -noboot(optional)\n Aborting...");
         return 1;
     }
+
+    if(argc >= 3 && strcmp(argv[2], "-noboot") == 0)
+        bootrom_flag = false;
 
     CPU cpu;
     char* inputRom = argv[1];
@@ -59,6 +76,7 @@ int main(int argc, char *argv[]) {
                 if (event.key.keysym.sym == SDLK_SPACE) {
                     dump_vram(&cpu, "dump.bin");
                     dump_header(&cpu, "header.bin");
+                    dump_serial_log("serial.txt");
                 }
             }
         }

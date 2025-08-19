@@ -373,9 +373,9 @@ void run_inst(uint8_t opcode, CPU *cpu){
             - Add the adjustment to A.
         */
             uint8_t adjustment = 0;
+            bool carry = (reg->f & FLAG_C) != 0;;
 
             if (reg->f & FLAG_N) {
-                uint8_t adjustment = 0;
                 if (reg->f & FLAG_H)
                     adjustment |= 0x06;
                 if (reg->f & FLAG_C)
@@ -387,14 +387,14 @@ void run_inst(uint8_t opcode, CPU *cpu){
                     adjustment |= 0x06;
                 if (reg->f & FLAG_C || reg->a > 0x99){
                     adjustment |= 0x60;
-                    set_C(1, cpu);
+                    carry = true;  
                 }
                 reg->a += adjustment;
             }
 
-            // Update flags
             set_Z(reg->a, cpu);
             set_H(0, cpu);
+            set_C(carry, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
