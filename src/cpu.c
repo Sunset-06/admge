@@ -36,6 +36,64 @@ void start_cpu(CPU *cpu) {
     cpu->cycles = 0; 
 }
 
+void handle_interrupts(CPU *cpu) {
+    // Acknowledge a pending interrupt
+    uint8_t pending = cpu->iflag & cpu->ie;
+    
+    if (cpu->halted && pending) {
+        cpu->halted = false;
+    }
+
+    if (!cpu->ime) {
+        return;
+    }
+
+    //VBlank
+    if (pending & 0x01) {
+        // Clear the V-Blank interrupt flag
+        cpu->iflag &= ~0x01;
+        // Disable global interrupts
+        cpu->ime = false;
+        // Push the current PC onto the stack
+        stack_push(cpu, cpu->pc);
+        // Jump to the V-Blank interrupt vector
+        cpu->pc = 0x40;
+        cpu->cycles += 5;
+    }
+    // LCD STAT (bit 1)
+    else if (pending & 0x02) {
+        cpu->iflag &= ~0x02;
+        cpu->ime = false;
+        stack_push(cpu, cpu->pc);
+        cpu->pc = 0x48;
+        cpu->cycles += 5;
+    }
+    // Timer (bit 2)
+    else if (pending & 0x04) {
+        cpu->iflag &= ~0x04;
+        cpu->ime = false;
+        stack_push(cpu, cpu->pc);
+        cpu->pc = 0x50;
+        cpu->cycles += 5;
+    }
+    // Serial (bit 3)
+    else if (pending & 0x08) {
+        cpu->iflag &= ~0x08;
+        cpu->ime = false;
+        stack_push(cpu, cpu->pc);
+        cpu->pc = 0x58;
+        cpu->cycles += 5;
+    }
+    // Joypad (bit 4)
+    else if (pending & 0x10) {
+        cpu->iflag &= ~0x10;
+        cpu->ime = false;
+        stack_push(cpu, cpu->pc);
+        cpu->pc = 0x60;
+        cpu->cycles += 5;
+    }
+}
+
 /*Update all timers. Yet to decode DMG Timer behaviours, so this is just a generated function fornow*/
 void update_timers(CPU *cpu, uint16_t tcycles) {
     // Update DIV - the main timer
@@ -76,16 +134,26 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
     4. Do a PPU step
 */
 void cpu_step(CPU *cpu) {
-    // Fetch, decode, execute - then increment pc, cause the instructions increment it for bytes.
+    if (cpu->ime_enable) {
+        cpu->ime = true;
+        cpu->ime_enable = false;
+    }
+    
+    if (cpu->halted) {
+        printf("THe CPU was halted!\n\n");
+        handle_interrupts(cpu);
+        return;
+    }
+
     printf("Starting a step.\n");
     uint8_t opcode = read8(cpu, cpu->pc);
     printf("Current op: %02x \n", opcode);
     run_inst(opcode, cpu);
     printf("pc post inst %02x \n\n", cpu->pc);
-    update_timers(cpu, cpu->cycles*4);
     ppu_step(&cpu->ppu, cpu);
+    update_timers(cpu, cpu->cycles*4);
     cpu->cycles = 0;
-    //handle_interrupts(cpu);
+    handle_interrupts(cpu);
 }
 
 // Change Z based on result <- NOTE this is the exact opposite of all other flag functions

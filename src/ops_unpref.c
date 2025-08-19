@@ -25,7 +25,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0x02:  //LD BC, A 
             //write from A to byte pointed by BC
             write8(cpu, reg->bc, reg->a);
-            cpu->pc += 3;
+            cpu->pc += 1;
             cpu->cycles += 2;    
             break;
 
@@ -295,7 +295,6 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0x20:  //JR NZ, i8
         // Jump by i8 steps if Z flag is NOT set
-            printf("Z currently: %d\n ", (reg->f & FLAG_Z));
             offset = (int8_t) read8(cpu, cpu->pc+1); 
             cpu->pc += 2;
             if(!(reg->f & FLAG_Z)){
@@ -402,6 +401,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0x28:  //JR Z, i8
             // Jump by i8 steps if Z flag is set
             offset = (int8_t) read8(cpu, cpu->pc+1);
+            cpu->pc += 2;
             if(reg->f & FLAG_Z){
                 cpu->pc += offset;
                 cpu->cycles += 3;
@@ -409,7 +409,6 @@ void run_inst(uint8_t opcode, CPU *cpu){
             else{
                 cpu->cycles += 2;
             }
-            cpu->pc += 2;
             break;
 
         case 0x29:  //ADD HL, HL
@@ -476,15 +475,14 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0x30:  //JR NC, i8
             // Jump by i8 steps if C flag is NOT set
             offset = (int8_t) read8(cpu, cpu->pc+1);
+            cpu->pc += 2;
             if(!(reg->f & FLAG_C)){
                 cpu->pc += offset;
                 cpu->cycles += 3;
             }
             else{
-                //++cpu->pc;
                 cpu->cycles += 2;
             }
-            cpu->pc += 2;
             break;
 
         case 0x31:  //LD SP, u16
@@ -552,15 +550,14 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0x38:  //JR C, i8
             // Jump by i8 if C is set
             offset = (int8_t) read8(cpu, cpu->pc+1);
+            cpu->pc += 2;
             if(reg->f & FLAG_C){
                 cpu->pc += offset;
                 cpu->cycles += 3;
             }
             else{
-                //++cpu->pc;
                 cpu->cycles += 2;
             }
-            cpu->pc += 2;
             break;
 
         case 0x39:  //ADD HL, SP
@@ -955,7 +952,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x76:  //HALT
-            // HALT ------------------------- Recheck this one
+            cpu->halted= true;
             break;
 
         case 0x77:  //LD HL, A
@@ -1096,7 +1093,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x88:  //ADC A, B
-            u8 = reg->b + (reg->f & FLAG_C);
+            u8 = reg->b + ((reg->f & FLAG_C)? 1 : 0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1107,7 +1104,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x89:  //ADC A, C
-            u8 = reg->c + (reg->f & FLAG_C);
+            u8 = reg->c + ((reg->f & FLAG_C)? 1 : 0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1118,7 +1115,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x8A:  //ADC A, D
-            u8 = reg->d + (reg->f & FLAG_C);
+            u8 = reg->d + ((reg->f & FLAG_C)? 1 : 0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1129,7 +1126,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x8B:  //ADC A, E
-            u8 = reg->e + (reg->f & FLAG_C);
+            u8 = reg->e + ((reg->f & FLAG_C)? 1 : 0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1140,7 +1137,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x8C:  //ADC A, H
-            u8 = reg->h + (reg->f & FLAG_C);
+            u8 = reg->h + ((reg->f & FLAG_C)? 1 : 0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1151,7 +1148,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x8D:  //ADC A, L
-            u8 = reg->l + (reg->f & FLAG_C);
+            u8 = reg->l + ((reg->f & FLAG_C)? 1 : 0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1162,7 +1159,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x8E:  //ADC A, [HL]
-            u8 = read8(cpu, reg->hl) + (reg->f & FLAG_C);
+            u8 = read8(cpu, reg->hl) + ((reg->f & FLAG_C)? 1 : 0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1173,7 +1170,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x8F:  //ADC A, A
-            u8 = reg->a + (reg->f & FLAG_C);
+            u8 = reg->a + ((reg->f & FLAG_C)? 1 : 0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1265,7 +1262,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x98:  //SBC A, B
-            u8 = reg->b + (reg->f & FLAG_C);
+            u8 = reg->b + ((reg->f & FLAG_C) ? 1 : 0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -1276,7 +1273,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x99:  //SBC A, C
-            u8 = reg->c + (reg->f & FLAG_C);
+            u8 = reg->c + ((reg->f & FLAG_C) ? 1 : 0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -1287,7 +1284,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x9A:  //SBC A, D
-            u8 = reg->d + (reg->f & FLAG_C);
+            u8 = reg->d + ((reg->f & FLAG_C) ? 1 : 0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -1298,7 +1295,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x9B:  //SBC A, E
-            u8 = reg->e + (reg->f & FLAG_C);
+            u8 = reg->e + ((reg->f & FLAG_C) ? 1 : 0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -1309,7 +1306,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x9C:  //SBC A, H
-            u8 = reg->h + (reg->f & FLAG_C);
+            u8 = reg->h + ((reg->f & FLAG_C) ? 1 : 0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -1320,7 +1317,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x9D:  //SBC A, L
-            u8 = reg->l + (reg->f & FLAG_C);
+            u8 = reg->l + ((reg->f & FLAG_C) ? 1 : 0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -1331,7 +1328,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x9E:  //SBC A, HL
-            u8 = read8(cpu, reg->hl) + (reg->f & FLAG_C);
+            u8 = read8(cpu, reg->hl) + ((reg->f & FLAG_C) ? 1 : 0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -1342,7 +1339,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x9F:  //SBC A, A
-            u8 = reg->a + (reg->f & FLAG_C);
+            u8 = reg->a + ((reg->f & FLAG_C) ? 1 : 0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -1681,10 +1678,9 @@ void run_inst(uint8_t opcode, CPU *cpu){
                 cpu->cycles = 5;
             } 
             else {
-                //cpu->cycles = 8;
+                cpu->pc += 1;
                 cpu->cycles += 2;
             }
-            cpu->pc += 1;
             break;
 
         case 0xC1:  //POP BC
@@ -1700,10 +1696,9 @@ void run_inst(uint8_t opcode, CPU *cpu){
                 cpu->cycles += 4;
             }
             else{
-                //++cpu->pc;
+                cpu->pc += 3;
                 cpu->cycles += 3;
             }
-            cpu->pc += 3;
             break;
 
         case 0xC3:  //JP u16
@@ -1715,7 +1710,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xC4:  //CALL NZ, u16
             u16 = read16(cpu, cpu->pc+1);
-            //cpu->pc += 2;
+            cpu->pc += 3;
             if (!(reg->f & FLAG_Z)) {
                 stack_push(cpu, cpu->pc);
                 cpu->pc = u16;
@@ -1723,7 +1718,6 @@ void run_inst(uint8_t opcode, CPU *cpu){
             } else {
                 cpu->cycles += 3; 
             }
-            cpu->pc += 3;
             break;
 
         case 0xC5:  //PUSH BC
@@ -1755,9 +1749,9 @@ void run_inst(uint8_t opcode, CPU *cpu){
                 cpu->cycles += 5;
             } 
             else {
+                cpu->pc += 1;
                 cpu->cycles += 2;
             }
-            cpu->pc += 1;
             break;
 
         case 0xC9:  //RET
@@ -1771,10 +1765,9 @@ void run_inst(uint8_t opcode, CPU *cpu){
                 cpu->cycles += 4;
             }
             else{
-                //++cpu->pc;
+                cpu->pc += 3;
                 cpu->cycles += 3;
             }
-            cpu->pc += 3;
             break;
 
         case 0xCB:  //Prefix CB
@@ -1786,12 +1779,12 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xCC:  //CALL Z, u16
             u16 = read16(cpu, cpu->pc+1);
+            cpu->pc += 3;
             if ((reg->f & FLAG_Z)) {
-                stack_push(cpu, cpu->pc+3);
+                stack_push(cpu, cpu->pc);
                 cpu->pc = u16;
                 cpu->cycles += 6;
             } else {
-                cpu->pc += 3;
                 cpu->cycles += 3; 
             }
             break;
@@ -1804,7 +1797,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xCE:  //ADC A, u8
-            u8 = read8(cpu, cpu->pc+1) + (reg->f & FLAG_C);
+            u8 = read8(cpu, cpu->pc+1) + ((reg->f & FLAG_C)? 1:0);
             set_N(0, cpu);
             set_H_add(reg->a, u8, cpu);
             set_C_add(reg->a, u8, cpu);
@@ -1902,7 +1895,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0xD9:  //RETI
             // Set Interrupt Master Enable after RET
             cpu->pc = stack_pop(cpu);
-            ime_enable = true;
+            cpu->ime_enable = true;
             cpu->cycles += 4;
             break;
 
@@ -1939,7 +1932,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xDE:  //SBC A, u8
-            u8 = read8(cpu, cpu->pc+1) + (reg->f & FLAG_C);
+            u8 = read8(cpu, cpu->pc+1) + ((reg->f & FLAG_C)? 1:0);
             set_N(1, cpu);
             set_H_sub(reg->a, u8, cpu);
             set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
@@ -2103,7 +2096,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(0, cpu);
-            cpu->pc += 1;
+            cpu->pc += 2;
             cpu->cycles += 2; 
             break;
 
@@ -2141,13 +2134,13 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xFA:  //LD A, u16
             u16 = read16(cpu, cpu->pc+1);
-            reg->a  = u16;
+            reg->a  = read8(cpu, u16);
             cpu->pc += 3;
             cpu->cycles += 4;
             break;
 
         case 0xFB:  //EI
-            ime_enable = true;  // Set ime after next instruction
+            cpu->ime_enable = true;  
             cpu->pc += 1;
             cpu->cycles += 1;
             break;

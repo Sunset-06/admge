@@ -82,10 +82,6 @@ int main(int argc, char *argv[]) {
         }
 
         cpu_step(&cpu);
-        if (ime_enable) {
-            cpu.ime = true;
-            ime_enable = false;
-        }
     }
     sdl_destroy();
 }

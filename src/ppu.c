@@ -51,14 +51,20 @@ void ppu_step(PPU *ppu, CPU *cpu) {
         if (ppu->ly == 144) {
             // VBlank interrupt
             printf("\n\n --------------------- Hit a VBlank. Rendering next frame.\n"); 
-            cpu->iflag |= 0x01; // Set VBlank interrupt
+            cpu->iflag |= 0x01; 
             sdl_present(ppu);
         } 
         else if (ppu->ly > 153) {
             ppu->ly = 0;
         }
+
+        if (ppu->ly == ppu->lyc) {
+            ppu->stat |= 0x04;
+        } else {
+            ppu->stat &= ~0x04;
+        }
+
     }
-    //printf("\nLCDC -> %d\n",ppu->lcdc);
 }
 
 uint8_t ppu_read(CPU *cpu, uint16_t addr) {
@@ -98,7 +104,7 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
         case 0xFF41: ppu->stat = value; break;
         case 0xFF42: ppu->scy  = value; break;
         case 0xFF43: ppu->scx  = value; break;
-        //case 0xFF44: ppu->ly   = 0;     break; // <- This one is read only
+        case 0xFF44: ppu->ly   = 0;     break; // <- This one is read only
         case 0xFF45: ppu->lyc  = value; break;
         case 0xFF47: ppu->bgp  = value; break;
         case 0xFF48: ppu->obp0 = value; break;
@@ -125,8 +131,8 @@ void render_scanline(PPU *ppu, CPU *cpu) {
     if (!(ppu->lcdc & 0x01)) return; // BG disabled
 
 
-    uint16_t tile_map_base = 0x9800;  // Fixed for boot ROM
-    uint16_t tile_data_base = 0x8000; // Unsigned indexing
+    uint16_t tile_map_base = 0x9800;  
+    uint16_t tile_data_base = 0x8000; 
     
     uint8_t scrolled_y = (ppu->scy + ppu->ly) % 256; 
     uint8_t tile_row = scrolled_y / 8;

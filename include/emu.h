@@ -7,7 +7,6 @@
 #include "cpu.h"
 
 extern bool quit_flag;
-extern bool ime_enable;
 extern bool bootrom_flag;
 extern char serial_log[65536];  
 extern size_t serial_len;
