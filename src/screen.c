@@ -37,7 +37,7 @@ bool init_screen(int scale) {
 }
 
 void sdl_present(PPU *ppu) {
-    printf("Presenting...\n");
+    //printf("Presenting...\n");
     SDL_UpdateTexture(texture, NULL, ppu->framebuffer, SCREEN_WIDTH * sizeof(uint32_t));
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);

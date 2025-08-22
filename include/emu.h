@@ -8,6 +8,7 @@
 
 extern bool quit_flag;
 extern bool bootrom_flag;
+extern int timer_counter;
 extern char serial_log[65536];  
 extern size_t serial_len;
 

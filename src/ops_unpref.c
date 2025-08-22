@@ -1672,9 +1672,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xC0:  //RET NZ
             if (!(reg->f & FLAG_Z)) {
-                uint8_t low = read8(cpu, cpu->sp++);
-                uint8_t high = read8(cpu, cpu->sp++);
-                cpu->pc = (high << 8) | low;
+                cpu->pc = stack_pop(cpu);
                 cpu->cycles = 5;
             } 
             else {
@@ -1797,11 +1795,20 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xCE:  //ADC A, u8
-            u8 = read8(cpu, cpu->pc+1) + ((reg->f & FLAG_C)? 1:0);
+            u8 = read8(cpu, cpu->pc+1);
+            temp8 = (reg->f & FLAG_C)? 1:0;
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+            if (((reg->a & 0x0F) + (u8 & 0x0F) + temp8) > 0x0F)
+                set_H(1, cpu); 
+            else
+                set_H(0, cpu);
+
+            if (u16 > 0xFF) 
+                set_C(1, cpu);
+            else 
+                set_C(0,cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 2;
             cpu->cycles += 2; 
@@ -1932,11 +1939,21 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xDE:  //SBC A, u8
-            u8 = read8(cpu, cpu->pc+1) + ((reg->f & FLAG_C)? 1:0);
+            u8 = read8(cpu, cpu->pc+1); 
+            temp8 = (reg->f & FLAG_C)? 1:0;
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+            if((reg->a & 0x0F) < ((u8 & 0x0F) + temp8))
+                set_H(1, cpu);  
+            else
+                set_H(0, cpu);
+            
+            if (u16 > 0xFF)
+                set_C(1, cpu);
+            else 
+                set_C(0, cpu);
+
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 2;
             cpu->cycles += 2; 
@@ -1951,7 +1968,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0xE0:  //LDH u8, A
             u8 = read8(cpu, cpu->pc+1);
             write8(cpu, 0xFF00 + u8, reg->a);
-            printf("Got a write to: %04x\n\n\n\n\n\n\n\n", 0xFF00+u8);
+            //printf("Got a write to: %04x\n\n\n\n\n\n\n\n", 0xFF00+u8);
             cpu->pc += 2;
             cpu->cycles += 3;
             break;
@@ -2140,6 +2157,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xFB:  //EI
+            printf("Got an EI call. That means the test starts\n");
             cpu->ime_enable = true;  
             cpu->pc += 1;
             cpu->cycles += 1;

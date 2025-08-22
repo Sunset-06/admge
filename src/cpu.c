@@ -1,8 +1,9 @@
 #include "cpu.h"
+#include "emu.h"
 
 // initializes emu state
 void start_cpu(CPU *cpu) {
-    printf("Starting CPU init\n");
+    ////printf("Starting CPU init\n");
     cpu->regs.af = 0x01B0;  // A and F initial values 
     cpu->regs.bc = 0x0013;  // B and C initial values
     cpu->regs.de = 0x00D8;  // D and E initial values
@@ -31,13 +32,14 @@ void start_cpu(CPU *cpu) {
     cpu->div = 0x00;  
     cpu->tima = 0x00; 
     cpu->tma = 0x00;  
-    cpu->tac = 0x00;    
+    cpu->tac = 0xF8;    
 
-    cpu->cycles = 0; 
+    cpu->cycles = 0;
 }
 
 void handle_interrupts(CPU *cpu) {
     // Acknowledge a pending interrupt
+    printf("iflag / ie / ime : %04x / %04x / %04x\n", cpu->iflag, cpu->ie, cpu->ime);
     uint8_t pending = cpu->iflag & cpu->ie;
     
     if (cpu->halted && pending) {
@@ -45,16 +47,19 @@ void handle_interrupts(CPU *cpu) {
     }
 
     if (!cpu->ime) {
+        printf("No ime this step. continue\n\n");
         return;
     }
+    printf("Interrupt signal. Pending: %04x\n",pending);
 
     //VBlank
     if (pending & 0x01) {
+        printf("Handling the vblank");
         // Clear the V-Blank interrupt flag
         cpu->iflag &= ~0x01;
+        printf("Iflag cleared: %04x",  cpu->iflag);
         // Disable global interrupts
         cpu->ime = false;
-        // Push the current PC onto the stack
         stack_push(cpu, cpu->pc);
         // Jump to the V-Blank interrupt vector
         cpu->pc = 0x40;
@@ -70,6 +75,7 @@ void handle_interrupts(CPU *cpu) {
     }
     // Timer (bit 2)
     else if (pending & 0x04) {
+        printf("Timer interrupt handler");
         cpu->iflag &= ~0x04;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
@@ -94,36 +100,43 @@ void handle_interrupts(CPU *cpu) {
     }
 }
 
-/*Update all timers. Yet to decode DMG Timer behaviours, so this is just a generated function fornow*/
-void update_timers(CPU *cpu, uint16_t tcycles) {
-    // Update DIV - the main timer
-    cpu->div += tcycles;
-/* 
-    if (cpu->tac & 0x04) {
-        // Which bit of div controls TIMA increments
-        int bit;
-        switch (cpu->tac & 0x03) {
-            case 0: bit = 9;  break; // 4096 Hz   (DIV bit 9)
-            case 1: bit = 3;  break; // 262144 Hz (DIV bit 3)
-            case 2: bit = 5;  break; // 65536 Hz  (DIV bit 5)
-            case 3: bit = 7;  break; // 16384 Hz  (DIV bit 7)
-        }
+/*
+* Add to your CPU struct:
+* int timer_counter;
+*/
 
-        // Detect falling edge of selected DIV bit
-        static int prev_bit = 0;
-        for (int i = 0; i < tcycles; i++) {
-            int curr_bit = (cpu->div >> bit) & 1;
-            if (prev_bit == 1 && curr_bit == 0) {
-                cpu->tima++;
-                if (cpu->tima == 0) {
-                    cpu->tima = cpu->tma;
-                    cpu->iflag |= (1 << 2); 
-                }
-            }
-            prev_bit = curr_bit;
-            cpu->div++;
+void update_timers(CPU *cpu, uint16_t tcycles) {
+    // Update DIV counter (internal 16-bit counter)
+    cpu->div += tcycles;
+
+    // Check if the timer is enabled in the TAC register (bit 2)
+    if (!(cpu->tac & 0x04)) {
+        return;
+    }
+
+    // Add cycles to the TIMA accumulator
+    timer_counter += tcycles;
+
+    // Get the cycle threshold for the current frequency
+    uint16_t rate_cycles = 0;
+    switch (cpu->tac & 0x03) {
+        case 0: rate_cycles = 1024; break; 
+        case 1: rate_cycles = 16;   break; 
+        case 2: rate_cycles = 64;   break; 
+        case 3: rate_cycles = 256;  break; 
+    }
+
+    while (timer_counter >= rate_cycles) {
+        timer_counter -= rate_cycles;
+
+        // Check if TIMA will overflow
+        if (cpu->tima == 0xFF) {
+            cpu->tima = cpu->tma; ///reset TIMA to TMA
+            cpu->iflag |= 0x04; 
+        } else {
+            cpu->tima++; 
         }
-    } */
+    }
 }
 
 
@@ -133,23 +146,24 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
     3. Update timers
     4. Do a PPU step
 */
-void cpu_step(CPU *cpu) {
+void cpu_step(CPU *cpu){
     if (cpu->ime_enable) {
+        printf("ime_enable hit true. Enabling ime now\n");
         cpu->ime = true;
         cpu->ime_enable = false;
     }
     
     if (cpu->halted) {
-        printf("THe CPU was halted!\n\n");
+        //printf("The CPU was halted!\n\n");
         handle_interrupts(cpu);
         return;
     }
 
-    printf("Starting a step.\n");
+    //printf("Starting a step.\n");
     uint8_t opcode = read8(cpu, cpu->pc);
     printf("Current op: %02x \n", opcode);
     run_inst(opcode, cpu);
-    printf("pc post inst %02x \n\n", cpu->pc);
+    //printf("pc post inst %02x \n\n", cpu->pc);
     ppu_step(&cpu->ppu, cpu);
     update_timers(cpu, cpu->cycles*4);
     cpu->cycles = 0;

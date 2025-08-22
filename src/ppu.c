@@ -39,19 +39,20 @@ void ppu_step(PPU *ppu, CPU *cpu) {
     // Each scanline takes 456 cycles
     if(ppu->mode_cycles >= 456) {
         ppu->mode_cycles -= 456;
-        printf("Decremented 456, new cycles: %d\n", ppu->mode_cycles);  
+        //printf("Decremented 456, new cycles: %d\n", ppu->mode_cycles);  
         ppu->ly++;
 
-        printf("ly: %d\n", ppu->ly);
+        //printf("ly: %d\n", ppu->ly);
         if (ppu->ly < 144) {    
-        printf("ly < 144, rendering scanline now.\n\n");
+        //printf("ly < 144, rendering scanline now.\n\n");
             render_scanline(ppu, cpu);
         }
 
         if (ppu->ly == 144) {
             // VBlank interrupt
-            printf("\n\n --------------------- Hit a VBlank. Rendering next frame.\n"); 
-            cpu->iflag |= 0x01; 
+            //printf("\n\n --------------------- Hit a VBlank. Rendering next frame.\n"); 
+            cpu->iflag |= 0x01;
+            //write8(cpu, 0xFF0F, 0x01); 
             sdl_present(ppu);
         } 
         else if (ppu->ly > 153) {
@@ -120,9 +121,9 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
             break;
         }
     }
-    printf("\n\n\n VRAM:");
+    //printf("\n\n\n VRAM:");
     for(int i=0x8000; i<0x9FFF;i++){
-        printf("%02x ", cpu->memory[i]);
+        //printf("%02x ", cpu->memory[i]);
     }
 }
 
