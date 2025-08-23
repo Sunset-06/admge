@@ -14,7 +14,4 @@ So far, I'm focusing on getting all instructions working.
 - handle audio
 - get bank switching working
 
-Once it reaches a point where I can test it, i'll use the approach that ends up being faster.
-
-
 There's a bootrom in this repo, shamelessly sourced from [Hacktix](https://github.com/Hacktix/Bootix) 

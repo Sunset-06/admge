@@ -32,7 +32,8 @@ void start_cpu(CPU *cpu) {
     cpu->div = 0x00;  
     cpu->tima = 0x00; 
     cpu->tma = 0x00;  
-    cpu->tac = 0xF8;    
+    cpu->tac = 0xF8;
+    cpu->timer_counter = 0;    
 
     cpu->cycles = 0;
 }
@@ -66,7 +67,7 @@ void handle_interrupts(CPU *cpu) {
         cpu->cycles += 5;
     }
     // LCD STAT (bit 1)
-    else if (pending & 0x02) {
+    if (pending & 0x02) {
         cpu->iflag &= ~0x02;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
@@ -74,7 +75,7 @@ void handle_interrupts(CPU *cpu) {
         cpu->cycles += 5;
     }
     // Timer (bit 2)
-    else if (pending & 0x04) {
+    if (pending & 0x04) {
         printf("Timer interrupt handler");
         cpu->iflag &= ~0x04;
         cpu->ime = false;
@@ -83,7 +84,7 @@ void handle_interrupts(CPU *cpu) {
         cpu->cycles += 5;
     }
     // Serial (bit 3)
-    else if (pending & 0x08) {
+    if (pending & 0x08) {
         cpu->iflag &= ~0x08;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
@@ -91,7 +92,7 @@ void handle_interrupts(CPU *cpu) {
         cpu->cycles += 5;
     }
     // Joypad (bit 4)
-    else if (pending & 0x10) {
+    if (pending & 0x10) {
         cpu->iflag &= ~0x10;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
@@ -99,11 +100,6 @@ void handle_interrupts(CPU *cpu) {
         cpu->cycles += 5;
     }
 }
-
-/*
-* Add to your CPU struct:
-* int timer_counter;
-*/
 
 void update_timers(CPU *cpu, uint16_t tcycles) {
     // Update DIV counter (internal 16-bit counter)
@@ -113,9 +109,7 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
     if (!(cpu->tac & 0x04)) {
         return;
     }
-
-    // Add cycles to the TIMA accumulator
-    timer_counter += tcycles;
+    cpu->timer_counter += tcycles;
 
     // Get the cycle threshold for the current frequency
     uint16_t rate_cycles = 0;
@@ -126,8 +120,8 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
         case 3: rate_cycles = 256;  break; 
     }
 
-    while (timer_counter >= rate_cycles) {
-        timer_counter -= rate_cycles;
+    while (cpu->timer_counter >= rate_cycles) {
+        cpu->timer_counter -= rate_cycles;
 
         // Check if TIMA will overflow
         if (cpu->tima == 0xFF) {

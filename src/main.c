@@ -6,8 +6,6 @@ bool ime_enable = false;
 bool quit_flag = false;
 bool bootrom_flag = true;
 
-int timer_counter = 0;
-
 
 char serial_log[65536];  
 size_t serial_len = 0;

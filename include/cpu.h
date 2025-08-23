@@ -119,6 +119,7 @@ typedef struct {
     //timers
     uint16_t div;
     uint8_t tima, tma, tac;
+    int timer_counter;
 
     uint64_t cycles;
 } CPU;

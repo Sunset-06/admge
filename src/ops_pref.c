@@ -345,7 +345,7 @@ void run_pref_inst(CPU *cpu, uint8_t opcode){
         case 0x1E:  //RR [HL] 
             u8 = read8(cpu, reg->hl);
             temp8 = u8 & 0x01;
-            u8 = (u8 >> 1) | (reg->f & FLAG_C) ? 0x80 : 0x00;
+            u8 = (u8 >> 1) | ((reg->f & FLAG_C) ? 0x80 : 0x00);
             write8(cpu, reg->hl, u8);  
             set_Z(u8, cpu);
             set_N(0, cpu);
@@ -713,7 +713,7 @@ void run_pref_inst(CPU *cpu, uint8_t opcode){
             break;
         
         case 0x48:  // BIT 1,B
-            u8 = ((reg->a >> 1) & 1);
+            u8 = ((reg->b >> 1) & 1);
             set_Z(u8, cpu);
             set_N(0, cpu);
             set_H(1, cpu);
@@ -769,7 +769,7 @@ void run_pref_inst(CPU *cpu, uint8_t opcode){
             break;
         
         case 0x50:  // BIT 2,B
-            u8 = ((reg->a >> 2) & 1);
+            u8 = ((reg->b >> 2) & 1);
             set_Z(u8, cpu);
             set_N(0, cpu);
             set_H(1, cpu);

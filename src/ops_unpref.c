@@ -223,8 +223,8 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0x18:  //JR i8
             // Jump relative by i8 steps in pc
             offset = (int8_t) read8(cpu, cpu->pc+1);
-            cpu->pc += offset;
             cpu->pc += 2;
+            cpu->pc += offset;
             cpu->cycles += 3; 
             break;
         
@@ -295,7 +295,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0x20:  //JR NZ, i8
         // Jump by i8 steps if Z flag is NOT set
-            offset = (int8_t) read8(cpu, cpu->pc+1); 
+            offset = (int8_t)read8(cpu, cpu->pc+1); 
             cpu->pc += 2;
             if(!(reg->f & FLAG_Z)){
                 cpu->pc += offset;  
@@ -1159,11 +1159,24 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x8E:  //ADC A, [HL]
-            u8 = read8(cpu, reg->hl) + ((reg->f & FLAG_C)? 1 : 0);
+            u8 = read8(cpu, reg->hl);
+            temp8 = ((reg->f & FLAG_C)? 1 : 0);
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+
+            if (((reg->a & 0x0F) + (u8 & 0x0F) + temp8) > 0x0F) {
+                set_H(1, cpu);
+            } else {
+                set_H(0, cpu);
+            }
+            
+            if (u16 > 0xFF) {
+                set_C(1, cpu);
+            } else {
+                set_C(0, cpu);
+            }
+
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 2;
@@ -1328,11 +1341,24 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x9E:  //SBC A, HL
-            u8 = read8(cpu, reg->hl) + ((reg->f & FLAG_C) ? 1 : 0);
+            u8 = read8(cpu, reg->hl);
+            temp8 = ((reg->f & FLAG_C) ? 1 : 0);
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+
+            if ((reg->a & 0x0F) < ((u8 & 0x0F) + temp8)) {
+                set_H(1, cpu);
+            } else {
+                set_H(0, cpu);
+            }
+            
+            if (u16 & 0xFF00) {
+                set_C(1, cpu);
+            } else {
+                set_C(0, cpu);
+            }
+
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 2;
@@ -1673,7 +1699,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0xC0:  //RET NZ
             if (!(reg->f & FLAG_Z)) {
                 cpu->pc = stack_pop(cpu);
-                cpu->cycles = 5;
+                cpu->cycles += 5;
             } 
             else {
                 cpu->pc += 1;
@@ -2019,12 +2045,13 @@ void run_inst(uint8_t opcode, CPU *cpu){
             // 16bit ADD - signed i8 to sp
             set_Z(1, cpu);
             set_N(0, cpu);
-            offset = (int8_t)read8(cpu, cpu->pc+1);
-            if (((cpu->sp & 0xF) + (offset & 0xF)) > 0xF)
-                set_H(1, cpu);
+            offset  = (int8_t)read8(cpu, cpu->pc+1);
+            uint8_t low_sp = cpu->sp & 0xFF;
+            uint8_t low_offset = offset;
 
-            if (((cpu->sp & 0xFF) + (offset & 0xFF)) > 0xFF)
-                set_C(1, cpu);
+            set_H(((cpu->sp & 0xF) + (offset & 0xF)) > 0xF, cpu);
+            set_C(((low_sp & 0xFF) + (low_offset & 0xFF)) > 0xFF, cpu); // C seems to be using only the low bytes. 
+
             cpu->sp += offset;
             cpu->pc += 2;
             cpu->cycles += 4; 
