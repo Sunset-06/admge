@@ -135,12 +135,15 @@ extern void set_H_sub(uint8_t a, uint8_t b, CPU *cpu);
 extern void set_H_add16(uint16_t a, uint16_t b, CPU *cpu);
 extern void set_H_inc(uint8_t before, CPU *cpu);
 extern void set_H_dec(uint8_t before, CPU *cpu);
+extern void set_H_adc(uint8_t a, uint8_t b, uint8_t c, CPU *cpu);
+extern void set_H_sbc(uint8_t a, uint8_t b, uint8_t c, CPU *cpu);
 
 extern void set_C(bool condition, CPU *cpu);
 extern void set_C_add(uint8_t a, uint8_t b, CPU *cpu);
 extern void set_C_sub(uint8_t a, uint8_t b, CPU *cpu);
 extern void set_C_add16(uint16_t a, uint16_t b, CPU *cpu);
-extern void set_C_sbc(uint8_t a, uint8_t b, bool carry, CPU *cpu);
+extern void set_C_adc(uint16_t res, CPU *cpu);
+extern void set_C_sbc(uint16_t res, CPU *cpu);
 
 extern void clear_flags(CPU *cpu);
 
@@ -155,6 +158,7 @@ extern uint16_t stack_pop(CPU *cpu);
 
 // --------------------- cpu functions
 extern void start_cpu(CPU *cpu);
+extern void start_cpu_noboot(CPU *cpu);
 extern void cpu_step(CPU *cpu);
 
 // --------------------- instructions

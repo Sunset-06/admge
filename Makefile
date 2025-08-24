@@ -26,8 +26,4 @@ $(BIN_DIR):
 clean:
 	rm -rf $(BIN_DIR)/*
 
-# Run the emulator
-run: $(TARGET)
-	./$(TARGET)
-
 .PHONY: all clean run

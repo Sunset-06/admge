@@ -285,7 +285,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             temp8 = (reg->f & FLAG_C) ? 0x80 : 0x00; // bit in carry
             u8 = reg->a & 0x01; // lsb
             reg->a = (reg->a >> 1) | temp8; // add carry to msb of a
-            set_Z(0, cpu);
+            set_Z(99, cpu);
             set_N(0, cpu);
             set_H(0, cpu);
             set_C(u8, cpu);
@@ -953,6 +953,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0x76:  //HALT
             cpu->halted= true;
+            cpu->pc += 1;
             break;
 
         case 0x77:  //LD HL, A
@@ -1093,66 +1094,78 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x88:  //ADC A, B
-            u8 = reg->b + ((reg->f & FLAG_C)? 1 : 0);
+            u8 = reg->b;
+            temp8 = ((reg->f & FLAG_C)? 1 : 0);
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+            set_H_adc(reg->a, u8, temp8, cpu);
+            set_C_adc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x89:  //ADC A, C
-            u8 = reg->c + ((reg->f & FLAG_C)? 1 : 0);
+            u8 = reg->c;
+            temp8 = ((reg->f & FLAG_C)? 1 : 0);
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+            set_H_adc(reg->a, u8, temp8, cpu);
+            set_C_adc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x8A:  //ADC A, D
-            u8 = reg->d + ((reg->f & FLAG_C)? 1 : 0);
+            u8 = reg->d;
+            temp8 = ((reg->f & FLAG_C)? 1 : 0);
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+            set_H_adc(reg->a, u8, temp8, cpu);
+            set_C_adc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x8B:  //ADC A, E
-            u8 = reg->e + ((reg->f & FLAG_C)? 1 : 0);
+            u8 = reg->e;
+            temp8 = ((reg->f & FLAG_C)? 1 : 0);
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+            set_H_adc(reg->a, u8, temp8, cpu);
+            set_C_adc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x8C:  //ADC A, H
-            u8 = reg->h + ((reg->f & FLAG_C)? 1 : 0);
+            u8 = reg->h;
+            temp8 = ((reg->f & FLAG_C)? 1 : 0);
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+            set_H_adc(reg->a, u8, temp8, cpu);
+            set_C_adc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x8D:  //ADC A, L
-            u8 = reg->l + ((reg->f & FLAG_C)? 1 : 0);
+            u8 = reg->l;
+            temp8 = ((reg->f & FLAG_C)? 1 : 0);
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+            set_H_adc(reg->a, u8, temp8, cpu);
+            set_C_adc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
@@ -1162,20 +1175,9 @@ void run_inst(uint8_t opcode, CPU *cpu){
             u8 = read8(cpu, reg->hl);
             temp8 = ((reg->f & FLAG_C)? 1 : 0);
             u16 = reg->a + u8 + temp8;
-            set_N(0, cpu);
-
-            if (((reg->a & 0x0F) + (u8 & 0x0F) + temp8) > 0x0F) {
-                set_H(1, cpu);
-            } else {
-                set_H(0, cpu);
-            }
-            
-            if (u16 > 0xFF) {
-                set_C(1, cpu);
-            } else {
-                set_C(0, cpu);
-            }
-
+            set_N(0, cpu);      
+            set_H_adc(reg->a, u8,temp8, cpu);
+            set_C_adc(u16, cpu);
             reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
@@ -1183,11 +1185,13 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x8F:  //ADC A, A
-            u8 = reg->a + ((reg->f & FLAG_C)? 1 : 0);
+            u8 = reg->a;
+            temp8 = ((reg->f & FLAG_C)? 1 : 0);
+            u16 = reg->a + u8 + temp8;
             set_N(0, cpu);
-            set_H_add(reg->a, u8, cpu);
-            set_C_add(reg->a, u8, cpu);
-            reg->a += u8;
+            set_H_adc(reg->a, u8, temp8, cpu);
+            set_C_adc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
@@ -1275,69 +1279,81 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x98:  //SBC A, B
-            u8 = reg->b + ((reg->f & FLAG_C) ? 1 : 0);
+            u8 = reg->b; 
+            temp8 = ((reg->f & FLAG_C) ? 1 : 0);
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+            set_H_sbc(reg->a, u8, temp8, cpu);
+            set_C_sbc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x99:  //SBC A, C
-            u8 = reg->c + ((reg->f & FLAG_C) ? 1 : 0);
+            u8 = reg->c; 
+            temp8 = ((reg->f & FLAG_C) ? 1 : 0);
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+            set_H_sbc(reg->a, u8, temp8, cpu);
+            set_C_sbc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x9A:  //SBC A, D
-            u8 = reg->d + ((reg->f & FLAG_C) ? 1 : 0);
+            u8 = reg->d; 
+            temp8 = ((reg->f & FLAG_C) ? 1 : 0);
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+            set_H_sbc(reg->a, u8, temp8, cpu);
+            set_C_sbc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x9B:  //SBC A, E
-            u8 = reg->e + ((reg->f & FLAG_C) ? 1 : 0);
+            u8 = reg->e; 
+            temp8 = ((reg->f & FLAG_C) ? 1 : 0);
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+            set_H_sbc(reg->a, u8, temp8, cpu);
+            set_C_sbc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x9C:  //SBC A, H
-            u8 = reg->h + ((reg->f & FLAG_C) ? 1 : 0);
+            u8 = reg->h; 
+            temp8 = ((reg->f & FLAG_C) ? 1 : 0);
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+            set_H_sbc(reg->a, u8, temp8, cpu);
+            set_C_sbc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
             break;
 
         case 0x9D:  //SBC A, L
-            u8 = reg->l + ((reg->f & FLAG_C) ? 1 : 0);
+            u8 = reg->l; 
+            temp8 = ((reg->f & FLAG_C) ? 1 : 0);
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+            set_H_sbc(reg->a, u8, temp8, cpu);
+            set_C_sbc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
-            cpu->cycles += 1;
             cpu->pc += 1;
+            cpu->cycles += 1;
             break;
 
         case 0x9E:  //SBC A, HL
@@ -1345,19 +1361,8 @@ void run_inst(uint8_t opcode, CPU *cpu){
             temp8 = ((reg->f & FLAG_C) ? 1 : 0);
             u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-
-            if ((reg->a & 0x0F) < ((u8 & 0x0F) + temp8)) {
-                set_H(1, cpu);
-            } else {
-                set_H(0, cpu);
-            }
-            
-            if (u16 & 0xFF00) {
-                set_C(1, cpu);
-            } else {
-                set_C(0, cpu);
-            }
-
+            set_H_sbc(reg->a, u8, temp8, cpu);
+            set_C_sbc(u16, cpu);
             reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
@@ -1365,11 +1370,13 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0x9F:  //SBC A, A
-            u8 = reg->a + ((reg->f & FLAG_C) ? 1 : 0);
+            u8 = reg->a; 
+            temp8 = ((reg->f & FLAG_C) ? 1 : 0);
+            u16 = reg->a - u8 - temp8;
             set_N(1, cpu);
-            set_H_sub(reg->a, u8, cpu);
-            set_C_sbc(reg->a, u8, reg->f & FLAG_C, cpu);
-            reg->a -= u8;
+            set_H_sbc(reg->a, u8, temp8, cpu);
+            set_C_sbc(u16, cpu);
+            reg->a = (uint8_t)u16;
             set_Z(reg->a, cpu);
             cpu->pc += 1;
             cpu->cycles += 1;
@@ -1734,12 +1741,12 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xC4:  //CALL NZ, u16
             u16 = read16(cpu, cpu->pc+1);
-            cpu->pc += 3;
             if (!(reg->f & FLAG_Z)) {
-                stack_push(cpu, cpu->pc);
+                stack_push(cpu, cpu->pc+3);
                 cpu->pc = u16;
-                cpu->cycles += 5;
+                cpu->cycles += 6;
             } else {
+                cpu->pc += 3;
                 cpu->cycles += 3; 
             }
             break;
@@ -1803,12 +1810,12 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xCC:  //CALL Z, u16
             u16 = read16(cpu, cpu->pc+1);
-            cpu->pc += 3;
             if ((reg->f & FLAG_Z)) {
-                stack_push(cpu, cpu->pc);
+                stack_push(cpu, cpu->pc+3);
                 cpu->pc = u16;
                 cpu->cycles += 6;
             } else {
+                cpu->pc += 3;
                 cpu->cycles += 3; 
             }
             break;
@@ -1881,12 +1888,12 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xD4:  //CALL NC, u16
             u16 = read16(cpu, cpu->pc+1);
-            cpu->pc += 3;
             if (!(reg->f & FLAG_C)) {
-                stack_push(cpu, cpu->pc);
+                stack_push(cpu, cpu->pc+3);
                 cpu->pc = u16;
-                cpu->cycles += 5;
+                cpu->cycles += 6;
             } else {
+                cpu->pc += 3;
                 cpu->cycles += 3; 
             }
             break;
@@ -1950,12 +1957,12 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xDC:  //CALL C, u16
             u16 = read16(cpu, cpu->pc+1);
-            cpu->pc += 3;
-            if (!(reg->f & FLAG_C)) {
-                stack_push(cpu, cpu->pc);
+            if ((reg->f & FLAG_C)) {
+                stack_push(cpu, cpu->pc+3);
                 cpu->pc = u16;
-                cpu->cycles += 5;
+                cpu->cycles += 6;
             } else {
+                cpu->pc += 3;
                 cpu->cycles += 3; 
             }
             break;
@@ -2049,7 +2056,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             uint8_t low_sp = cpu->sp & 0xFF;
             uint8_t low_offset = offset;
 
-            set_H(((cpu->sp & 0xF) + (offset & 0xF)) > 0xF, cpu);
+            set_H(((cpu->sp & 0xF) + ((uint8_t)offset & 0xF)) > 0xF, cpu);
             set_C(((low_sp & 0xFF) + (low_offset & 0xFF)) > 0xFF, cpu); // C seems to be using only the low bytes. 
 
             cpu->sp += offset;
@@ -2156,12 +2163,12 @@ void run_inst(uint8_t opcode, CPU *cpu){
             set_Z(1, cpu);
             set_N(0, cpu);
 
-            if ((cpu->sp & 0xF) + (offset & 0xF) > 0xF)
+            if ((cpu->sp & 0xF) + ((uint8_t)offset & 0xF) > 0xF)
                 cpu->regs.f |= FLAG_H;
             else
                 cpu->regs.f &= ~FLAG_H;
 
-            if ((cpu->sp & 0xFF) + (offset & 0xFF) > 0xFF)
+            if ((cpu->sp & 0xFF) + ((uint8_t)offset & 0xFF) > 0xFF)
                 cpu->regs.f |= FLAG_C;
             else
                 cpu->regs.f &= ~FLAG_C;

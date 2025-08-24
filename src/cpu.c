@@ -3,11 +3,11 @@
 
 // initializes emu state
 void start_cpu(CPU *cpu) {
-    ////printf("Starting CPU init\n");
-    cpu->regs.af = 0x01B0;  // A and F initial values 
-    cpu->regs.bc = 0x0013;  // B and C initial values
-    cpu->regs.de = 0x00D8;  // D and E initial values
-    cpu->regs.hl = 0x014D;  // H and L initial values
+    //printf("Starting CPU init\n");
+    cpu->regs.af = 0x0000;  
+    cpu->regs.bc = 0x0000; 
+    cpu->regs.de = 0x0000; 
+    cpu->regs.hl = 0x0000;
 
     // Stack pointer and program counter
     cpu->sp = 0xFFFE;
@@ -32,7 +32,44 @@ void start_cpu(CPU *cpu) {
     cpu->div = 0x00;  
     cpu->tima = 0x00; 
     cpu->tma = 0x00;  
-    cpu->tac = 0xF8;
+    cpu->tac = 0x00;
+    cpu->timer_counter = 0;    
+
+    cpu->cycles = 0;
+}
+
+/* Starting without a Bootrom, keeps expected 
+   values after the bootrom is executed. */
+void start_cpu_noboot(CPU *cpu) {
+    cpu->regs.af = 0x01B0;   
+    cpu->regs.bc = 0x0013;  
+    cpu->regs.de = 0x00D8; 
+    cpu->regs.hl = 0x014D;  
+
+    // Stack pointer and program counter
+    cpu->sp = 0xFFFE;
+    cpu->pc = 0x0100;  
+
+    // Initialize memory
+    for (int i = 0; i < MEMORY_SIZE; ++i) {
+        cpu->memory[i] = 0x00;
+    }
+
+    // initializes ppu state
+    ppu_init(&cpu->ppu);  
+    cpu->bootrom_flag = true;
+    // Interrupts and states
+    cpu->ime = false;  
+    cpu->ie = 0x00;  
+    cpu->iflag = 0x00;  
+
+    cpu->halted = false;
+    cpu->stopped = false;
+
+    cpu->div = cpu->memory[0xFF04] = 0xAB;  
+    cpu->tima = cpu->memory[0xFF05] = 0x00; 
+    cpu->tma = cpu->memory[0xFF06] = 0x00;  
+    cpu->tac = cpu->memory[0xFF04] = 0xF8;
     cpu->timer_counter = 0;    
 
     cpu->cycles = 0;
@@ -219,6 +256,20 @@ void set_H_inc(uint8_t before, CPU *cpu) {
         cpu->regs.f &= ~FLAG_H;
 }
 
+void set_H_adc(uint8_t a, uint8_t b, uint8_t c, CPU *cpu){
+    if (((a & 0x0F) + (b & 0x0F) + c) > 0x0F)
+        cpu->regs.f |= FLAG_H;
+    else
+        cpu->regs.f &= ~FLAG_H;
+}
+
+void set_H_sbc(uint8_t a, uint8_t b, uint8_t c, CPU *cpu){
+    if ((a & 0x0F) < ((b & 0x0F) + c))
+        cpu->regs.f |= FLAG_H;
+    else
+        cpu->regs.f &= ~FLAG_H;
+}
+
 void set_H_dec(uint8_t before, CPU *cpu) {
     if ((before & 0x0F) == 0)
         cpu->regs.f |= FLAG_H;
@@ -258,11 +309,17 @@ void set_C_add16(uint16_t a, uint16_t b, CPU *cpu) {
         cpu->regs.f &= ~FLAG_C;
 }
 
-void set_C_sbc(uint8_t a, uint8_t b, bool carry, CPU *cpu) {
-    uint16_t temp = a - b - (carry ? 1 : 0);
-    if (temp > 0xFF)
+void set_C_adc(uint16_t res, CPU *cpu) {
+    if (res > 0xFF)
         cpu->regs.f |= FLAG_C;
     else
+        cpu->regs.f &= ~FLAG_C;
+}
+
+void set_C_sbc(uint16_t res, CPU *cpu) {
+    if (res & 0xFF00)
+        cpu->regs.f |= FLAG_C;
+    else 
         cpu->regs.f &= ~FLAG_C;
 }
 
