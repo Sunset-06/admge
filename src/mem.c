@@ -20,13 +20,13 @@ bool load_rom(CPU *cpu, const char* filename) {
     //printf("\nLoading bootrom: %s\n",BOOT_ROM);
     FILE *bootromFile = fopen(BOOT_ROM, "rb");
     if (bootromFile == NULL) {
-        //printf("Error: Could not load boot ROM.\n");
+        printf("Error: Could not load boot ROM.\n");
         return false;
     }
     
     FILE* romFile = fopen(filename, "rb");
     if (!romFile) {
-        //printf("Error reading ROM. Please check ROM file\n");
+        printf("Error reading ROM. Please check ROM file\n");
         return false;
     }
 
@@ -70,22 +70,50 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
         return 0xFF;
     }
 
+    // Inputs
     if (addr == 0xFF00){
-        
-        return 0xCF;
-    } 
+        //0x20 - Select Buttons
+        //0x10 - Select Dpad
+        //0x8 - Start / D
+        //0x4 - Select / U
+        //0x2 - B / L
+        //0x1 - A / R
+        // Lower Nibble is Read-only
+        //  0 is pressed and 1 is not
+        // This extends to the two selection bits as well 
+        uint8_t selection = cpu->memory[0xFF00];
+        uint8_t result = 0xFF;
 
-    // I/O Registers
-    if (addr >= 0xFF01 && addr <= 0xFF7F) { 
-        // Interrupt Flag Register - Top 3 bits always read as 1
-        if (addr == 0xFF0F) return cpu->memory[addr];
-        if (addr >= 0xFF10 && addr <= 0xFF3F) return 0xFF; // Sound disabled
-        if (addr >= 0xFF40 && addr <= 0xFF4B) return ppu_read(cpu, addr);
+        result = (result & 0xCF) | (selection & 0x30);
+
+        if ((selection & 0x10) == 0) {
+            // Get D-pad state (Right, Left, Up, Down -> bits 0-3)
+            uint8_t dpad_state = cpu->joypad & 0x0F;
+            result &= (dpad_state | 0xF0); 
+        }
+
+        if ((selection & 0x20) == 0) {
+            // Get button state (A,B,Select,Start -> bits 4-7)
+            uint8_t button_state = (cpu->joypad >> 4) & 0x0F;
+            result &= (button_state | 0xF0);
+        }
+
+        return result;
     }
     
-    // Interrupt Enable Register
+    // Interrupt flag (cpu->iflag)
+    if (addr == 0xFF0F) {
+        return cpu->iflag;
+    }
+
+    // Sound
+    if (addr >= 0xFF10 && addr <= 0xFF3F) return 0xFF; // Sound disabled
+    // VRAM
+    if (addr >= 0xFF40 && addr <= 0xFF4B) return ppu_read(cpu, addr);
+    
+    // Interrupt Enable Register (cpu->ie)
     if (addr == 0xFFFF) {
-        return cpu->memory[addr];
+        return cpu->ie;
     }
 
     // PPU registers
@@ -156,11 +184,15 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
         return;
     }
 
+    if (addr == 0xFF00) {
+        cpu->memory[0xFF00] = (value & 0x30) | 0xCF; // lower nibble is read only here
+    }
+
     // Interrupt Flag Register
     if (addr == 0xFF0F) {
         printf("GOT a WRITE to IFLAG\n");
-        cpu->memory[0xFF0F] = value;
-        //cpu->iflag = value;  // Adding this line sends the test rom into a loop lol
+        //cpu->memory[0xFF0F] = value;
+        cpu->iflag = value;
         return;
     }
 
@@ -173,7 +205,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
     // Interrupt Enable Register
     if (addr == 0xFFFF) {
         printf("GOT a WRITE to IE\n");
-        cpu->memory[0xFFFF] = value;
+        //cpu->memory[0xFFFF] = value;
         cpu->ie = value;
         return;
     }

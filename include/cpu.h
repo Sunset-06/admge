@@ -121,6 +121,11 @@ typedef struct {
     uint8_t tima, tma, tac;
     int timer_counter;
 
+    // storing the state of all 8 buttons together
+    // St Sl B A - upper nibble is buttons
+    // D U L R   - lower nibble is DPAD
+    uint8_t joypad;
+
     uint64_t cycles;
 } CPU;
 

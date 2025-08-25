@@ -33,7 +33,9 @@ void start_cpu(CPU *cpu) {
     cpu->tima = 0x00; 
     cpu->tma = 0x00;  
     cpu->tac = 0x00;
-    cpu->timer_counter = 0;    
+    cpu->timer_counter = 0;
+    
+    cpu->joypad = 0xFF;
 
     cpu->cycles = 0;
 }
@@ -72,11 +74,12 @@ void start_cpu_noboot(CPU *cpu) {
     cpu->tac = cpu->memory[0xFF04] = 0xF8;
     cpu->timer_counter = 0;    
 
+    cpu->joypad = 0xFF;
+
     cpu->cycles = 0;
 }
 
-void handle_interrupts(CPU *cpu) {
-    // Acknowledge a pending interrupt
+bool handle_interrupts(CPU *cpu) {
     printf("iflag / ie / ime : %04x / %04x / %04x\n", cpu->iflag, cpu->ie, cpu->ime);
     uint8_t pending = cpu->iflag & cpu->ie;
     
@@ -86,7 +89,7 @@ void handle_interrupts(CPU *cpu) {
 
     if (!cpu->ime) {
         printf("No ime this step. continue\n\n");
-        return;
+        return false;
     }
     printf("Interrupt signal. Pending: %04x\n",pending);
 
@@ -102,40 +105,46 @@ void handle_interrupts(CPU *cpu) {
         // Jump to the V-Blank interrupt vector
         cpu->pc = 0x40;
         cpu->cycles += 5;
+        return true;
     }
     // LCD STAT (bit 1)
-    if (pending & 0x02) {
+    else if (pending & 0x02) {
         cpu->iflag &= ~0x02;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
         cpu->pc = 0x48;
         cpu->cycles += 5;
+        return true;
     }
     // Timer (bit 2)
-    if (pending & 0x04) {
+    else if (pending & 0x04) {
         printf("Timer interrupt handler");
         cpu->iflag &= ~0x04;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
         cpu->pc = 0x50;
         cpu->cycles += 5;
+        return true;
     }
     // Serial (bit 3)
-    if (pending & 0x08) {
+    else if (pending & 0x08) {
         cpu->iflag &= ~0x08;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
         cpu->pc = 0x58;
         cpu->cycles += 5;
+        return true;
     }
     // Joypad (bit 4)
-    if (pending & 0x10) {
+    else if (pending & 0x10) {
         cpu->iflag &= ~0x10;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
         cpu->pc = 0x60;
         cpu->cycles += 5;
+        return true;
     }
+    return false;
 }
 
 void update_timers(CPU *cpu, uint16_t tcycles) {
@@ -183,22 +192,31 @@ void cpu_step(CPU *cpu){
         cpu->ime = true;
         cpu->ime_enable = false;
     }
+
+    if(handle_interrupts(cpu)){
+        ppu_step(&cpu->ppu, cpu);
+        update_timers(cpu, cpu->cycles * 4);
+        cpu->cycles = 0;
+        return; 
+    }
     
     if (cpu->halted) {
-        //printf("The CPU was halted!\n\n");
-        handle_interrupts(cpu);
+        printf("The CPU was halted!\n\n");
+        cpu->cycles = 1; // 1 M-Cycle (4 T-Cycles)
+        ppu_step(&cpu->ppu, cpu);
+        update_timers(cpu, cpu->cycles * 4);
+        cpu->cycles = 0;
         return;
     }
 
-    //printf("Starting a step.\n");
+    printf("Starting a step.\n");
     uint8_t opcode = read8(cpu, cpu->pc);
     printf("Current op: %02x \n", opcode);
     run_inst(opcode, cpu);
-    //printf("pc post inst %02x \n\n", cpu->pc);
+    printf("pc post inst %02x \n\n", cpu->pc);
     ppu_step(&cpu->ppu, cpu);
     update_timers(cpu, cpu->cycles*4);
     cpu->cycles = 0;
-    handle_interrupts(cpu);
 }
 
 // Change Z based on result <- NOTE this is the exact opposite of all other flag functions

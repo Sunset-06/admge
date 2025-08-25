@@ -10,6 +10,7 @@ bool bootrom_flag = true;
 char serial_log[65536];  
 size_t serial_len = 0;
 
+
 void dump_serial_log(const char *filename) {
     FILE *f = fopen(filename, "w");
     if (!f) return;
@@ -78,6 +79,67 @@ void log_cpu_state(const CPU *cpu, FILE *log_file) {
             cpu->cycles);
 }
 
+// Useful for masking the cpu->joypad variable - updates the cpu input state
+const uint8_t BUTTON_R = 1; // Bit 0
+const uint8_t BUTTON_L = 1 << 1; // Bit 1
+const uint8_t BUTTON_U = 1 << 2; // Bit 2
+const uint8_t BUTTON_D = 1 << 3; // Bit 3
+const uint8_t BUTTON_A = 1 << 4; // Bit 4
+const uint8_t BUTTON_B = 1 << 5; // Bit 5
+const uint8_t BUTTON_SL = 1 << 6; // Bit 6
+const uint8_t BUTTON_ST = 1 << 7; // Bit 7
+
+void handle_input(CPU* cpu) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT)
+            quit_flag = true; 
+        else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+            printf("Key pressed! event: %d", event.type);
+            bool is_pressed = (event.type == SDL_KEYDOWN);
+            
+            switch (event.key.keysym.sym) {
+                // exit
+                case SDLK_ESCAPE:
+                    quit_flag = true;
+                    break;
+                // for logging
+                case SDLK_SPACE:
+                    dump_vram(cpu, "vram.bin");
+                    dump_header(cpu, "header.bin");
+                    dump_serial_log("serial.txt");
+                    break;
+                // DPad
+                case SDLK_RIGHT:
+                    is_pressed ? (cpu->joypad &= ~BUTTON_R) : (cpu->joypad |= BUTTON_R);
+                    break;
+                case SDLK_LEFT:
+                    is_pressed ? (cpu->joypad &= ~BUTTON_L) : (cpu->joypad |= BUTTON_L);
+                    break;
+                case SDLK_UP:
+                    is_pressed ? (cpu->joypad &= ~BUTTON_U) : (cpu->joypad |= BUTTON_U);
+                    break;
+                case SDLK_DOWN:
+                    is_pressed ? (cpu->joypad &= ~BUTTON_D) : (cpu->joypad |= BUTTON_D);
+                    break;
+                // Buttons (A, B, Sl, St)
+                case SDLK_z:
+                    is_pressed ? (cpu->joypad &= ~BUTTON_A) : (cpu->joypad |= BUTTON_A);
+                    break;
+                case SDLK_x:
+                    is_pressed ? (cpu->joypad &= ~BUTTON_B) : (cpu->joypad |= BUTTON_B);
+                    break;
+                case SDLK_RETURN:
+                    is_pressed ? (cpu->joypad &= ~BUTTON_ST) : (cpu->joypad |= BUTTON_ST);
+                    break;
+                case SDLK_RSHIFT:
+                    is_pressed ? (cpu->joypad &= ~BUTTON_SL) : (cpu->joypad |= BUTTON_SL);
+                    break;
+            }
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     /* Intializating everything */
     if(argc < 2){
@@ -101,28 +163,13 @@ int main(int argc, char *argv[]) {
     }
     
     init_screen(4);
-    FILE *full_dump = fopen("full_dump.txt", "w");
+    //FILE *full_dump = fopen("full_dump.txt", "w");
 
     while(!quit_flag){
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                quit_flag = true; 
-            } else if (event.type == SDL_KEYDOWN) {
-                if (event.key.keysym.sym == SDLK_ESCAPE) {
-                    quit_flag = true;  
-                }
-                if (event.key.keysym.sym == SDLK_SPACE) {
-                    dump_vram(&cpu, "vram.bin");
-                    dump_header(&cpu, "header.bin");
-                    dump_serial_log("serial.txt");
-                }
-            }
-        }
-
+        handle_input(&cpu);
         cpu_step(&cpu);
         //log_cpu_state(&cpu, full_dump);
     }
-    fclose(full_dump);
+    //fclose(full_dump);
     sdl_destroy();
 }

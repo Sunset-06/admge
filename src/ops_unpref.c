@@ -1935,7 +1935,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0xD9:  //RETI
             // Set Interrupt Master Enable after RET
             cpu->pc = stack_pop(cpu);
-            cpu->ime_enable = true;
+            cpu->ime = true;
             cpu->cycles += 4;
             break;
 
@@ -2191,7 +2191,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xFB:  //EI
-            printf("Got an EI call. That means the test starts\n");
+            printf("Got an EI call.\n");
             cpu->ime_enable = true;  
             cpu->pc += 1;
             cpu->cycles += 1;
