@@ -3,7 +3,7 @@
 
 // initializes emu state
 void start_cpu(CPU *cpu) {
-    //printf("Starting CPU init\n");
+    ////printf("Starting CPU init\n");
     cpu->regs.af = 0x0000;  
     cpu->regs.bc = 0x0000; 
     cpu->regs.de = 0x0000; 
@@ -80,7 +80,7 @@ void start_cpu_noboot(CPU *cpu) {
 }
 
 bool handle_interrupts(CPU *cpu) {
-    printf("iflag / ie / ime : %04x / %04x / %04x\n", cpu->iflag, cpu->ie, cpu->ime);
+    //printf("iflag / ie / ime : %04x / %04x / %04x\n", cpu->iflag, cpu->ie, cpu->ime);
     uint8_t pending = cpu->iflag & cpu->ie;
     
     if (cpu->halted && pending) {
@@ -88,17 +88,17 @@ bool handle_interrupts(CPU *cpu) {
     }
 
     if (!cpu->ime) {
-        printf("No ime this step. continue\n\n");
+        //printf("No ime this step. continue\n\n");
         return false;
     }
-    printf("Interrupt signal. Pending: %04x\n",pending);
+    //printf("Interrupt signal. Pending: %04x\n",pending);
 
     //VBlank
     if (pending & 0x01) {
-        printf("Handling the vblank");
+        //printf("Handling the vblank");
         // Clear the V-Blank interrupt flag
         cpu->iflag &= ~0x01;
-        printf("Iflag cleared: %04x",  cpu->iflag);
+        //printf("Iflag cleared: %04x",  cpu->iflag);
         // Disable global interrupts
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
@@ -118,7 +118,7 @@ bool handle_interrupts(CPU *cpu) {
     }
     // Timer (bit 2)
     else if (pending & 0x04) {
-        printf("Timer interrupt handler");
+        //printf("Timer interrupt handler");
         cpu->iflag &= ~0x04;
         cpu->ime = false;
         stack_push(cpu, cpu->pc);
@@ -188,7 +188,7 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
 */
 void cpu_step(CPU *cpu){
     if (cpu->ime_enable) {
-        printf("ime_enable hit true. Enabling ime now\n");
+        //printf("ime_enable hit true. Enabling ime now\n");
         cpu->ime = true;
         cpu->ime_enable = false;
     }
@@ -201,7 +201,7 @@ void cpu_step(CPU *cpu){
     }
     
     if (cpu->halted) {
-        printf("The CPU was halted!\n\n");
+        //printf("The CPU was halted!\n\n");
         cpu->cycles = 1; // 1 M-Cycle (4 T-Cycles)
         ppu_step(&cpu->ppu, cpu);
         update_timers(cpu, cpu->cycles * 4);
@@ -209,11 +209,11 @@ void cpu_step(CPU *cpu){
         return;
     }
 
-    printf("Starting a step.\n");
+    //printf("Starting a step.\n");
     uint8_t opcode = read8(cpu, cpu->pc);
-    printf("Current op: %02x \n", opcode);
+    //printf("Current op: %02x \n", opcode);
     run_inst(opcode, cpu);
-    printf("pc post inst %02x \n\n", cpu->pc);
+    //printf("pc post inst %02x \n\n", cpu->pc);
     ppu_step(&cpu->ppu, cpu);
     update_timers(cpu, cpu->cycles*4);
     cpu->cycles = 0;

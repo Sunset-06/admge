@@ -39,6 +39,15 @@
 #define VRAM_SIZE 0x2000  // 8KB
 #define OAM_SIZE 0xA0     // 160 bytes
 
+// A sprite struct
+typedef struct {
+    uint8_t y;
+    uint8_t x;
+    uint8_t tile_index;
+    uint8_t attributes;
+} Sprite;
+
+
 /* Struct for the PPU */
 typedef struct {
 
@@ -54,7 +63,7 @@ typedef struct {
     uint8_t bgp;  // BG Palette
     uint8_t obp0; // Object Palette 0
     uint8_t obp1; // Object Palette 1
-
+    uint8_t mode; // Keeps track of the OAM mode
     // PPU timing
     int mode_cycles;
     int scanline;

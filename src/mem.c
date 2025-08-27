@@ -12,21 +12,17 @@ void serial_write(uint8_t value) {
     }
 }
 
-void init_memory(CPU *cpu) {
-    memset(cpu->memory, 0, MEMORY_SIZE);
-}
-
 bool load_rom(CPU *cpu, const char* filename) {
-    //printf("\nLoading bootrom: %s\n",BOOT_ROM);
+    ////printf("\nLoading bootrom: %s\n",BOOT_ROM);
     FILE *bootromFile = fopen(BOOT_ROM, "rb");
     if (bootromFile == NULL) {
-        printf("Error: Could not load boot ROM.\n");
+        //printf("Error: Could not load boot ROM.\n");
         return false;
     }
     
     FILE* romFile = fopen(filename, "rb");
     if (!romFile) {
-        printf("Error reading ROM. Please check ROM file\n");
+        //printf("Error reading ROM. Please check ROM file\n");
         return false;
     }
 
@@ -132,7 +128,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
 
     // Boot ROM disable
     if (addr == 0xFF50 && cpu->bootrom_flag) {
-        //printf("Disabling bootrom");
+        ////printf("Disabling bootrom");
         bootrom_flag = false;
         return;
     }
@@ -140,7 +136,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
     if (addr == 0xFF02) { // SC (Serial control)
         // If transfer start (bit 7 set, and using internal clock bit 0)
         if (value == 0x81) {
-            //printf("Got a write to serial");
+            ////printf("Got a write to serial");
             uint8_t c = cpu->memory[0xFF01]; // read SB
             serial_write(c);
 
@@ -190,7 +186,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
 
     // Interrupt Flag Register
     if (addr == 0xFF0F) {
-        printf("GOT a WRITE to IFLAG\n");
+        //printf("GOT a WRITE to IFLAG\n");
         //cpu->memory[0xFF0F] = value;
         cpu->iflag = value;
         return;
@@ -204,7 +200,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
 
     // Interrupt Enable Register
     if (addr == 0xFFFF) {
-        printf("GOT a WRITE to IE\n");
+        //printf("GOT a WRITE to IE\n");
         //cpu->memory[0xFFFF] = value;
         cpu->ie = value;
         return;

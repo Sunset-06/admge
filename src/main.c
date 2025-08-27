@@ -23,26 +23,26 @@ void dump_serial_log(const char *filename) {
 void dump_vram(CPU *cpu, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        printf("Failed to open %s for writing\n", filename);
+        //printf("Failed to open %s for writing\n", filename);
         return;
     }
 
     // Dump entire VRAM (0x8000–0x9FFF)
     fwrite(&cpu->memory[0x8000], 1, 0x2000, file);
     fclose(file);
-    printf("VRAM dumped to %s\n", filename);
+    //printf("VRAM dumped to %s\n", filename);
 }
 
 void dump_header(CPU *cpu, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        printf("Failed to open %s for writing\n", filename);
+        //printf("Failed to open %s for writing\n", filename);
         return;
     }
 
     fwrite(&cpu->memory[0x0100], 1, 0x50, file);
     fclose(file);
-    printf("Header dumped to %s\n", filename);
+    //printf("Header dumped to %s\n", filename);
 }
 
 /* Logs the entire CPU state to passed file*/
@@ -91,11 +91,12 @@ const uint8_t BUTTON_ST = 1 << 7; // Bit 7
 
 void handle_input(CPU* cpu) {
     SDL_Event event;
+    uint8_t last_joypad = cpu->joypad;
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT)
             quit_flag = true; 
         else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-            printf("Key pressed! event: %d", event.type);
+            //printf("Joypad state: %04x\n\n", cpu->joypad);
             bool is_pressed = (event.type == SDL_KEYDOWN);
             
             switch (event.key.keysym.sym) {
@@ -138,12 +139,15 @@ void handle_input(CPU* cpu) {
             }
         }
     }
+    // request an interrupt if theres a change
+    if (((last_joypad ^ cpu->joypad) & last_joypad) > 0)
+        cpu->iflag |= (1 << 4); 
+
 }
 
 int main(int argc, char *argv[]) {
-    /* Intializating everything */
     if(argc < 2){
-        printf("Wrong start, use it like this:\n admge path/to/your/rom -noboot(optional)\n Aborting...");
+        //printf("Wrong start, use it like this:\n admge path/to/your/rom -noboot(optional)\n Aborting...");
         return 1;
     }
 
@@ -158,7 +162,7 @@ int main(int argc, char *argv[]) {
         start_cpu_noboot(&cpu);
     
     if(!load_rom(&cpu, inputRom)){
-        printf("Aborting...");
+        //printf("Aborting...");
         return 1;
     }
     

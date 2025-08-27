@@ -15,6 +15,7 @@ static inline uint8_t* get_register(CPU *cpu, int reg_index) {
     }
 }
 
+// trying to use a function instead of a switch for RES and SET
 void execute_RES(CPU *cpu, uint8_t opcode) {
     int bit = (opcode - 0x80) / 8;   // which bit to reset (0–7)
     int reg_index = (opcode - 0x80) % 8; // which register/(HL)

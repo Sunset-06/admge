@@ -9,8 +9,8 @@ Massive WIP, so this project will take some time to even reach playable state.
 - Get a game to boot :white_check_mark:
 - Get a boootrom working :white_check_mark:
 - Pass instruction tests :white_check_mark: 
-- Handle inputs  <--- [You are here]
-- Pass PPU tests
+- Handle inputs :white_check_mark:
+- Pass PPU tests <--- [You are here]
 - Handle audio
 - Get bank switching working
 

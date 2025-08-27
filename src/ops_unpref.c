@@ -2001,7 +2001,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
         case 0xE0:  //LDH u8, A
             u8 = read8(cpu, cpu->pc+1);
             write8(cpu, 0xFF00 + u8, reg->a);
-            //printf("Got a write to: %04x\n\n\n\n\n\n\n\n", 0xFF00+u8);
+            ////printf("Got a write to: %04x\n\n\n\n\n\n\n\n", 0xFF00+u8);
             cpu->pc += 2;
             cpu->cycles += 3;
             break;
@@ -2191,7 +2191,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
             break;
 
         case 0xFB:  //EI
-            printf("Got an EI call.\n");
+            //printf("Got an EI call.\n");
             cpu->ime_enable = true;  
             cpu->pc += 1;
             cpu->cycles += 1;
