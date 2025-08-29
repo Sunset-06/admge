@@ -13,7 +13,7 @@ bool init_screen(int scale) {
     }
 
     window = SDL_CreateWindow(
-        "AdmgE",
+        "admge",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         SCREEN_WIDTH * scale,

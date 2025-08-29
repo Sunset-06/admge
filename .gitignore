@@ -1,6 +1,7 @@
+full_dump.txt
+serial.txt
+*.bin
+gearboy
 /roms
 /bin
 /bootrom
-full_dump.txt
-serial.txt
-gearboy

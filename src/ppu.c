@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <pthread.h>
-static const uint32_t GAMEBOY_COLORS[4] = {
+static const uint32_t GAMEBOY_COLOURS[4] = {
     0xFFFFFFFF, // White
     0xFFAAAAAA, // Light Gray
     0xFF555555, // Dark Gray
@@ -30,7 +30,7 @@ void ppu_init(PPU *ppu) {
 
     // Clear framebuffer to white
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
-        ppu->framebuffer[i] = GAMEBOY_COLORS[0];
+        ppu->framebuffer[i] = GAMEBOY_COLOURS[0];
     }
 }
 
@@ -45,11 +45,11 @@ void dma_transfer(CPU *cpu, uint8_t value) {
 
 void ppu_step(PPU *ppu, CPU *cpu) {
     ppu->mode_cycles += cpu->cycles*4;
-    // Each scanline takes 456 cycles
 
     //OAM
     switch (ppu->stat & 0x03) {
-    case 0: // H-Blank
+    case 0: // HBlank
+        //printf("Enter HBlank\n");
         if (ppu->mode_cycles >= 204) {
             ppu->mode_cycles -= 204;
             ppu->ly++;
@@ -64,22 +64,33 @@ void ppu_step(PPU *ppu, CPU *cpu) {
                 ppu->stat = (ppu->stat & 0xFC) | 0x02;
             }
         }
+
+        if (ppu->ly == ppu->lyc) {
+            ppu->stat |= 0x04; // Set coincidence flag
+            if (ppu->stat & 0x40) { // If LYC=LY interrupt is enabled
+                cpu->iflag |= 0x02; // Request STAT interrupt
+            }
+        } else {
+            ppu->stat &= ~0x04; // Clear coincidence flag
+        }
         break;
 
-    case 1: // V-Blank
+    case 1: // VBlank
+        //printf("Enter VBlank\n");
         if(ppu->mode_cycles >= 456) {
             ppu->mode_cycles -= 456;
             ppu->ly++;
 
             if (ppu->ly > 153) {
                 ppu->ly = 0;
-                // Return to OAM Scan for the first scanline of the new frame
+                // Frame finished, now set mode back to OAM Scan
                 ppu->stat = (ppu->stat & 0xFC) | 0x02;
             }
         }
         break;
 
     case 2: // OAM Scan
+        //printf("Enter OAM scan\n");
         if (ppu->mode_cycles >= 80) {
             ppu->mode_cycles -= 80;
             // Enter Drawing mode
@@ -88,6 +99,7 @@ void ppu_step(PPU *ppu, CPU *cpu) {
         break;
 
     case 3: // Drawing
+        //printf("Drawing :D\n\n");
         if (ppu->mode_cycles >= 172) {
             ppu->mode_cycles -= 172;
             // Enter H-Blank
@@ -95,15 +107,6 @@ void ppu_step(PPU *ppu, CPU *cpu) {
             render_scanline(ppu, cpu);
         }
         break;
-    }
-
-    if (ppu->ly == ppu->lyc) {
-        ppu->stat |= 0x04; // Set coincidence flag
-        if (ppu->stat & 0x40) { // If LYC=LY interrupt is enabled
-            cpu->iflag |= 0x02; // Request STAT interrupt
-        }
-    } else {
-        ppu->stat &= ~0x04; // Clear coincidence flag
     }
 }
 
@@ -156,14 +159,15 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
             dma_transfer(cpu, value);
             break;
     }
-    ////printf("\n\n\n VRAM:");
+    //printf("\n\n\n VRAM:");
     for(int i=0x8000; i<0x9FFF;i++){
-        ////printf("%02x ", cpu->memory[i]);
+        //printf("%02x ", cpu->memory[i]);
     }
 }
 
-void render_scanline(PPU *ppu, CPU *cpu) {
-    if (!(ppu->lcdc & 0x80)) return; // LCD disabled
+
+// It says bg on the tin, but this renders both bg and window
+void render_bg(PPU *ppu, CPU *cpu){
 
     // Determine base addresses from LCDC register
     uint16_t bg_tile_map_base = (ppu->lcdc & 0x08) ? 0x9C00 : 0x9800;
@@ -178,7 +182,6 @@ void render_scanline(PPU *ppu, CPU *cpu) {
     for (int x = 0; x < SCREEN_WIDTH; x++) {
         // Check if the current pixel is inside the window's X range
         bool in_window = window_enabled && (x >= (ppu->wx - 7));
-
         if (in_window) {
             uint8_t window_x = x - (ppu->wx - 7); 
 
@@ -197,13 +200,13 @@ void render_scanline(PPU *ppu, CPU *cpu) {
             uint8_t byte1 = cpu->memory[tile_addr + line_in_tile * 2];
             uint8_t byte2 = cpu->memory[tile_addr + line_in_tile * 2 + 1];
 
-            // Combine the bytes to get the color ID
+            // Combine the bytes to get the colour ID
             uint8_t bit = 7 - (window_x % 8);
-            uint8_t color_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
+            uint8_t colour_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
             
-            // Get the actual color from the palette and write to the framebuffer
-            uint8_t shade = (ppu->bgp >> (color_id * 2)) & 0x03;
-            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + x] = GAMEBOY_COLORS[shade];
+            // Get the actual colour from the palette and write to the framebuffer
+            uint8_t shade = (ppu->bgp >> (colour_id * 2)) & 0x03;
+            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + x] = GAMEBOY_COLOURS[shade];
 
         } else if (ppu->lcdc & 0x01) {
             // Draw Background Pixel 
@@ -227,75 +230,122 @@ void render_scanline(PPU *ppu, CPU *cpu) {
             uint8_t byte1 = cpu->memory[tile_addr + tile_line * 2];
             uint8_t byte2 = cpu->memory[tile_addr + tile_line * 2 + 1];
             
-            // Combine the bytes to get the color ID
+            // Combine the bytes to get the colour ID
             uint8_t bit = 7 - (scrolled_x % 8);
-            uint8_t color_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
+            uint8_t colour_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
 
-            // Get the actual color from the palette and write to the framebuffer
-            uint8_t shade = (ppu->bgp >> (color_id * 2)) & 0x03;
-            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + x] = GAMEBOY_COLORS[shade];
+            // Get the actual colour from the palette and write to the framebuffer
+            uint8_t shade = (ppu->bgp >> (colour_id * 2)) & 0x03;
+            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + x] = GAMEBOY_COLOURS[shade];
         }
     }
+}
 
-    // OAM Sprites 
+// Innsertion sorts the objects based on x coordinate order 
+void ins_sort_obj(Sprite arr[], int n) {
+    int i, j;
+    Sprite key;
+    for (i = 1; i < n; i++) {
+        key = arr[i];
+        j = i - 1;
+        while (j >= 0 && arr[j].x > key.x) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+
+void render_objects(PPU *ppu, CPU *cpu){
+
     if (!(ppu->lcdc & 0x02)) return; // Sprites disabled
-
-    uint8_t sprite_height = (ppu->lcdc & 0x04) ? 16 : 8;
+    uint8_t obj_height = (ppu->lcdc & 0x04) ? 16 : 8;
+    //oam is storing 40 obects. each object has the four properties of the Sprite struct
     Sprite oam[40];
     memcpy(oam, &cpu->memory[0xFE00], sizeof(oam));
 
-    Sprite visible_sprites[10];
-    int sprite_count = 0;
+    // This buffer stores the visible objects
+    Sprite sp_buffer[10];
+    int obj_count = 0;
 
-    // Limiting to 10 sprites per scanline
-    for (int i = 0; i < 40 && sprite_count < 10; i++) {
-        int sprite_y = oam[i].y - 16;
-        if (ppu->ly >= sprite_y && ppu->ly < (sprite_y + sprite_height)) {
-            visible_sprites[sprite_count++] = oam[i];
-        }
+    /*
+    According to GBEDG:
+        Sprite X-Position must be greater than 0
+        LY + 16 must be greater than or equal to Sprite Y-Position
+        LY + 16 must be less than Sprite Y-Position + Sprite Height (8 in Normal Mode, 16 in Tall-Sprite-Mode)
+        The amount of sprites already stored in the OAM Buffer must be less than 10
+    
+    Adding the required objects to sp_buffer
+    This is esentially OAM scan for the current scanline
+    */
+    for (int i = 0; i < 40 && obj_count < 10; i++) {
+        if(oam[i].x <= 0) continue;
+        if(ppu->ly+16 < oam[i].y) continue;
+        if(ppu->ly + 16 >= oam[i].y + obj_height) continue;
+        sp_buffer[obj_count++] = oam[i];
     }
 
-    // reverse OAM order of priority
-    for (int i = sprite_count - 1; i >= 0; i--) {
-        Sprite s = visible_sprites[i];
-        int sprite_x = s.x - 8;
+    // Sort the objects by x coordinate increasing priority
+    ins_sort_obj(sp_buffer, obj_count);
+    for(int i=0; i<10; i++){
+        Sprite curr_sprite = sp_buffer[i];
+        
+        // select the obp and flip from flags
+        uint8_t palette_num = (curr_sprite.flags & 0x10) ? 1 : 0;
+        uint8_t palette = palette_num ? ppu->obp1 : ppu->obp0;
+        bool y_flip = (curr_sprite.flags & 0x40);
+        bool x_flip = (curr_sprite.flags & 0x20);
+        bool priority = (curr_sprite.flags & 0x80);
 
-        // Sprite attributes
-        bool x_flip = (s.attributes & 0x20);
-        bool y_flip = (s.attributes & 0x40);
-        bool bg_priority = (s.attributes & 0x80);
-        uint8_t palette_number = (s.attributes & 0x10) ? ppu->obp1 : ppu->obp0;
+        uint8_t tile_y = (ppu->ly - curr_sprite.y + 16);
 
-        uint8_t line_in_sprite = ppu->ly - (s.y - 16);
         if (y_flip) {
-            line_in_sprite = (sprite_height - 1) - line_in_sprite;
+            tile_y = obj_height - 1 - tile_y;
         }
 
-        uint16_t tile_addr = 0x8000 + (s.tile_index * 16);
-        uint8_t byte1 = cpu->memory[tile_addr + line_in_sprite * 2];
-        uint8_t byte2 = cpu->memory[tile_addr + line_in_sprite * 2 + 1];
-
-        for (int x_pixel = 0; x_pixel < 8; x_pixel++) {
-            int pixel_x = sprite_x + x_pixel;
-            if (pixel_x < 0 || pixel_x >= SCREEN_WIDTH) continue;
-
-            uint8_t bit = x_flip ? x_pixel : (7 - x_pixel);
-            uint8_t color_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
-
-            // color 0 = transparent
-            if (color_id == 0) continue;
-
-            // Handle background priority: sprite is behind BG if bg_priority is set
-            // and the background/window pixel is not color 0.
-            // Note: This check requires you to have stored the BG color ID, not the final color.
-            // A simpler, though less accurate, check is shown here.
-            uint32_t bg_pixel_color = ppu->framebuffer[ppu->ly * SCREEN_WIDTH + pixel_x];
-            if (bg_priority && bg_pixel_color != GAMEBOY_COLORS[0]) {
-                 continue;
+        uint8_t tile_index = curr_sprite.tile_index;
+        if (obj_height == 16) {
+            if (tile_y < 8) {
+                tile_index &= 0xFE; // Use first tile   
+            } else {
+                tile_index |= 0x01; // Use second tile
+                tile_y -= 8;
             }
+        }
+        uint16_t tile_addr = 0x8000 + (tile_index * 16) + (tile_y * 2);
 
-            uint8_t shade = (palette_number >> (color_id * 2)) & 0x03;
-            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + pixel_x] = GAMEBOY_COLORS[shade];
+        // This is pixel data (2bpp)
+        uint8_t bytelo = cpu->memory[tile_addr];
+        uint8_t bytehi = cpu->memory[tile_addr + 1];
+
+        for(int j=0;  j<8; j++){
+            int pixel_index = x_flip ? 7 - j : j;  
+            // we need msb to get the colours     
+            uint8_t colour_bit1 = (bytelo >> (7 - pixel_index)) & 1;
+            uint8_t colour_bit2 = (bytehi >> (7 - pixel_index)) & 1;
+            uint8_t colour_id = (colour_bit2 << 1) | colour_bit1;
+
+            if (colour_id == 0) continue;
+
+            int screen_x = curr_sprite.x - 8 + j;
+            
+            if (screen_x < 0 || screen_x >= 160) continue;
+            // --------------------------------------------------------
+
+            uint32_t index = ppu->ly * SCREEN_WIDTH + screen_x;
+            uint8_t shade_index = (palette >> (colour_id * 2)) & 0x03;
+            if (priority && ppu->framebuffer[index] != GAMEBOY_COLOURS[0]) {
+                continue;
+            }
+            ppu->framebuffer[index] = GAMEBOY_COLOURS[shade_index];
+
         }
     }
+}
+
+void render_scanline(PPU *ppu, CPU *cpu) {
+    if (!(ppu->lcdc & 0x80)) return; // LCD disabled
+    render_bg(ppu, cpu);
+    render_objects(ppu, cpu);
 }

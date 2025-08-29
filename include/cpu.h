@@ -39,12 +39,12 @@
 #define VRAM_SIZE 0x2000  // 8KB
 #define OAM_SIZE 0xA0     // 160 bytes
 
-// A sprite struct
+// Sprite struct
 typedef struct {
     uint8_t y;
     uint8_t x;
     uint8_t tile_index;
-    uint8_t attributes;
+    uint8_t flags;
 } Sprite;
 
 

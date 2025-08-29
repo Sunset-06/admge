@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define BOOT_ROM "./bootrom/bootix_dmg.bin"
-//#define BOOT_ROM "./bootrom/dmg_boot.bin"
+//#define BOOT_ROM "./bootrom/bootix_dmg.bin"
+#define BOOT_ROM "./bootrom/dmg_boot.bin"
 
 void serial_write(uint8_t value) {
     if (serial_len < sizeof(serial_log) - 1) {
