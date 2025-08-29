@@ -64,6 +64,8 @@ typedef struct {
     uint8_t obp0; // Object Palette 0
     uint8_t obp1; // Object Palette 1
     uint8_t mode; // Keeps track of the OAM mode
+    uint8_t wly;  // Window line counter
+    uint8_t wly_latch; // why
     // PPU timing
     int mode_cycles;
     int scanline;

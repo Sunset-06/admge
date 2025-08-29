@@ -24,6 +24,8 @@ void ppu_init(PPU *ppu) {
     ppu->bgp  = 0xFC;
     ppu->obp0 = 0xFF; 
     ppu->obp1 = 0xFF; 
+    ppu->wly  = 0x00;
+    ppu->wly_latch = false;
 
     ppu->mode_cycles = 0;
     ppu->scanline    = 0;
@@ -80,9 +82,10 @@ void ppu_step(PPU *ppu, CPU *cpu) {
         if(ppu->mode_cycles >= 456) {
             ppu->mode_cycles -= 456;
             ppu->ly++;
-
             if (ppu->ly > 153) {
                 ppu->ly = 0;
+                ppu->wly = 0;
+                ppu->wly_latch = false;
                 // Frame finished, now set mode back to OAM Scan
                 ppu->stat = (ppu->stat & 0xFC) | 0x02;
             }
@@ -143,11 +146,16 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
     }
 
     switch (addr) {
-        case 0xFF40: ppu->lcdc = value; break;
+        case 0xFF40:ppu->lcdc = value; 
+                    // if lcd is being switched off, set window line counter back to 0
+                    if (!(value & 0x80))// Bit 7 is the LCD enable bit
+                        ppu->wly = 0; 
+                    break;
         case 0xFF41: ppu->stat = value; break;
         case 0xFF42: ppu->scy  = value; break;
         case 0xFF43: ppu->scx  = value; break;
-        case 0xFF44: ppu->ly   = 0;     break; // <- This one is read only
+        case 0xFF44:ppu->ly = 0;     
+                    break; 
         case 0xFF45: ppu->lyc  = value; break;
         case 0xFF47: ppu->bgp  = value; break;
         case 0xFF48: ppu->obp0 = value; break;
@@ -159,59 +167,70 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
             dma_transfer(cpu, value);
             break;
     }
-    //printf("\n\n\n VRAM:");
-    for(int i=0x8000; i<0x9FFF;i++){
-        //printf("%02x ", cpu->memory[i]);
-    }
 }
 
+/*IMPORTANT --------------------------------------------------------------------------
+    "window is active" also probably needs a tweak - there's a hidden "window y latch" that is set to false at the start of the 
+    frame and true when WY==LY the first time in the frame.
+    The window will then draw on all lines after that, if WX is on-screen
+    i.e. the condition for window is "WY_latch is true and WX is <=166" not LY>=WY 
+
+    wow idk why pandocs feels cryptic 
+*/
 
 // It says bg on the tin, but this renders both bg and window
 void render_bg(PPU *ppu, CPU *cpu){
-
-    // Determine base addresses from LCDC register
-    uint16_t bg_tile_map_base = (ppu->lcdc & 0x08) ? 0x9C00 : 0x9800;
-    uint16_t window_tile_map_base = (ppu->lcdc & 0x40) ? 0x9C00 : 0x9800;
+    if(ppu->ly == ppu->wy)
+        ppu->wly_latch = true;
+    // LCDC sets these values
+    //get the addressing mode: $8000 unsigned or $9000 signed (8800 to 97FF)
     uint16_t tile_data_base = (ppu->lcdc & 0x10) ? 0x8000 : 0x9000;
+    // 0 = 9800–9BFF; 1 = 9C00–9FFF
+    uint16_t bg_tile_map_base = (ppu->lcdc & 0x08) ? 0x9C00 : 0x9800;
+    /// 0 = 9800–9BFF; 1 = 9C00–9FFF
+    uint16_t window_tile_map_base = (ppu->lcdc & 0x40) ? 0x9C00 : 0x9800;
 
     // Check if the window is enabled and visible on this scanline
-    bool window_enabled = (ppu->lcdc & 0x20) && (ppu->ly >= ppu->wy);
-    uint8_t window_y = ppu->ly - ppu->wy; 
+    bool window_visible = (ppu->lcdc & 0x20) && ppu->wly_latch && (ppu->wx < 166);
 
-    // Rendering BG and Windoew
-    for (int x = 0; x < SCREEN_WIDTH; x++) {
+    // Rendering BG and Window
+    // for every pixel in this scanline
+    for (int i = 0; i < SCREEN_WIDTH; i++) {
         // Check if the current pixel is inside the window's X range
-        bool in_window = window_enabled && (x >= (ppu->wx - 7));
-        if (in_window) {
-            uint8_t window_x = x - (ppu->wx - 7); 
-
-            uint16_t tile_map_addr = window_tile_map_base + ((window_y / 8) * 32) + (window_x / 8);
+        bool in_window = window_visible && (i >= (ppu->wx - 7));
+        if (in_window) {   
+            uint8_t window_x = i - (ppu->wx - 7);  
+            
+            //8 bits per tile and 
+            uint16_t tile_map_addr = window_tile_map_base  + ((ppu->wly / 8) * 32) + (window_x / 8);
             uint8_t tile_number = cpu->memory[tile_map_addr];
-
+            
             uint16_t tile_addr;
             // Choose signed or unsigned addressing
             if (tile_data_base == 0x8000) {
                 tile_addr = tile_data_base + (tile_number * 16);
             } else {
-                tile_addr = tile_data_base + (((int8_t)tile_number + 128) * 16);
+                tile_addr = tile_data_base + ((int8_t)tile_number * 16);
             }
 
-            uint8_t line_in_tile = window_y % 8;
+            uint8_t line_in_tile = ppu->wly % 8;
             uint8_t byte1 = cpu->memory[tile_addr + line_in_tile * 2];
             uint8_t byte2 = cpu->memory[tile_addr + line_in_tile * 2 + 1];
-
+ 
             // Combine the bytes to get the colour ID
             uint8_t bit = 7 - (window_x % 8);
             uint8_t colour_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
-            
+
             // Get the actual colour from the palette and write to the framebuffer
             uint8_t shade = (ppu->bgp >> (colour_id * 2)) & 0x03;
-            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + x] = GAMEBOY_COLOURS[shade];
+            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + i] = GAMEBOY_COLOURS[shade];
+
+    // ------------------------------------------------------------------------------------        
 
         } else if (ppu->lcdc & 0x01) {
             // Draw Background Pixel 
             uint8_t scrolled_y = (ppu->scy + ppu->ly) % 256; 
-            uint8_t scrolled_x = (ppu->scx + x) % 256;
+            uint8_t scrolled_x = (ppu->scx + i) % 256;
             
             // Get tile from the background tile map
             uint16_t tile_index_addr = bg_tile_map_base + ((scrolled_y / 8) * 32) + (scrolled_x / 8);
@@ -222,7 +241,7 @@ void render_bg(PPU *ppu, CPU *cpu){
             if (tile_data_base == 0x8000) {
                  tile_addr = tile_data_base + (tile_number * 16);
             } else {
-                 tile_addr = tile_data_base + (((int8_t)tile_number + 128) * 16);
+                 tile_addr = tile_data_base + ((int8_t)tile_number * 16);
             }
             
             // Get the two bytes for the current line of the tile
@@ -236,12 +255,17 @@ void render_bg(PPU *ppu, CPU *cpu){
 
             // Get the actual colour from the palette and write to the framebuffer
             uint8_t shade = (ppu->bgp >> (colour_id * 2)) & 0x03;
-            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + x] = GAMEBOY_COLOURS[shade];
+            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + i] = GAMEBOY_COLOURS[shade];
         }
+    }
+    // Incrementing window line counter
+    // If the window exists in this scanline
+    if (window_visible) {
+        ppu->wly += 1;
     }
 }
 
-// Innsertion sorts the objects based on x coordinate order 
+// Insertion sorts the objects based on x coordinate order 
 void ins_sort_obj(Sprite arr[], int n) {
     int i, j;
     Sprite key;
@@ -288,7 +312,7 @@ void render_objects(PPU *ppu, CPU *cpu){
 
     // Sort the objects by x coordinate increasing priority
     ins_sort_obj(sp_buffer, obj_count);
-    for(int i=0; i<10; i++){
+    for(int i=0; i<obj_count; i++){
         Sprite curr_sprite = sp_buffer[i];
         
         // select the obp and flip from flags
