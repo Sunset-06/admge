@@ -36,15 +36,6 @@ void ppu_init(PPU *ppu) {
     }
 }
 
-void dma_transfer(CPU *cpu, uint8_t value) {
-    uint16_t src = value << 8;
-    for (int i = 0; i < 0xA0; i++) {
-        write8(cpu, 0xFE00 + i, read8(cpu, src + i));
-    }
-    cpu->ppu.mode_cycles += 160*4;
-}
-
-
 void ppu_step(PPU *ppu, CPU *cpu) {
     ppu->mode_cycles += cpu->cycles*4;
 
@@ -113,6 +104,11 @@ void ppu_step(PPU *ppu, CPU *cpu) {
     }
 }
 
+void dma_transfer(CPU *cpu, uint8_t value) {
+    uint16_t src = value << 8;
+    memcpy(&cpu->memory[0xFE00], &cpu->memory[src], 0xA0);
+}
+
 uint8_t ppu_read(CPU *cpu, uint16_t addr) {
     PPU *ppu = &cpu->ppu;
 
@@ -165,6 +161,7 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
 
         case 0xFF46: // DMA Trigger
             dma_transfer(cpu, value);
+            cpu->cycles += 160;
             break;
     }
 }
@@ -174,8 +171,6 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
     frame and true when WY==LY the first time in the frame.
     The window will then draw on all lines after that, if WX is on-screen
     i.e. the condition for window is "WY_latch is true and WX is <=166" not LY>=WY 
-
-    wow idk why pandocs feels cryptic 
 */
 
 // It says bg on the tin, but this renders both bg and window
@@ -287,9 +282,9 @@ void render_objects(PPU *ppu, CPU *cpu){
     uint8_t obj_height = (ppu->lcdc & 0x04) ? 16 : 8;
     //oam is storing 40 obects. each object has the four properties of the Sprite struct
     Sprite oam[40];
-    memcpy(oam, &cpu->memory[0xFE00], sizeof(oam));
+    memcpy(oam, &cpu->memory[0xFE00], 0xA0);
 
-    // This buffer stores the visible objects
+    // This buffer stores the visible objects for current scanline
     Sprite sp_buffer[10];
     int obj_count = 0;
 
@@ -312,7 +307,9 @@ void render_objects(PPU *ppu, CPU *cpu){
 
     // Sort the objects by x coordinate increasing priority
     ins_sort_obj(sp_buffer, obj_count);
-    for(int i=0; i<obj_count; i++){
+    //printf("%u objects in scanline no: %u\n", obj_count, ppu->ly);
+    
+    for(int i=obj_count-1; i>=0; i--){
         Sprite curr_sprite = sp_buffer[i];
         
         // select the obp and flip from flags
@@ -359,9 +356,7 @@ void render_objects(PPU *ppu, CPU *cpu){
 
             uint32_t index = ppu->ly * SCREEN_WIDTH + screen_x;
             uint8_t shade_index = (palette >> (colour_id * 2)) & 0x03;
-            if (priority && ppu->framebuffer[index] != GAMEBOY_COLOURS[0]) {
-                continue;
-            }
+            if (priority && ppu->framebuffer[index] != GAMEBOY_COLOURS[0]) continue;
             ppu->framebuffer[index] = GAMEBOY_COLOURS[shade_index];
 
         }

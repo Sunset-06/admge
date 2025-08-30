@@ -133,6 +133,12 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
         return;
     }
 
+    if (addr >= 0x8000 && addr <= 0x9FFF) {
+        if ((cpu->ppu.lcdc & 0x80) && ((cpu->ppu.stat & 0x03) == 0x03)) {
+            return; // Ignore the write
+        }
+    }
+
     if (addr == 0xFF02) { // SC (Serial control)
         // If transfer start (bit 7 set, and using internal clock bit 0)
         if (value == 0x81) {
@@ -169,9 +175,9 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
         return;
     }
 
-    // OAM access blocked during modes 2+3
-    if ((addr >= 0xFE00 && addr <= 0xFE9F) && 
-        ((cpu->ppu.stat & 0x03) >= 0x02)) {
+    if (addr >= 0xFE00 && addr <= 0xFE9F) {
+        //printf("Wrote to OAM region in vram\n");
+        cpu->memory[addr] = value;
         return;
     }
 

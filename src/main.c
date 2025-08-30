@@ -23,26 +23,39 @@ void dump_serial_log(const char *filename) {
 void dump_vram(CPU *cpu, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        //printf("Failed to open %s for writing\n", filename);
+        printf("Failed to open %s for writing\n", filename);
         return;
     }
 
     // Dump entire VRAM (0x8000–0x9FFF)
     fwrite(&cpu->memory[0x8000], 1, 0x2000, file);
     fclose(file);
-    //printf("VRAM dumped to %s\n", filename);
+    printf("VRAM dumped to %s\n", filename);
+}
+
+void dump_oam(CPU *cpu, const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    if (!file) {
+        printf("Failed to open %s for writing\n", filename);
+        return;
+    }
+
+    // Dump entire OAM (0xFE00–0xFE9F)
+    fwrite(&cpu->memory[0xFE00], 1, 0x9F, file);
+    fclose(file);
+    printf("OAM dumped to %s\n", filename);
 }
 
 void dump_header(CPU *cpu, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        //printf("Failed to open %s for writing\n", filename);
+        printf("Failed to open %s for writing\n", filename);
         return;
     }
 
     fwrite(&cpu->memory[0x0100], 1, 0x50, file);
     fclose(file);
-    //printf("Header dumped to %s\n", filename);
+    printf("Header dumped to %s\n", filename);
 }
 
 /* Logs the entire CPU state to passed file*/
@@ -107,6 +120,7 @@ void handle_input(CPU* cpu) {
                 // for logging
                 case SDLK_SPACE:
                     dump_vram(cpu, "vram.bin");
+                    dump_oam(cpu, "oam.bin");
                     dump_header(cpu, "header.bin");
                     dump_serial_log("serial.txt");
                     break;
@@ -162,7 +176,7 @@ int main(int argc, char *argv[]) {
         start_cpu_noboot(&cpu);
     
     if(!load_rom(&cpu, inputRom)){
-        //printf("Aborting...");
+        printf("Aborting...");
         return 1;
     }
     
