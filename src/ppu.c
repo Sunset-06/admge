@@ -13,7 +13,7 @@ static const uint32_t GAMEBOY_COLOURS[4] = {
 
 void ppu_init(PPU *ppu) {
     // Default values for LCD registers 
-    ppu->lcdc = 0x91; 
+    ppu->lcdc = 0x00; 
     ppu->stat = 0x85; 
     ppu->scy  = 0x00; 
     ppu->scx  = 0x00; 
@@ -34,6 +34,19 @@ void ppu_init(PPU *ppu) {
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
         ppu->framebuffer[i] = GAMEBOY_COLOURS[0];
     }
+}
+
+void lcd_off(PPU *ppu){
+    ppu->ly = 0;
+    // PPU enters Hblank
+    ppu->stat = (ppu->stat & 0xFC) | 0x00;
+    ppu->mode_cycles = 0;
+    ppu->wly_latch = false;
+    for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
+        ppu->framebuffer[i] = GAMEBOY_COLOURS[0];
+    }
+    ppu->wly = 0;
+
 }
 
 void ppu_step(PPU *ppu, CPU *cpu) {
@@ -105,6 +118,7 @@ void ppu_step(PPU *ppu, CPU *cpu) {
 }
 
 void dma_transfer(CPU *cpu, uint8_t value) {
+    //printf("Hit a DMA\n");
     uint16_t src = value << 8;
     memcpy(&cpu->memory[0xFE00], &cpu->memory[src], 0xA0);
 }
@@ -145,7 +159,7 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
         case 0xFF40:ppu->lcdc = value; 
                     // if lcd is being switched off, set window line counter back to 0
                     if (!(value & 0x80))// Bit 7 is the LCD enable bit
-                        ppu->wly = 0; 
+                        lcd_off(ppu);
                     break;
         case 0xFF41: ppu->stat = value; break;
         case 0xFF42: ppu->scy  = value; break;
