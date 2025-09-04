@@ -76,6 +76,19 @@ typedef struct {
     uint32_t framebuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
 } PPU;
 
+/* Struct for the APU */
+typedef struct {
+    // Registers for the four channels
+    uint8_t nr10, nr11, nr12, nr13, nr14;
+    uint8_t nr21, nr22, nr23, nr24;
+    uint8_t nr30, nr31, nr32, nr33, nr34;
+    uint8_t nr41, nr42, nr43, nr44;
+
+    // Control registers
+    uint8_t nr50, nr51, nr52;
+
+    uint8_t waveform[16]; // 16 bytes for the custom waveform
+} APU;
 
 /* Struct for the Registers a,f,b,c,d,e,h,l */
 typedef struct {
