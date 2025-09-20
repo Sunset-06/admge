@@ -112,7 +112,7 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
     }
 
     // Sound
-    if (addr >= 0xFF10 && addr <= 0xFF3F) return 0xFF; // Sound disabled
+    if (addr >= 0xFF10 && addr <= 0xFF3F) return apu_read(cpu, addr); // Sound disabled
 
     // VRAM
     if (addr >= 0xFF40 && addr <= 0xFF4B) return ppu_read(cpu, addr);
@@ -196,6 +196,11 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
         cpu->iflag = value;
         return;
     }
+
+    if (addr >= 0xFF10 && addr <= 0xFF3F){
+        apu_write(cpu, addr, value);
+        return;
+    } 
 
     // PPU registers
     if (addr >= 0xFF40 && addr <= 0xFF4B) {

@@ -36,8 +36,14 @@
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 144
 
-#define VRAM_SIZE 0x2000  // 8KB
-#define OAM_SIZE 0xA0     // 160 bytes
+#define VRAM_SIZE 0x2000  
+#define OAM_SIZE 0xA0     
+
+#define AMPLITUDE 6000
+#define FREQUENCY 440           
+#define SAMPLE_RATE 44100
+#define CPU_FREQUENCY 4194304 
+
 
 // Sprite struct
 typedef struct {
@@ -78,6 +84,12 @@ typedef struct {
 
 /* Struct for the APU */
 typedef struct {
+    int main_clock;
+    int ch1_clock;
+    int ch2_clock;
+    int ch3_clock;
+    int ch4_clock;
+    int frame_seq_clock;
     // Registers for the four channels
     uint8_t nr10, nr11, nr12, nr13, nr14;
     uint8_t nr21, nr22, nr23, nr24;
@@ -86,8 +98,20 @@ typedef struct {
 
     // Control registers
     uint8_t nr50, nr51, nr52;
+    uint8_t frame_seq;
+
+    // enabled flags
+    bool ch1_enabled;
+    bool ch2_enabled;
+    bool ch3_enabled;
+    bool ch4_enabled;
+
 
     uint8_t waveform[16]; // 16 bytes for the custom waveform
+
+    int16_t internal_buffer[4096];
+    volatile int write_pos; // Where the main thread writes next
+    volatile int read_pos;  // Where the audio callback reads next
 } APU;
 
 /* Struct for the Registers a,f,b,c,d,e,h,l */
@@ -123,6 +147,7 @@ typedef struct {
 typedef struct {
     Registers regs;
     PPU ppu;
+    APU apu;
 
     //stack pointer and program counter
     uint16_t sp;
@@ -201,5 +226,12 @@ extern void ppu_step(PPU *ppu, CPU *cpu);
 extern uint8_t ppu_read(CPU *cpu, uint16_t addr);
 extern void ppu_write(CPU *cpu, uint16_t addr, uint8_t value);
 extern void render_scanline(PPU *ppu, CPU *cpu);
+
+// ---------------------- apu functions
+extern bool init_audio(APU *apu);
+extern uint8_t apu_read(APU *apu, uint16_t addr);
+extern void apu_write(APU *apu, uint16_t addr, uint8_t value);
+extern void apu_step(APU *apu, CPU *cpu);
+extern void destroy_audio();
 
 #endif 

@@ -4,37 +4,42 @@
 static SDL_AudioDeviceID audio_device;
 
 static void audio_callback(void *userdata, Uint8 *stream, int len) {
+    printf("running callback\n");
+    
     APU *apu = (APU*)userdata;
-    int16_t *buffer = (int16_t*)stream;
+    int16_t *op_buffer = (int16_t*)stream;
     int num_samples_to_generate = len / (sizeof(int16_t) * 2); // 2 for stereo
-
-    // This is where you generate audio samples and fill the buffer.
-    // In a real emulator, you'd have a buffer that the APU fills over time,
-    // and this callback would just copy data from it.
+    // avoid race
+    SDL_LockAudioDevice(audio_device);
+    
     for (int i = 0; i < num_samples_to_generate; ++i) {
-        // TODO: In your main loop, you'll call an apu_step() function that
-        // generates samples and puts them in a buffer.
-        // For now, let's just imagine we're getting them.
         
-        int16_t left_sample = 0;  // Get a generated left sample from APU
-        int16_t right_sample = 0; // Get a generated right sample from APU
-
-        *buffer++ = left_sample;  // Left channel
-        *buffer++ = right_sample; // Right channel
+        if (apu->read_pos != apu->write_pos) {
+            // Copy one sample from our buffer
+            op_buffer[i] = apu->internal_buffer[apu->read_pos];
+            
+            apu->read_pos = (apu->read_pos + 1) % 4096;
+        } else {
+            // If buffer is empty, play silence
+            op_buffer[i] = 0;
+        }
     }
+
+        SDL_UnlockAudioDevice(audio_device);
 }
 
 /* Initializes the SDL Audio subsystem and opens an audio device. */
 bool init_audio(APU *apu) {
+    printf("initng Audio thread\n");
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
         SDL_Log("SDL could not initialize audio! SDL_Error: %s", SDL_GetError());
         return false;
     }
 
     SDL_AudioSpec want, have;
-    SDL_zero(want); // Fills the struct with zeros
+    SDL_zero(want); 
 
-    want.freq = 44100;                // Samples per second
+    want.freq = SAMPLE_RATE;
     want.format = AUDIO_S16SYS;       // Signed 16-bit samples, system endianness
     want.channels = 2;                // Stereo audio
     want.samples = 1024;              // Audio buffer size in samples. Lower for less latency.
@@ -48,7 +53,6 @@ bool init_audio(APU *apu) {
         return false;
     }
 
-    // Start audio playback. The callback will now be called periodically.
     SDL_PauseAudioDevice(audio_device, 0);
     return true;
 }

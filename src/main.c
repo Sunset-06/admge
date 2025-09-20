@@ -181,6 +181,7 @@ int main(int argc, char *argv[]) {
     }
     
     init_screen(4);
+    init_audio(&cpu.apu);   
     //FILE *full_dump = fopen("full_dump.txt", "w");
 
     while(!quit_flag){
