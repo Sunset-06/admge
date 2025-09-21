@@ -36,9 +36,6 @@
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 144
 
-#define VRAM_SIZE 0x2000  
-#define OAM_SIZE 0xA0     
-
 #define AMPLITUDE 6000
 #define FREQUENCY 440           
 #define SAMPLE_RATE 44100
@@ -90,16 +87,50 @@ typedef struct {
     int ch3_clock;
     int ch4_clock;
     int frame_seq_clock;
+    
     // Registers for the four channels
     uint8_t nr10, nr11, nr12, nr13, nr14;
     uint8_t nr21, nr22, nr23, nr24;
     uint8_t nr30, nr31, nr32, nr33, nr34;
     uint8_t nr41, nr42, nr43, nr44;
-
-    // Control registers
+    // control regs
     uint8_t nr50, nr51, nr52;
     uint8_t frame_seq;
 
+
+    // CH1 State
+    bool ch1_enabled;
+    int ch1_timer;
+    int ch1_length_timer;
+    int ch1_duty_pos;
+    int ch1_envelope_timer;
+    uint8_t ch1_envelope_volume;
+    bool ch1_sweep_enabled;
+    int ch1_sweep_timer;
+    uint16_t ch1_sweep_frequency; 
+
+    // CH2 State 
+    bool ch2_enabled;
+    int ch2_timer;
+    int ch2_length_timer;
+    int ch2_duty_pos;
+    int ch2_envelope_timer;
+    uint8_t ch2_envelope_volume;
+
+    // CH3 State
+    bool ch3_enabled;
+    int ch3_timer;
+    int ch3_length_timer;
+    int ch3_wave_pos;
+    
+    // CH4 State
+    bool ch4_enabled;
+    int ch4_timer;
+    int ch4_length_timer;
+    uint16_t ch4_lfsr;
+    int ch4_envelope_timer;
+    uint8_t ch4_envelope_volume;
+    
     // enabled flags
     bool ch1_enabled;
     bool ch2_enabled;
@@ -107,7 +138,7 @@ typedef struct {
     bool ch4_enabled;
 
 
-    uint8_t waveform[16]; // 16 bytes for the custom waveform
+    uint8_t waveform[16]; // 16 bytes
 
     int16_t internal_buffer[4096];
     volatile int write_pos; // Where the main thread writes next
@@ -228,9 +259,9 @@ extern void ppu_write(CPU *cpu, uint16_t addr, uint8_t value);
 extern void render_scanline(PPU *ppu, CPU *cpu);
 
 // ---------------------- apu functions
-extern bool init_audio(APU *apu);
-extern uint8_t apu_read(APU *apu, uint16_t addr);
-extern void apu_write(APU *apu, uint16_t addr, uint8_t value);
+
+extern uint8_t apu_read(CPU *cpu, uint16_t addr);
+extern void apu_write(CPU *cpu, uint16_t addr, uint8_t value);
 extern void apu_step(APU *apu, CPU *cpu);
 extern void destroy_audio();
 

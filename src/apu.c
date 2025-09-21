@@ -113,6 +113,129 @@ void apu_write(CPU *cpu, uint16_t addr, uint8_t value) {
     }
 }
 
+// Clocks the length counters, volume envelopes, and frequency sweep
+static void frame_sequencer(APU *apu) {
+    switch (apu->frame_seq){
+        case 0:
+            clock_length_counters(apu);
+            break;
+
+        case 1:
+            break;
+
+        case 2:
+            clock_length_counters(apu);
+            clock_sweep(apu);
+            break;
+
+        case 3:
+            break;
+
+        case 4:
+            clock_length_counters(apu);
+            break;
+
+        case 5:
+            break;
+
+        case 6:
+            clock_length_counters(apu);
+            clock_sweep(apu);
+            break;
+
+        case 7:
+            clock_volume_envelopes(apu);
+            break;
+    }
+}
+
+static void clock_length_counters(APU *apu) {
+    // Channel 1
+    if ((apu->nr14 & 0x40) && apu->ch1_length_timer > 0) {
+        if (--apu->ch1_length_timer == 0) {
+            apu->ch1_enabled = false;
+            apu->nr52 &= ~0x01; // Clear CH1 status bit
+        }
+    }
+    // Channel 2
+    if ((apu->nr24 & 0x40) && apu->ch2_length_timer > 0) {
+        if (--apu->ch2_length_timer == 0) {
+            apu->ch2_enabled = false;
+            apu->nr52 &= ~0x02; // Clear CH2 status bit
+        }
+    }
+    // Channel 3
+    if ((apu->nr34 & 0x40) && apu->ch3_length_timer > 0) {
+        if (--apu->ch3_length_timer == 0) {
+            apu->ch3_enabled = false;
+            apu->nr52 &= ~0x04; // Clear CH3 status bit
+        }
+    }
+    // Channel 4
+    if ((apu->nr44 & 0x40) && apu->ch4_length_timer > 0) {
+        if (--apu->ch4_length_timer == 0) {
+            apu->ch4_enabled = false;
+            apu->nr52 &= ~0x08; // Clear CH4 status bit
+        }
+    }
+}
+
+static void clock_sweep(APU *apu) {
+    uint8_t sweep_period = (apu->nr10 >> 4) & 0x07;
+    if (!apu->ch1_sweep_enabled || sweep_period == 0) {
+        return;
+    }
+
+    if (--apu->ch1_sweep_timer <= 0) {
+        apu->ch1_sweep_timer = sweep_period;
+        
+        uint16_t current_freq = apu->ch1_sweep_frequency;
+        uint8_t shift = apu->nr10 & 0x07;
+        uint16_t offset = current_freq >> shift;
+        bool is_decrease = apu->nr10 & 0x08;
+        
+        uint16_t new_freq = is_decrease ? (current_freq - offset) : (current_freq + offset);
+
+        if (new_freq > 2047) {
+            apu->ch1_enabled = false;
+            apu->nr52 &= ~0x01;
+        } else if (shift > 0) {
+            apu->ch1_sweep_frequency = new_freq;
+            apu->nr13 = new_freq & 0xFF;
+            apu->nr14 = (apu->nr14 & 0xF8) | ((new_freq >> 8) & 0x07);
+        }
+    }
+}
+
+static void clock_volume_envelopes(APU *apu) {
+    uint8_t ch1_period = apu->nr12 & 0x07;
+    if (ch1_period > 0 && --apu->ch1_envelope_timer <= 0) {
+        apu->ch1_envelope_timer = ch1_period;
+        uint8_t current_vol = apu->ch1_envelope_volume;
+        bool is_increase = apu->nr12 & 0x08;
+        if (is_increase && current_vol < 15) apu->ch1_envelope_volume++;
+        else if (!is_increase && current_vol > 0) apu->ch1_envelope_volume--;
+    }
+
+    uint8_t ch2_period = apu->nr22 & 0x07;
+    if (ch2_period > 0 && --apu->ch2_envelope_timer <= 0) {
+        apu->ch2_envelope_timer = ch2_period;
+        uint8_t current_vol = apu->ch2_envelope_volume;
+        bool is_increase = apu->nr22 & 0x08;
+        if (is_increase && current_vol < 15) apu->ch2_envelope_volume++;
+        else if (!is_increase && current_vol > 0) apu->ch2_envelope_volume--;
+    }
+
+    uint8_t ch4_period = apu->nr42 & 0x07;
+    if (ch4_period > 0 && --apu->ch4_envelope_timer <= 0) {
+        apu->ch4_envelope_timer = ch4_period;
+        uint8_t current_vol = apu->ch4_envelope_volume;
+        bool is_increase = apu->nr42 & 0x08;
+        if (is_increase && current_vol < 15) apu->ch4_envelope_volume++;
+        else if (!is_increase && current_vol > 0) apu->ch4_envelope_volume--;
+    }
+}
+
 
 void apu_step(APU *apu, CPU *cpu){
 

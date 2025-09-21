@@ -36,7 +36,7 @@ bool init_screen(int scale) {
     return true;
 }
 
-void sdl_present(PPU *ppu) {
+void present_screen(PPU *ppu) {
     ////printf("Presenting...\n");
     SDL_UpdateTexture(texture, NULL, ppu->framebuffer, SCREEN_WIDTH * sizeof(uint32_t));
     SDL_RenderClear(renderer);
@@ -44,7 +44,7 @@ void sdl_present(PPU *ppu) {
     SDL_RenderPresent(renderer);
 }
 
-void sdl_destroy() {
+void destroy_screen() {
     if (texture) SDL_DestroyTexture(texture);
     if (renderer) SDL_DestroyRenderer(renderer);
     if (window) SDL_DestroyWindow(window);
