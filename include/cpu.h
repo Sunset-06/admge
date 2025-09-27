@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <SDL2/SDL.h>
 
 /* A Note about the Clock and Cycles
@@ -82,10 +83,6 @@ typedef struct {
 /* Struct for the APU */
 typedef struct {
     int main_clock;
-    int ch1_clock;
-    int ch2_clock;
-    int ch3_clock;
-    int ch4_clock;
     int frame_seq_clock;
     
     // Registers for the four channels
@@ -130,13 +127,6 @@ typedef struct {
     uint16_t ch4_lfsr;
     int ch4_envelope_timer;
     uint8_t ch4_envelope_volume;
-    
-    // enabled flags
-    bool ch1_enabled;
-    bool ch2_enabled;
-    bool ch3_enabled;
-    bool ch4_enabled;
-
 
     uint8_t waveform[16]; // 16 bytes
 
@@ -260,6 +250,7 @@ extern void render_scanline(PPU *ppu, CPU *cpu);
 
 // ---------------------- apu functions
 
+extern void apu_init(APU *apu);
 extern uint8_t apu_read(CPU *cpu, uint16_t addr);
 extern void apu_write(CPU *cpu, uint16_t addr, uint8_t value);
 extern void apu_step(APU *apu, CPU *cpu);

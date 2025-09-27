@@ -190,5 +190,6 @@ int main(int argc, char *argv[]) {
         //log_cpu_state(&cpu, full_dump);
     }
     //fclose(full_dump);
-    sdl_destroy();
+    destroy_audio();
+    destroy_screen();
 }

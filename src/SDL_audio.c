@@ -1,36 +1,33 @@
-#include <SDL2/SDL.h>
 #include "cpu.h" 
 
-static SDL_AudioDeviceID audio_device;
+SDL_AudioDeviceID audio_device;
 
 static void audio_callback(void *userdata, Uint8 *stream, int len) {
-    printf("running callback\n");
-    
+    printf("used callback!");
     APU *apu = (APU*)userdata;
     int16_t *op_buffer = (int16_t*)stream;
-    int num_samples_to_generate = len / (sizeof(int16_t) * 2); // 2 for stereo
-    // avoid race
+    
+    int num_sample_frames = len / (sizeof(int16_t) * 2);
+
     SDL_LockAudioDevice(audio_device);
     
-    for (int i = 0; i < num_samples_to_generate; ++i) {
-        
+    for (int i = 0; i < num_sample_frames; ++i) {
+        int16_t sample = 0; // Default to silence
+
         if (apu->read_pos != apu->write_pos) {
-            // Copy one sample from our buffer
-            op_buffer[i] = apu->internal_buffer[apu->read_pos];
-            
+            sample = apu->internal_buffer[apu->read_pos];
             apu->read_pos = (apu->read_pos + 1) % 4096;
-        } else {
-            // If buffer is empty, play silence
-            op_buffer[i] = 0;
         }
+
+        op_buffer[i * 2]     = sample;
+        op_buffer[i * 2 + 1] = sample;
     }
 
-        SDL_UnlockAudioDevice(audio_device);
+    SDL_UnlockAudioDevice(audio_device);
 }
 
-/* Initializes the SDL Audio subsystem and opens an audio device. */
 bool init_audio(APU *apu) {
-    printf("initng Audio thread\n");
+    printf("initing Audio thread\n");
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
         SDL_Log("SDL could not initialize audio! SDL_Error: %s", SDL_GetError());
         return false;

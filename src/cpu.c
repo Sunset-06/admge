@@ -18,8 +18,9 @@ void start_cpu(CPU *cpu) {
         cpu->memory[i] = 0x00;
     }
 
-    // initializes ppu state
-    ppu_init(&cpu->ppu);  
+    // initializes ppu and apu state
+    ppu_init(&cpu->ppu);
+    apu_init(&cpu->apu);  
     cpu->bootrom_flag = true;
     // Interrupts and states
     cpu->ime = false;  
@@ -57,8 +58,9 @@ void start_cpu_noboot(CPU *cpu) {
         cpu->memory[i] = 0x00;
     }
 
-    // initializes ppu state
+    // initializes ppu and apu state
     ppu_init(&cpu->ppu);  
+    apu_init(&cpu->apu);
     cpu->bootrom_flag = true;
     // Interrupts and states
     cpu->ime = false;  
@@ -195,6 +197,7 @@ void cpu_step(CPU *cpu){
 
     if(handle_interrupts(cpu)){
         ppu_step(&cpu->ppu, cpu);
+        apu_step(&cpu->apu, cpu);
         update_timers(cpu, cpu->cycles * 4);
         cpu->cycles = 0;
         return; 
@@ -204,6 +207,7 @@ void cpu_step(CPU *cpu){
         //printf("The CPU was halted!\n\n");
         cpu->cycles = 1; // 1 M-Cycle (4 T-Cycles)
         ppu_step(&cpu->ppu, cpu);
+        apu_step(&cpu->apu, cpu);
         update_timers(cpu, cpu->cycles * 4);
         cpu->cycles = 0;
         return;

@@ -1,9 +1,6 @@
 #include "cpu.h"
 #include "screen.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <pthread.h>
+
 static const uint32_t GAMEBOY_COLOURS[4] = {
     0xFFFFFFFF, // White
     0xFFAAAAAA, // Light Gray
