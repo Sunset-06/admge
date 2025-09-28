@@ -23,7 +23,10 @@ Mixing the output of the four channels together.
 Placing these generated samples into a separate, intermediate buffer*/
 
 /* There will be a separate thread that consumes this buffer. This thread will run synced to real time NOT the cpu cycles. 
-   I'll be placing this in my SDL_audio.c*/
+   I'll be placing this in my SDL_audio.c
+   
+   All of the apu code is ai generated as of now, i'll work on it when I have a beetter idea.
+   */
 
 void apu_init(APU *apu) {
     // 1. Zero out all internal state and most registers.

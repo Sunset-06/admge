@@ -161,7 +161,7 @@ void handle_input(CPU* cpu) {
 
 int main(int argc, char *argv[]) {
     if(argc < 2){
-        //printf("Wrong start, use it like this:\n admge path/to/your/rom -noboot(optional)\n Aborting...");
+        printf("Wrong start, use it like this:\n admge path/to/your/rom -noboot(optional)\n Aborting...");
         return 1;
     }
 
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
     if(bootrom_flag)
         start_cpu(&cpu); // This initializes everything normally - expects a bootrom
     else
-        start_cpu_noboot(&cpu);
+        start_cpu_noboot(&cpu); // This one does not need a bootrom
     
     if(!load_rom(&cpu, inputRom)){
         printf("Aborting...");
@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
     }
     
     init_screen(4);
-    init_audio(&cpu.apu);   
+    //init_audio(&cpu.apu);   
     //FILE *full_dump = fopen("full_dump.txt", "w");
 
     while(!quit_flag){
@@ -190,6 +190,6 @@ int main(int argc, char *argv[]) {
         //log_cpu_state(&cpu, full_dump);
     }
     //fclose(full_dump);
-    destroy_audio();
+    //destroy_audio();
     destroy_screen();
 }

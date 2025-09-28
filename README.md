@@ -11,8 +11,8 @@ Massive WIP, so this project will take some time to even reach playable state.
 - Pass instruction tests :white_check_mark: 
 - Handle inputs :white_check_mark:
 - Pass PPU tests :white_check_mark:
-- Handle audio <--- [You are here]
-- Get bank switching/ MBC working
+- Get bank switching/ MBC working <--- [You are here]
+- Handle audio
 
   
 > "You shouldn't implement 255 instructions at once. It becomes hell to debug later" <br/>
