@@ -18,6 +18,8 @@ bool load_rom(CPU *cpu, const char* filename) {
         printf("Error: Could not load boot ROM.\n");
         return false;
     }
+    fread(cpu->bootrom, 1, 0x0100, bootromFile);
+    fclose(bootromFile);
     
     FILE* romFile = fopen(filename, "rb");
     if (!romFile) {
@@ -25,11 +27,29 @@ bool load_rom(CPU *cpu, const char* filename) {
         return false;
     }
 
-    fread(cpu->bootrom, 1, 0x0100, bootromFile);
-    fread(cpu->memory, 1, 0x8000, romFile); // 0x0000 - 0x7FFF
+    fseek(romFile, 0, SEEK_END);
+    rom_size = ftell(romFile);
+    fseek(romFile, 0, SEEK_SET);
 
-    fclose(bootromFile);
+    rom = malloc(rom_size);
+    if (rom == NULL) {
+        printf("Error: Could not allocate memory for ROM\n");
+        fclose(romFile);
+        return false;
+    }
+
+    if (fread(rom, 1, rom_size, romFile) != rom_size) {
+        printf("Error: Could not read the full ROM file\n");
+        fclose(romFile);
+        free(rom);
+        return false;
+    }
     fclose(romFile);
+    
+    memcpy(cpu->memory, rom, 0x8000);
+    printf("Successfully loaded ROM. Size: %zu bytes\n", rom_size);
+    cpu->mbc_type = rom[0x0147];
+    printf("Cartridge Type: 0x%02X\n", cpu->mbc_type);
     return true;
 }
 
@@ -38,6 +58,28 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
     if (bootrom_flag && addr < 0x0100) {
         return cpu->bootrom[addr];
     }
+
+    // read from rom
+    if (addr <= 0x7FFF) {
+        // Bank 00 is fixed
+        if (addr <= 0x3FFF) {
+            return rom[addr];
+        }
+        // 0x4000-0x7FFF --> switchable banks
+        else {
+            uint32_t offset = (cpu->curr_rom_bank * 0x4000) + (addr - 0x4000);
+            return rom[offset];
+        }
+    }
+
+    // cartridge ram
+    if (addr >= 0xA000 && addr <= 0xBFFF) {
+        if (cpu->ram_enabled) {
+            uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
+        }
+        return 0xFF;
+    }
+
 
     // VRAM access control
     if (addr >= 0x8000 && addr <= 0x9FFF) {
@@ -134,13 +176,51 @@ uint16_t read16(CPU *cpu, uint16_t addr) {
 }
 
 void write8(CPU *cpu, uint16_t addr, uint8_t value) {
-    // Disabling the write to ROM for now
-    if (addr <= 0x7FFF)
+    
+    // write to MBC
+    if (addr <= 0x7FFF) {
+
+        // ------------------- MBC1
+        if (cpu->mbc_type >= 0x01 && cpu->mbc_type <= 0x03) {
+
+            if (addr <= 0x1FFF) {
+                cpu->ram_enabled = ((value & 0x0F) == 0x0A);
+                return;
+            }
+
+            if (addr >= 0x2000 && addr <= 0x3FFF) {
+                // The lower 5 bits of the value select the bank.
+                uint8_t bank = value & 0x1F; 
+                
+                // bank 0 defaults to 1
+                if (bank == 0) {
+                    bank = 1;
+                }
+                
+                cpu->curr_rom_bank = (cpu->curr_rom_bank & 0xE0) | bank;
+            }
+
+            if (addr >= 0x4000 && addr <= 0x5FFF) {
+                if (cpu->bank_mode == 0) { 
+                    cpu->curr_rom_bank = (cpu->curr_rom_bank & 0x1F) | ((value & 0x03) << 5);
+                } else { 
+                    cpu->curr_ram_bank = value & 0x03;
+                }
+                return;
+            }
+            
+            if(addr >= 0x6000){
+                cpu->bank_mode = value & 0x01;
+                return;
+            }
+        }
         return;
+
+    }
 
     if (addr >= 0x8000 && addr <= 0x9FFF) {
         if ((cpu->ppu.lcdc & 0x80) && ((cpu->ppu.stat & 0x03) == 0x03)) {
-            return; // Ignore the write
+            return; 
         }
     }
 

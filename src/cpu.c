@@ -35,7 +35,10 @@ void start_cpu(CPU *cpu) {
     cpu->tma = 0x00;  
     cpu->tac = 0x00;
     cpu->timer_counter = 0;
-    
+
+    cpu->mbc_type = 0;
+    cpu->curr_rom_bank = 1;
+
     cpu->joypad = 0xFF;
 
     cpu->cycles = 0;
@@ -74,7 +77,10 @@ void start_cpu_noboot(CPU *cpu) {
     cpu->tima = cpu->memory[0xFF05] = 0x00; 
     cpu->tma = cpu->memory[0xFF06] = 0x00;  
     cpu->tac = cpu->memory[0xFF04] = 0xF8;
-    cpu->timer_counter = 0;    
+    cpu->timer_counter = 0;
+
+    cpu->mbc_type = 0;
+    cpu->curr_rom_bank = 1;
 
     cpu->joypad = 0xFF;
 
@@ -93,7 +99,6 @@ bool handle_interrupts(CPU *cpu) {
         //printf("No ime this step. continue\n\n");
         return false;
     }
-    //printf("Interrupt signal. Pending: %04x\n",pending);
 
     //VBlank
     if (pending & 0x01) {

@@ -8,8 +8,10 @@
 
 extern bool quit_flag;
 extern bool bootrom_flag;
-extern char serial_log[65536];  
+extern char serial_log[65536];
 extern size_t serial_len;
+extern uint8_t *rom;
+extern size_t rom_size;
 
 extern void serial_write(uint8_t value);
 extern bool load_rom(CPU *cpu, const char* filename);

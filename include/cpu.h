@@ -191,6 +191,14 @@ typedef struct {
     uint8_t tima, tma, tac;
     int timer_counter;
 
+    //mbc
+    bool ram_enabled;
+    uint8_t mbc_type;
+    uint8_t bank_mode;
+    uint8_t curr_rom_bank;
+    uint8_t curr_ram_bank;
+    
+
     // storing the state of all 8 buttons together
     // St Sl B A - upper nibble is buttons
     // D U L R   - lower nibble is DPAD

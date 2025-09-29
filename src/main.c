@@ -9,6 +9,9 @@ bool bootrom_flag = true;
 
 char serial_log[65536];  
 size_t serial_len = 0;
+uint8_t *rom = NULL;
+size_t rom_size = 0;
+
 
 
 void dump_serial_log(const char *filename) {
@@ -192,4 +195,5 @@ int main(int argc, char *argv[]) {
     //fclose(full_dump);
     //destroy_audio();
     destroy_screen();
+    free(rom);
 }
