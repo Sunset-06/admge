@@ -20,7 +20,7 @@ bool init_screen(int scale) {
     );
     if (!window) return false;
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) return false;
 
     texture = SDL_CreateTexture(

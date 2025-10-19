@@ -14,7 +14,11 @@ Massive WIP, so this project will take some time to even reach playable state.
 - Get bank switching/ MBC working <--- [You are here]
 - Handle audio
 
-  
+
+Note: I'm relying on Vsync to limit the framerate. While untested, this should break on monitors with refresh rate above 60Hz.
+
+What if you've disabled VSync for your graphics driver? Well, enjoy the raw speed of your CPU then :D
+
 > "You shouldn't implement 255 instructions at once. It becomes hell to debug later" <br/>
 > _~someone who I should've encountered earlier in my life_
 
