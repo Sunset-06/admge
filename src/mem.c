@@ -76,6 +76,7 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
     if (addr >= 0xA000 && addr <= 0xBFFF) {
         if (cpu->ram_enabled) {
             uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
+            return cpu->external_ram[ram_offset];
         }
         return 0xFF;
     }
@@ -176,6 +177,17 @@ uint16_t read16(CPU *cpu, uint16_t addr) {
 }
 
 void write8(CPU *cpu, uint16_t addr, uint8_t value) {
+
+    if (addr >= 0xA000 && addr <= 0xBFFF) {
+        if (cpu->ram_enabled) {
+            uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
+            
+            if (ram_offset < EX_RAM_SIZE) { 
+                cpu->external_ram[ram_offset] = value;
+            }
+        }
+        return;
+    }
     
     // write to MBC
     if (addr <= 0x7FFF) {
@@ -198,6 +210,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
                 }
                 
                 cpu->curr_rom_bank = (cpu->curr_rom_bank & 0xE0) | bank;
+                return;
             }
 
             if (addr >= 0x4000 && addr <= 0x5FFF) {

@@ -26,7 +26,8 @@
     So DIV is the main clock, it just accumulates CPU cycles, and most things use it for timing
 */
 
-#define MEMORY_SIZE 0x10000
+#define MEMORY_SIZE 0x10000 // 64 kib
+#define EX_RAM_SIZE 0x20000 // 128 kib
 #define BOOTROM_SIZE 0x100
 
 #define FLAG_Z 0x80
@@ -190,6 +191,7 @@ typedef struct {
     uint16_t div;
     uint8_t tima, tma, tac;
     int timer_counter;
+    uint16_t div_counter;
 
     //mbc
     bool ram_enabled;
@@ -197,6 +199,7 @@ typedef struct {
     uint8_t bank_mode;
     uint8_t curr_rom_bank;
     uint8_t curr_ram_bank;
+    uint8_t external_ram[EX_RAM_SIZE];
     
 
     // storing the state of all 8 buttons together

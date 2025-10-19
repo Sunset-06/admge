@@ -18,6 +18,10 @@ void start_cpu(CPU *cpu) {
         cpu->memory[i] = 0x00;
     }
 
+    for (int i = 0; i < EX_RAM_SIZE; ++i) {
+        cpu->external_ram[i] = 0x00;
+    }
+
     // initializes ppu and apu state
     ppu_init(&cpu->ppu);
     //apu_init(&cpu->apu);  
@@ -35,6 +39,7 @@ void start_cpu(CPU *cpu) {
     cpu->tma = 0x00;  
     cpu->tac = 0x00;
     cpu->timer_counter = 0;
+    cpu->div_counter = 0;
 
     cpu->mbc_type = 0;
     cpu->curr_rom_bank = 1;
@@ -61,6 +66,10 @@ void start_cpu_noboot(CPU *cpu) {
         cpu->memory[i] = 0x00;
     }
 
+    for (int i = 0; i < EX_RAM_SIZE; ++i) {
+        cpu->external_ram[i] = 0x00;
+    }
+
     // initializes ppu and apu state
     ppu_init(&cpu->ppu);  
     //apu_init(&cpu->apu);
@@ -78,6 +87,7 @@ void start_cpu_noboot(CPU *cpu) {
     cpu->tma = cpu->memory[0xFF06] = 0x00;  
     cpu->tac = cpu->memory[0xFF04] = 0xF8;
     cpu->timer_counter = 0;
+    cpu->div_counter = 0;
 
     cpu->mbc_type = 0;
     cpu->curr_rom_bank = 1;
@@ -156,7 +166,13 @@ bool handle_interrupts(CPU *cpu) {
 
 void update_timers(CPU *cpu, uint16_t tcycles) {
     // Update DIV counter (internal 16-bit counter)
-    cpu->div += tcycles;
+    cpu->div_counter += tcycles;
+
+    while (cpu->div_counter >= 256) {
+        cpu->div_counter -= 256;
+        cpu->div++; 
+        cpu->memory[0xFF04] = cpu->div; 
+    }
 
     // Check if the timer is enabled in the TAC register (bit 2)
     if (!(cpu->tac & 0x04)) {
