@@ -227,6 +227,30 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
                 return;
             }
         }
+
+        // ------------------- MBC2
+        if (cpu->mbc_type == 0x05 || cpu->mbc_type == 0x06) {
+            
+            if (addr <= 0x3FFF) {
+                // If A8 is CLEAR (0): RAM Enable
+                if ((addr & 0x0100) == 0) {
+                    // RAM is enabled if lower 4 bits of value is 0x0A
+                    cpu->ram_enabled = ((value & 0x0F) == 0x0A);
+                    return;
+                } 
+                
+                else { 
+                    uint8_t bank = value & 0x0F;
+                    
+                    if (bank == 0) {
+                        bank = 1;
+                    }
+
+                    cpu->curr_rom_bank = bank; 
+                    return;
+                }
+            }
+        }
         return;
 
     }

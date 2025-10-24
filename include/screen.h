@@ -8,5 +8,7 @@
 extern bool init_screen(int scale);
 extern void present_screen(PPU *ppu);
 extern void destroy_screen(void);
+extern void init_audio(CPU *cpu);
+extern void destroy_audio();
 
 #endif

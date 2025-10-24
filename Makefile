@@ -1,6 +1,6 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -std=c11 -Iinclude
-LDFLAGS := `sdl2-config --cflags --libs`
+LDFLAGS := `sdl2-config --cflags --libs` -lm
 
 SRC_DIR := src
 INC_DIR := include

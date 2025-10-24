@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdatomic.h>
 #include <SDL2/SDL.h>
 
 /* A Note about the Clock and Cycles
@@ -42,6 +43,8 @@
 #define FREQUENCY 440           
 #define SAMPLE_RATE 44100
 #define CPU_FREQUENCY 4194304 
+#define AUDIO_BUFFER_SIZE 4096
+#define CYCLES_PER_SAMPLE (CPU_FREQUENCY / SAMPLE_RATE)
 
 
 // Sprite struct
@@ -131,9 +134,11 @@ typedef struct {
 
     uint8_t waveform[16]; // 16 bytes
 
+    double sample_counter;
     int16_t internal_buffer[4096];
-    volatile int write_pos; // Where the main thread writes next
-    volatile int read_pos;  // Where the audio callback reads next
+    atomic_int write_pos;
+    atomic_int read_pos;
+
 } APU;
 
 /* Struct for the Registers a,f,b,c,d,e,h,l */

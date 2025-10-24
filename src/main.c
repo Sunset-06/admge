@@ -184,16 +184,26 @@ int main(int argc, char *argv[]) {
     }
     
     init_screen(4);
-    //init_audio(&cpu.apu);   
+    init_audio(&cpu);   
     //FILE *full_dump = fopen("full_dump.txt", "w");
 
     while(!quit_flag){
         handle_input(&cpu);
         cpu_step(&cpu);
         //log_cpu_state(&cpu, full_dump);
+
+        // Sleep if the audio buffer is too full lol
+        int read_pos = atomic_load(&cpu.apu.read_pos);
+        int write_pos = atomic_load(&cpu.apu.write_pos);
+        int buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
+
+        // more than 3/4th full = sleep() 
+        if (buffer_fullness > (AUDIO_BUFFER_SIZE * 3 / 4)) {
+             SDL_Delay(1); 
+        }
     }
     //fclose(full_dump);
-    //destroy_audio();
+    destroy_audio();
     destroy_screen();
     free(rom);
 }
