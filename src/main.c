@@ -1,6 +1,6 @@
 #include "emu.h"
 #include "cpu.h"
-#include "screen.h"
+#include "peripherals.h"
 
 bool ime_enable = false;
 bool quit_flag = false;

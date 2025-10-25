@@ -1,5 +1,5 @@
 #include "cpu.h"
-#include <SDL2/SDL.h>
+#include "peripherals.h"
 
 static SDL_AudioDeviceID audio_device;
 

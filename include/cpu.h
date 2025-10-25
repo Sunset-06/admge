@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdatomic.h>
-#include <SDL2/SDL.h>
 
 /* A Note about the Clock and Cycles
     Every op will take a certain amount of m-cycles

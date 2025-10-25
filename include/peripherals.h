@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <SDL2/SDL.h>
 #include "cpu.h"
 
 extern bool init_screen(int scale);
