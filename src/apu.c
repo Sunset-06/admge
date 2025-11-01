@@ -8,6 +8,8 @@ void apu_init(APU *apu) {
     atomic_init(&apu->write_pos, 0);
     atomic_init(&apu->read_pos, 0);
     apu->sample_counter = 0.0;
+    apu->frame_seq_clock = 0;
+    apu->frame_seq = 0;
 }
 
 static void ch1_trigger(APU *apu) {
@@ -131,7 +133,172 @@ static int16_t generate_mixed_sample(APU *apu) {
     if (phase >= 2.0 * 3.14159265358979323846) {
         phase -= 2.0 * 3.14159265358979323846;
     }
-    return (int16_t)(sin(phase) * AMPLITUDE);
+    return 0; //(int16_t)(sin(phase) * AMPLITUDE);
+}
+
+// In apu.c, add these new functions:
+
+static void apu_step_length(APU *apu) {
+    // Channel 1
+    if ((apu->nr14 & 0x40) && apu->ch1_length_timer > 0) { // Length enabled?
+        apu->ch1_length_timer--;
+        if (apu->ch1_length_timer == 0) {
+            apu->ch1_enabled = false;
+            apu->nr52 &= ~0x01; // Update status bit
+        }
+    }
+    
+    // Channel 2
+    if ((apu->nr24 & 0x40) && apu->ch2_length_timer > 0) {
+        apu->ch2_length_timer--;
+        if (apu->ch2_length_timer == 0) {
+            apu->ch2_enabled = false;
+            apu->nr52 &= ~0x02;
+        }
+    }
+
+    // Channel 3
+    if ((apu->nr34 & 0x40) && apu->ch3_length_timer > 0) {
+        apu->ch3_length_timer--;
+        if (apu->ch3_length_timer == 0) {
+            apu->nr52 &= ~0x04; // Just clear status bit
+        }
+    }
+
+    // Channel 4
+    if ((apu->nr44 & 0x40) && apu->ch4_length_timer > 0) {
+        apu->ch4_length_timer--;
+        if (apu->ch4_length_timer == 0) {
+            apu->ch4_enabled = false;
+            apu->nr52 &= ~0x08;
+        }
+    }
+}
+
+static void apu_step_envelope(APU *apu) {
+    // Channel 1
+    uint8_t ch1_period = apu->nr12 & 0x07;
+    if (ch1_period > 0) {
+        if (apu->ch1_envelope_timer > 0) {
+            apu->ch1_envelope_timer--;
+        }
+        if (apu->ch1_envelope_timer == 0) {
+            apu->ch1_envelope_timer = ch1_period; // Reload
+            
+            uint8_t direction = (apu->nr12 & 0x08);
+            uint8_t current_vol = apu->ch1_envelope_volume;
+            
+            if (direction && current_vol < 15) {
+                apu->ch1_envelope_volume++;
+            } else if (!direction && current_vol > 0) {
+                apu->ch1_envelope_volume--;
+            }
+        }
+    }
+
+    // Channel 2
+    uint8_t ch2_period = apu->nr22 & 0x07;
+    if (ch2_period > 0) {
+        if (apu->ch2_envelope_timer > 0) {
+            apu->ch2_envelope_timer--;
+        }
+        if (apu->ch2_envelope_timer == 0) {
+            apu->ch2_envelope_timer = ch2_period;
+            uint8_t direction = (apu->nr22 & 0x08);
+            uint8_t current_vol = apu->ch2_envelope_volume;
+            if (direction && current_vol < 15) {
+                apu->ch2_envelope_volume++;
+            } else if (!direction && current_vol > 0) {
+                apu->ch2_envelope_volume--;
+            }
+        }
+    }
+
+    // Channel 4
+    uint8_t ch4_period = apu->nr42 & 0x07;
+    if (ch4_period > 0) {
+        if (apu->ch4_envelope_timer > 0) {
+            apu->ch4_envelope_timer--;
+        }
+        if (apu->ch4_envelope_timer == 0) {
+            apu->ch4_envelope_timer = ch4_period;
+            uint8_t direction = (apu->nr42 & 0x08);
+            uint8_t current_vol = apu->ch4_envelope_volume;
+            if (direction && current_vol < 15) {
+                apu->ch4_envelope_volume++;
+            } else if (!direction && current_vol > 0) {
+                apu->ch4_envelope_volume--;
+            }
+        }
+    }
+}
+
+static void apu_step_sweep(APU *apu) {
+    if (!apu->ch1_sweep_enabled) {
+        return;
+    }
+
+    if (apu->ch1_sweep_timer > 0) {
+        apu->ch1_sweep_timer--;
+    }
+    
+    if (apu->ch1_sweep_timer == 0) {
+        uint8_t sweep_period = (apu->nr10 >> 4) & 0x07;
+        apu->ch1_sweep_timer = (sweep_period == 0) ? 8 : sweep_period; // Reload
+
+        if (sweep_period > 0) {
+            // Run the sweep calculation
+            uint8_t sweep_shift = apu->nr10 & 0x07;
+            uint16_t new_freq = apu->ch1_sweep_frequency >> sweep_shift;
+            
+            if (apu->nr10 & 0x08) { // Subtraction
+                new_freq = apu->ch1_sweep_frequency - new_freq;
+            } else { // Addition
+                new_freq = apu->ch1_sweep_frequency + new_freq;
+            }
+
+            // Check for overflow and update
+            if (new_freq > 2047) {
+                apu->ch1_enabled = false;
+                apu->nr52 &= ~0x01;
+            } else if (sweep_shift > 0) {
+                apu->ch1_sweep_frequency = new_freq;
+                
+                // Update the actual channel 1 frequency registers
+                apu->nr13 = new_freq & 0xFF;
+                apu->nr14 = (apu->nr14 & 0xF8) | ((new_freq >> 8) & 0x07);
+                
+                // Run the overflow check again (hardware quirk)
+                uint16_t check_freq = new_freq >> sweep_shift;
+                if (apu->nr10 & 0x08) check_freq = new_freq - check_freq;
+                else check_freq = new_freq + check_freq;
+                
+                if (check_freq > 2047) {
+                     apu->ch1_enabled = false;
+                     apu->nr52 &= ~0x01;
+                }
+            }
+        }
+    }
+}
+
+static void apu_step_frame_sequencer(APU *apu, uint8_t step) {
+    // The sequencer clocks different components on different steps:
+    // Step 0: Length
+    // Step 2: Length, Sweep
+    // Step 4: Length
+    // Step 6: Length, Sweep
+    // Step 7: Envelope
+
+    if (step % 2 == 0) { // Steps 0, 2, 4, 6
+        apu_step_length(apu);
+    }
+    if (step == 2 || step == 6) { // Steps 2, 6
+        apu_step_sweep(apu);
+    }
+    if (step == 7) { // Step 7
+        apu_step_envelope(apu);
+    }
 }
 
 
@@ -177,14 +344,65 @@ void apu_step(APU *apu, CPU *cpu) {
 }
 
 uint8_t apu_read(CPU *cpu, uint16_t addr) {
-    // Why are you even reading this commit, look for something newer
+    APU *apu = &cpu->apu;
+
+    // NR52 (0xFF26) is always readable
+    if (addr == 0xFF26) {
+        return (apu->nr52 & 0x8F) | 0x70;
+    }
+
+    // Wave RAM (0xFF30 - 0xFF3F)
+    if (addr >= 0xFF30 && addr <= 0xFF3F) {
+        if ((apu->nr52 & 0x80) == 0 || (apu->nr52 & 0x04) == 0) {
+            return apu->waveform[addr - 0xFF30];
+        }
+        // If apu and ch3 are on, access is blocked
+        return 0xFF;
+    }
+
+    // apu is off
+    if ((apu->nr52 & 0x80) == 0) {
+        return 0xFF;
+    }
+
+    switch (addr) {
+        // --- Channel 1 ---
+        case 0xFF10: return apu->nr10 | 0x80;
+        case 0xFF11: return apu->nr11 | 0x3F; 
+        case 0xFF12: return apu->nr12;
+        case 0xFF13: return 0xFF; // Write-only
+        case 0xFF14: return apu->nr14 | 0xBF;
+
+        // --- Channel 2 ---
+        case 0xFF15: return 0xFF; // Unused
+        case 0xFF16: return apu->nr21 | 0x3F;
+        case 0xFF17: return apu->nr22;
+        case 0xFF18: return 0xFF; // Write-only
+        case 0xFF19: return apu->nr24 | 0xBF;
+
+        // --- Channel 3 ---
+        case 0xFF1A: return apu->nr30 | 0x7F;
+        case 0xFF1B: return 0xFF; // Write-only
+        case 0xFF1C: return apu->nr32 | 0x9F;
+        case 0xFF1D: return 0xFF; // Write-only
+        case 0xFF1E: return apu->nr34 | 0xBF;
+
+        // --- Channel 4 ---
+        case 0xFF1F: return 0xFF; // Unused
+        case 0xFF20: return 0xFF; // Write-only
+        case 0xFF21: return apu->nr42;
+        case 0xFF22: return apu->nr43;
+        case 0xFF23: return apu->nr44 | 0xBF;
+
+        case 0xFF24: return apu->nr50;
+        case 0xFF25: return apu->nr51;
+    }
     return 0xFF;
 }
 
 void apu_write(CPU *cpu, uint16_t addr, uint8_t value) {
 
     APU *apu = &cpu->apu;
-    // Writing to NR52 (0xFF26) bit 7 controls master power, all registers (0xFF10-0xFF25) are cleared.
     if (addr == 0xFF26) {
         apu->nr52 = (value & 0x80) | (apu->nr52 & 0x0F);
         
@@ -202,8 +420,10 @@ void apu_write(CPU *cpu, uint16_t addr, uint8_t value) {
 
     // Handle Waveform
     if (addr >= 0xFF30 && addr <= 0xFF3F) {
-        // This RAM is only accessible when Channel 3 is OFF.
-        apu->waveform[addr - 0xFF30] = value;
+        // Only writable if ch3 is off
+        if ((apu->nr52 & 0x80) == 0 || (apu->nr52 & 0x04) == 0) {
+            apu->waveform[addr - 0xFF30] = value;
+        }
         return;
     }
 
