@@ -1,7 +1,9 @@
 # admge
 A simple emulator for the original GameBoy (and hopefully CGB too) in C.
 
-Massive WIP, so this project will take some time to even reach playable state.
+Massive WIP, so this project ~~will take some time to even reach playable state~~ can run MBC1 games now!
+
+Audio support should come soon!
 
 ## Work left:
 
@@ -11,13 +13,22 @@ Massive WIP, so this project will take some time to even reach playable state.
 - Pass instruction tests :white_check_mark: 
 - Handle inputs :white_check_mark:
 - Pass PPU tests :white_check_mark:
-- Get bank switching/ MBC working <--- [You are here]
-- Handle audio
+- Get bank switching/ MBC working :white_check_mark:
+- Handle audio <--- [You are here]
+- Implement MBC2 an onwards
 
+## Issues:
 
-Note: I'm relying on Vsync to limit the framerate. While untested, this should break on monitors with refresh rate above 60Hz.
+There is a single bug within the PPU that I cannot pin down. I'm looking for it right now, but audio is higher priority.
 
+Note: I'm relying on Vsync to limit the framerate. While untested, this should break on monitors with refresh rate above 60Hz.  
 What if you've disabled VSync for your graphics driver? Well, enjoy the raw speed of your CPU then :D
+
+I'm actually not sure how to handle this issue, I could potentially use `sleep()` or other equivalents.  
+(I do not want to do that as that will bring about many more issues, and honestly, it feels a bit lazy)
+
+So for now just use VSync   
+<img src="https://i.pinimg.com/474x/3b/bb/db/3bbbdbca9e30c5dc52b069320aa54ab7.jpg" height="60" width="60" style="vertical-align: middle;" />
 
 > "You shouldn't implement 255 instructions at once. It becomes hell to debug later" <br/>
 > _~someone who I should've encountered earlier in my life_
