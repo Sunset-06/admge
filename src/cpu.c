@@ -220,7 +220,7 @@ void cpu_step(CPU *cpu){
 
     if(handle_interrupts(cpu)){
         ppu_step(&cpu->ppu, cpu);
-        //apu_step(&cpu->apu, cpu);
+        apu_step(&cpu->apu, cpu);
         update_timers(cpu, cpu->cycles * 4);
         cpu->cycles = 0;
         return; 
@@ -242,7 +242,7 @@ void cpu_step(CPU *cpu){
     run_inst(opcode, cpu);
     //printf("pc post inst %02x \n\n", cpu->pc);
     ppu_step(&cpu->ppu, cpu);
-    //apu_step(&cpu->apu, cpu);
+    apu_step(&cpu->apu, cpu);
     update_timers(cpu, cpu->cycles*4);
     cpu->cycles = 0;
 }

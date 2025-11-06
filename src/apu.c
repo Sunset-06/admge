@@ -2,6 +2,15 @@
 #include <string.h>
 #include <math.h>
 
+static const int DUTY_TABLE[4][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 1}, // 12.5%
+    {1, 0, 0, 0, 0, 0, 0, 1}, // 25%
+    {1, 0, 0, 0, 0, 1, 1, 1}, // 50%
+    {0, 1, 1, 1, 1, 1, 1, 0}  // 75%
+};
+
+static const int NOISE_TIMERS[8] = {8, 16, 32, 48, 64, 80, 96, 112};
+
 void apu_init(APU *apu) {
 
     memset(apu, 0, sizeof(APU));
@@ -118,6 +127,117 @@ static void ch4_trigger(APU *apu) {
     apu->ch4_envelope_timer = apu->nr42 & 0x07;
     
     apu->ch4_lfsr = 0xFFFF; // Reset Linear Feedback Shift Register
+
+    uint8_t clock_shift = apu->nr43 >> 4;
+    uint8_t divisor_code = apu->nr43 & 0x07;
+    apu->ch4_timer = NOISE_TIMERS[divisor_code] << clock_shift;
+}
+
+static void apu_step_timers(APU *apu, int t_cycles) {
+    // Channel 1 (Pulse)
+    if (apu->ch1_enabled) {
+        apu->ch1_timer -= t_cycles;
+        if (apu->ch1_timer <= 0) {
+            uint16_t freq_data = ((apu->nr14 & 0x07) << 8) | apu->nr13;
+            int period = (2048 - freq_data) * 4;
+            apu->ch1_timer += period; // Reload timer
+
+            apu->ch1_duty_pos = (apu->ch1_duty_pos + 1) % 8;
+            
+            // Get duty cycle output (0 or 1)
+            uint8_t duty_pattern = (apu->nr11 >> 6) & 0x03;
+            int duty_output = DUTY_TABLE[duty_pattern][apu->ch1_duty_pos];
+            
+            // Combine with envelope volume (0-15)
+            uint8_t dac_input = duty_output * apu->ch1_envelope_volume;
+
+            // Convert to float (-1.0 to 1.0)
+            apu->ch1_dac_out = (dac_input / 7.5f) - 1.0f;
+        }
+    } else {
+        apu->ch1_dac_out = 0.0f;
+    }
+
+    // Channel 2 (Pulse)
+    if (apu->ch2_enabled) {
+        apu->ch2_timer -= t_cycles;
+        if (apu->ch2_timer <= 0) {
+            uint16_t freq_data = ((apu->nr24 & 0x07) << 8) | apu->nr23;
+            int period = (2048 - freq_data) * 4;
+            apu->ch2_timer += period; // Reload timer
+            
+            apu->ch2_duty_pos = (apu->ch2_duty_pos + 1) % 8;
+
+            uint8_t duty_pattern = (apu->nr21 >> 6) & 0x03;
+            int duty_output = DUTY_TABLE[duty_pattern][apu->ch2_duty_pos];
+            
+            uint8_t dac_input = duty_output * apu->ch2_envelope_volume;
+            apu->ch2_dac_out = (dac_input / 7.5f) - 1.0f;
+        }
+    } else {
+        apu->ch2_dac_out = 0.0f;
+    }
+
+    // Channel 3 (Wave)
+    // Check if DAC is on (bit 7 of NR30)
+    if (apu->nr30 & 0x80) {
+        apu->ch3_timer -= t_cycles;
+        if (apu->ch3_timer <= 0) {
+            uint16_t freq_data = ((apu->nr34 & 0x07) << 8) | apu->nr33;
+            int period = (2048 - freq_data) * 2;
+            apu->ch3_timer += period;
+            
+            // Advance wave position (0-31)
+            apu->ch3_wave_pos = (apu->ch3_wave_pos + 1) % 32;
+            
+            // Get 4-bit sample from Wave RAM
+            uint8_t sample_byte = apu->waveform[apu->ch3_wave_pos / 2];
+            uint8_t sample_4bit = (apu->ch3_wave_pos % 2 == 0) 
+                                ? (sample_byte >> 4)   // High nibble
+                                : (sample_byte & 0x0F); // Low nibble
+            
+            // Apply volume shift (NR32)
+            uint8_t vol_code = (apu->nr32 >> 5) & 0x03;
+            if (vol_code == 1) sample_4bit >>= 0; // 100%
+            else if (vol_code == 2) sample_4bit >>= 1; // 50%
+            else if (vol_code == 3) sample_4bit >>= 2; // 25%
+            else sample_4bit = 0; // 0%
+            
+            apu->ch3_dac_out = (sample_4bit / 7.5f) - 1.0f;
+        }
+    } else {
+        apu->ch3_dac_out = 0.0f;
+    }
+
+    // Channel 4 (Noise)
+    if (apu->ch4_enabled) {
+        apu->ch4_timer -= t_cycles;
+        if (apu->ch4_timer <= 0) {
+            uint8_t clock_shift = apu->nr43 >> 4;
+            uint8_t divisor_code = apu->nr43 & 0x07;
+            
+            // Reload timer
+            apu->ch4_timer += NOISE_TIMERS[divisor_code] << clock_shift;
+
+            // Clock the LFSR
+            uint16_t lfsr = apu->ch4_lfsr;
+            uint8_t xor_bit = (lfsr & 1) ^ ((lfsr >> 1) & 1);
+            lfsr = (lfsr >> 1) | (xor_bit << 14);
+
+            // Check for 7-bit "short mode"
+            if (apu->nr43 & 0x08) {
+                lfsr = (lfsr & 0xBF7F) | (xor_bit << 6);
+            }
+            apu->ch4_lfsr = lfsr;
+            
+            int duty_output = !(lfsr & 1); 
+            
+            uint8_t dac_input = duty_output * apu->ch4_envelope_volume;
+            apu->ch4_dac_out = (dac_input / 7.5f) - 1.0f;
+        }
+    } else {
+        apu->ch4_dac_out = 0.0f;
+    }
 }
 
 static int16_t generate_mixed_sample(APU *apu) {
@@ -127,13 +247,51 @@ static int16_t generate_mixed_sample(APU *apu) {
     // 3. Mix them together (simple addition)
     // 4. Return the final 16-bit sample.
 
-    // the ultimate constant crakle 
+    /* // the ultimate constant crakle 
     static double phase = 0.0;
     phase += 2.0 * 3.14159265358979323846 * FREQUENCY / SAMPLE_RATE;
     if (phase >= 2.0 * 3.14159265358979323846) {
         phase -= 2.0 * 3.14159265358979323846;
     }
-    return 0; //(int16_t)(sin(phase) * AMPLITUDE);
+    return (int16_t)(sin(phase) * AMPLITUDE); */
+
+    // If master APU switch is off, return silence
+    if ((apu->nr52 & 0x80) == 0) {
+        return 0;
+    }
+
+    float left_mix = 0.0f;
+    float right_mix = 0.0f;
+
+    // (apu->nr52 & 0x0X) checks if channel is enabled
+    if (apu->nr52 & 0x01) {
+        if (apu->nr51 & 0x10) left_mix += apu->ch1_dac_out;
+        if (apu->nr51 & 0x01) right_mix += apu->ch1_dac_out;
+    }
+    if (apu->nr52 & 0x02) {
+        if (apu->nr51 & 0x20) left_mix += apu->ch2_dac_out;
+        if (apu->nr51 & 0x02) right_mix += apu->ch2_dac_out;
+    }
+    if (apu->nr52 & 0x04) {
+        if (apu->nr51 & 0x40) left_mix += apu->ch3_dac_out;
+        if (apu->nr51 & 0x04) right_mix += apu->ch3_dac_out;
+    }
+    if (apu->nr52 & 0x08) {
+        if (apu->nr51 & 0x80) left_mix += apu->ch4_dac_out;
+        if (apu->nr51 & 0x08) right_mix += apu->ch4_dac_out;
+    }
+
+    float left_vol = ((apu->nr50 >> 4) & 0x07) / 7.0f;
+    float right_vol = (apu->nr50 & 0x07) / 7.0f;
+
+    float final_left = left_mix * left_vol;
+    float final_right = right_mix * right_vol;
+    
+    float mono_mix = (final_left + final_right) / 2.0f;
+
+    int16_t sample = (int16_t)(mono_mix * 8000.0f); 
+
+    return sample;
 }
 
 // In apu.c, add these new functions:
@@ -314,19 +472,26 @@ void apu_step(APU *apu, CPU *cpu) {
 
     apu->sample_counter += t_cycles;
 
-    // apu->frame_seq_clock += t_cycles;
+    apu->frame_seq_clock += t_cycles;
+    if (apu->frame_seq_clock >= 8192) {
+        apu->frame_seq_clock -= 8192;
+        apu_step_frame_sequencer(apu, apu->frame_seq);
+        apu->frame_seq = (apu->frame_seq + 1) % 8;
+    }
 
-    // Check if enough cycles have passed to generate a new sample
+    if ((apu->nr52 & 0x80)) { // Only step timers if APU is on
+        apu_step_timers(apu, t_cycles);
+    }
+
+    // Only generate a new cycle if enough cycles have passed
     while (apu->sample_counter >= CYCLES_PER_SAMPLE) {
         apu->sample_counter -= CYCLES_PER_SAMPLE;
 
         int16_t mono_sample = generate_mixed_sample(apu);
 
-        // current positions
         int write_pos = atomic_load(&apu->write_pos);
         int read_pos = atomic_load(&apu->read_pos);
 
-        // We are writing 2 samples (L+R), so check 2 spots ahead
         int next_write_pos = (write_pos + 2) % AUDIO_BUFFER_SIZE;
 
         if (next_write_pos == read_pos) {
@@ -335,7 +500,7 @@ void apu_step(APU *apu, CPU *cpu) {
             break; 
         }
 
-        // Apparently we just duplicate the mono sample for stereo, which  is kinda funny
+        // Apparently we just duplicate the mono sample for stereo
         apu->internal_buffer[write_pos] = mono_sample; // Left Channel
         apu->internal_buffer[(write_pos + 1) % AUDIO_BUFFER_SIZE] = mono_sample; // Right Channel
         

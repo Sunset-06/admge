@@ -27,7 +27,7 @@ What if you've disabled VSync for your graphics driver? Well, enjoy the raw spee
 I'm actually not sure how to handle this issue, I could potentially use `sleep()` or other equivalents.  
 (I do not want to do that as that will bring about many more issues, and honestly, it feels a bit lazy)
 
-So for now just use VSync   
+So for now just use VSync with a 60Hz refresh rate  
 <img src="https://i.pinimg.com/474x/3b/bb/db/3bbbdbca9e30c5dc52b069320aa54ab7.jpg" height="60" width="60" style="vertical-align: middle;" />
 
 > "You shouldn't implement 255 instructions at once. It becomes hell to debug later" <br/>

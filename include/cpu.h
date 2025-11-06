@@ -133,6 +133,11 @@ typedef struct {
 
     uint8_t waveform[16]; // 16 bytes
 
+    float ch1_dac_out;
+    float ch2_dac_out;
+    float ch3_dac_out;
+    float ch4_dac_out;
+
     double sample_counter;
     int16_t internal_buffer[4096];
     atomic_int write_pos;

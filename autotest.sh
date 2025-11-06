@@ -12,7 +12,7 @@ find "$ROMS_DIR" -maxdepth 1 -type f -name "*.gb" -print0 | while IFS= read -r -
     
     "$BIN" "$rom_file" "-noboot"
     
-    #read -p "Press [Enter] to run the next ROM..."
+    #read -p "Press Enter to run the next ROM..."
 done
 
 echo ""
