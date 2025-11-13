@@ -14,8 +14,11 @@ Audio support should come soon!
 - Handle inputs :white_check_mark:
 - Pass PPU tests :white_check_mark:
 - Get bank switching/ MBC working :white_check_mark:
-- Handle audio <--- [You are here]
-- Implement MBC2 an onwards
+- Handle audio :white_check_mark:
+- Implement MBC2 and onwards <--- [You are here]
+- Add a GUI <--- [and also here]
+
+(updates will be less frequent and scattered now)
 
 ## Issues:
 
