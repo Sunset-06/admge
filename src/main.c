@@ -18,6 +18,7 @@ void dump_serial_log(const char *filename) {
     FILE *f = fopen(filename, "w");
     if (!f) return;
 
+    
     fwrite(serial_log, 1, serial_len, f);
     fclose(f);
 }

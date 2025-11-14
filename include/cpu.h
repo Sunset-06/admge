@@ -209,6 +209,7 @@ typedef struct {
     uint8_t curr_rom_bank;
     uint8_t curr_ram_bank;
     uint8_t external_ram[EX_RAM_SIZE];
+    uint8_t mbc2_ram[512];
     
 
     // storing the state of all 8 buttons together

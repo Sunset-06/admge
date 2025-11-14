@@ -68,15 +68,29 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
         // 0x4000-0x7FFF --> switchable banks
         else {
             uint32_t offset = (cpu->curr_rom_bank * 0x4000) + (addr - 0x4000);
-            return rom[offset];
+            if (offset < rom_size) {
+                return rom[offset];
+            }
+            return 0xFF;
         }
     }
 
     // cartridge ram
     if (addr >= 0xA000 && addr <= 0xBFFF) {
         if (cpu->ram_enabled) {
-            uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
-            return cpu->external_ram[ram_offset];
+            // MBC2
+            if (cpu->mbc_type == 0x05 || cpu->mbc_type == 0x06) {
+                // MBC2 ram is mirrored.
+                uint16_t offset = (addr - 0xA000) % 0x200;
+                return cpu->mbc2_ram[offset] | 0xF0; 
+            }
+            // All other MBCs
+            else{
+                uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
+                if (ram_offset < EX_RAM_SIZE) {
+                    return cpu->external_ram[ram_offset];
+                }
+            }
         }
         return 0xFF;
     }
@@ -177,17 +191,6 @@ uint16_t read16(CPU *cpu, uint16_t addr) {
 }
 
 void write8(CPU *cpu, uint16_t addr, uint8_t value) {
-
-    if (addr >= 0xA000 && addr <= 0xBFFF) {
-        if (cpu->ram_enabled) {
-            uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
-            
-            if (ram_offset < EX_RAM_SIZE) { 
-                cpu->external_ram[ram_offset] = value;
-            }
-        }
-        return;
-    }
     
     // write to MBC
     if (addr <= 0x7FFF) {
@@ -259,6 +262,26 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
         if ((cpu->ppu.lcdc & 0x80) && ((cpu->ppu.stat & 0x03) == 0x03)) {
             return; 
         }
+    }
+
+    if (addr >= 0xA000 && addr <= 0xBFFF) {
+        if (cpu->ram_enabled) {
+            // MBC2
+            if (cpu->mbc_type == 0x05 || cpu->mbc_type == 0x06) {
+                // MBC2 mirrored ram
+                uint16_t offset = (addr - 0xA000) % 0x200;
+                cpu->mbc2_ram[offset] = value & 0x0F;
+            }
+            // Other MBCs
+            else{
+                uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
+                
+                if (ram_offset < EX_RAM_SIZE) { 
+                    cpu->external_ram[ram_offset] = value;
+                }
+            }
+        }
+        return;
     }
 
     // Echo RAM

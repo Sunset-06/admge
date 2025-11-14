@@ -13,13 +13,19 @@ void start_cpu(CPU *cpu) {
     cpu->sp = 0xFFFE;
     cpu->pc = 0x0000;  
 
-    // Initialize memory
+    // main memory
     for (int i = 0; i < MEMORY_SIZE; ++i) {
         cpu->memory[i] = 0x00;
     }
-
+    
+    // Cartridge ram
     for (int i = 0; i < EX_RAM_SIZE; ++i) {
         cpu->external_ram[i] = 0x00;
+    }
+
+    // mbc2 chip ram
+    for (int i = 0; i < 512; ++i) {
+        cpu->mbc2_ram[i] = 0x00;
     }
 
     // initializes ppu and apu state
@@ -62,13 +68,19 @@ void start_cpu_noboot(CPU *cpu) {
     cpu->sp = 0xFFFE;
     cpu->pc = 0x0100;  
 
-    // Initialize memory
+    // main memory
     for (int i = 0; i < MEMORY_SIZE; ++i) {
         cpu->memory[i] = 0x00;
     }
 
+    // cartridge ram
     for (int i = 0; i < EX_RAM_SIZE; ++i) {
         cpu->external_ram[i] = 0x00;
+    }
+
+    // mbc2 chip ram
+    for (int i = 0; i < 512; ++i) {
+        cpu->mbc2_ram[i] = 0x00;
     }
 
     // initializes ppu and apu state
