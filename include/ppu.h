@@ -44,7 +44,7 @@ typedef struct {
 typedef struct {
 
     // LCD Registers
-    uint8_t lcdc; // LCDControl.  All 8 bits do something, Note to self: Check PanDocs for reference
+    uint8_t lcdc; // LCDControl.  All 8 bits do something, Note to self:     Check PanDocs for reference
     uint8_t stat; // LCD Status
     uint8_t scy;  // Scroll Y
     uint8_t scx;  // Scroll X
