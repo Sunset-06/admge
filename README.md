@@ -16,13 +16,14 @@ Audio support should come soon!
 - Get bank switching/ MBC working :white_check_mark:
 - Handle audio :white_check_mark:
 - Implement MBC2 and onwards <--- [You are here]
-- Add a GUI <--- [and also here]
+- Overhaul the PPU <--- [and also here] 
+- Add a GUI
 
 (updates will be less frequent and scattered now)
 
 ## Issues:
 
-There is a single bug within the PPU that I cannot pin down. I'm looking for it right now, but audio is higher priority.
+There is a ppu overhaul being worked on the ppu/accurate branch. This will however take some time, and won't be merged till I am convinced that it is a better implementation.
 
 Note: I'm relying on Vsync to limit the framerate. While untested, this should break on monitors with refresh rate above 60Hz.  
 What if you've disabled VSync for your graphics driver? Well, enjoy the raw speed of your CPU then :D
