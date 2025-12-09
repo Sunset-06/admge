@@ -21,6 +21,7 @@ typedef struct {
     uint32_t color;
     uint8_t palette;
     bool priority;
+    uint8_t index;
 } Pixel;
 
 typedef struct {
@@ -37,7 +38,21 @@ typedef struct {
     uint8_t x;
     uint8_t tile_index;
     uint8_t flags;
+    uint8_t index;
 } Sprite;
+
+typedef struct {
+    Pixel pixels[8];
+    uint8_t x_pos;
+    uint8_t index;
+    bool fetched;
+} Sprite_FIFO_Entry;
+
+typedef struct {
+    Sprite entries[10];
+    uint8_t count;
+    Sprite_FIFO_Entry fetched_data[10]; 
+} Sprite_List;
 
 
 /* Struct for the PPU */
@@ -61,6 +76,7 @@ typedef struct {
     // PPU timing
     int mode_cycles;
     int scanline;
+    Sprite_List sprites;
 
     int line_ticks;
     
@@ -75,6 +91,7 @@ typedef struct {
     int lx;
     int pushed_x;
     int fetcher_cycles;
+    bool window_visible;
 
     /*The framebuffer gets updated when the Scanlines are finshed.
       This happens when when the scanline reaches line 144. This is kept track of by the ly register.

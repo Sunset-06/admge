@@ -85,6 +85,75 @@ Pixel fifo_pop(PPU *ppu) {
     return p;
 }
 
+// In ppu.c
+
+// This function must be called after the OAM scan (Mode 2) is complete, 
+// typically right before or at the start of Mode 3.
+
+void sort_sprites(PPU *ppu) {
+    if (ppu->sprites.count <= 1) {
+        return;
+    }
+
+    for (int i = 1; i < ppu->sprites.count; i++) {
+        Sprite current_sprite = ppu->sprites.entries[i];
+        Sprite_FIFO_Entry current_data = ppu->sprites.fetched_data[i];
+        int j = i - 1;
+        while (j >= 0) {
+            Sprite check_sprite = ppu->sprites.entries[j];
+            if (current_sprite.x < check_sprite.x) {
+                ppu->sprites.entries[j + 1] = check_sprite;
+                ppu->sprites.fetched_data[j + 1] = ppu->sprites.fetched_data[j];
+                j--;
+                continue;
+            }
+            //Tiebreaker
+            if (current_sprite.x == check_sprite.x) {
+                if (current_sprite.index < check_sprite.index) {
+                    ppu->sprites.entries[j + 1] = check_sprite;
+                    ppu->sprites.fetched_data[j + 1] = ppu->sprites.fetched_data[j];
+                    j--;
+                    continue;
+                }
+            }
+            break; 
+        }
+        ppu->sprites.entries[j + 1] = current_sprite;
+        ppu->sprites.fetched_data[j + 1] = current_data;
+    }
+}
+
+void fetch_sprite_data(PPU *ppu, CPU *cpu, int sprite_index) {
+    Sprite *obj = &ppu->sprites.entries[sprite_index];
+    Sprite_FIFO_Entry *entry_data = &ppu->sprites.fetched_data[sprite_index];
+
+    uint8_t obj_height = (ppu->lcdc & 0x04) ? 16 : 8;
+    int row = ppu->ly + 16 - obj->y;
+    
+    if (obj->flags & 0x40) {
+        row = obj_height - 1 - row;
+    }
+    uint16_t tile_addr = 0x8000 + (obj->tile_index * 16) + (row * 2);
+    uint8_t data_lo = cpu->memory[tile_addr];
+    uint8_t data_hi = cpu->memory[tile_addr + 1];
+
+    for (int i = 0; i < 8; i++) {
+        int bit = (obj->flags & 0x20) ? i : (7 - i); 
+        
+        uint8_t lo = (data_lo >> bit) & 1;
+        uint8_t hi = (data_hi >> bit) & 1;
+        uint8_t color_id = (hi << 1) | lo;
+
+        entry_data->pixels[i].color = color_id;
+        entry_data->pixels[i].palette = (obj->flags & 0x10) ? ppu->obp1 : ppu->obp0; 
+        
+        entry_data->pixels[i].priority = (obj->flags & 0x80); 
+    }
+    
+    // Mark the data as fetched to prevent re-fetching on the same line
+    entry_data->fetched = true;
+}
+
 void fetcher_step(PPU *ppu, CPU *cpu) {
     ppu->fetcher_cycles++;
     // takes 2 dots
@@ -92,14 +161,26 @@ void fetcher_step(PPU *ppu, CPU *cpu) {
         return;
     }
     ppu->fetcher_cycles = 0;
+    //bool window_visible = (ppu->lcdc & 0x20) && ppu->wly_latch && (ppu->wx < 166);
 
     switch (ppu->fetcher_state) {
         case FETCH_TILE_MAP:
-            uint16_t map_base = (ppu->lcdc & 0x08) ? 0x9C00 : 0x9800;
+            uint16_t map_base;
+            uint8_t map_x;
+            uint8_t map_y;
             
-            uint8_t map_x = (ppu->scx / 8 + ppu->fetcher_x) & 0x1F;
-            uint8_t map_y = (ppu->scy + ppu->ly) & 0xFF;
-            
+            if (ppu->window_visible) {
+                // Draw the window here
+                map_base = (ppu->lcdc & 0x40) ? 0x9C00 : 0x9800;
+                
+                map_x = ppu->fetcher_x; 
+                map_y = ppu->wly;       
+            } else {
+                // Draw the bg here
+                map_base = (ppu->lcdc & 0x08) ? 0x9C00 : 0x9800;
+                map_x = (ppu->scx / 8 + ppu->fetcher_x) & 0x1F;
+                map_y = (ppu->scy + ppu->ly) & 0xFF;
+            }
             // tile id
             uint16_t map_addr = map_base + (map_y / 8 * 32) + map_x;
             ppu->tile_map_id = cpu->memory[map_addr];
@@ -111,13 +192,17 @@ void fetcher_step(PPU *ppu, CPU *cpu) {
             uint16_t data_base = (ppu->lcdc & 0x10) ? 0x8000 : 0x9000;
             uint16_t tile_addr;
             
-            if (ppu->lcdc & 0x10) {
+            if (ppu->lcdc & 0x10)
                 tile_addr = data_base + (ppu->tile_map_id * 16);
-            } else {
+            else
                 tile_addr = data_base + ((int8_t)ppu->tile_map_id * 16);
-            }
 
-            uint8_t tile_row = (ppu->scy + ppu->ly) % 8;
+            uint8_t tile_row;
+            if (ppu->window_visible) {
+                tile_row = ppu->wly % 8;
+            } else {
+                tile_row = (ppu->scy + ppu->ly) % 8;
+            }
             
             ppu->tile_data_lo = cpu->memory[tile_addr + (tile_row * 2)];
             ppu->fetcher_state = FETCH_TILE_DATA_HIGH;
@@ -126,10 +211,18 @@ void fetcher_step(PPU *ppu, CPU *cpu) {
         case FETCH_TILE_DATA_HIGH:
             uint16_t data_base_h = (ppu->lcdc & 0x10) ? 0x8000 : 0x9000;
             uint16_t tile_addr_h;
-            if (ppu->lcdc & 0x10) tile_addr_h = data_base_h + (ppu->tile_map_id * 16);
-            else tile_addr_h = data_base_h + ((int8_t)ppu->tile_map_id * 16);
 
-            uint8_t tile_row_h = (ppu->scy + ppu->ly) % 8;
+            if(ppu->lcdc & 0x10)
+                tile_addr_h = data_base_h + (ppu->tile_map_id * 16);
+            else
+                tile_addr_h = data_base_h + ((int8_t)ppu->tile_map_id * 16);
+
+            uint8_t tile_row_h;
+            
+            if (ppu->window_visible)
+                tile_row_h = ppu->wly % 8;
+            else
+                tile_row_h = (ppu->scy + ppu->ly) % 8;
             
             ppu->tile_data_hi = cpu->memory[tile_addr_h + (tile_row_h * 2) + 1];
             
@@ -150,9 +243,8 @@ void fetcher_step(PPU *ppu, CPU *cpu) {
             if (fifo_push(ppu, temp_pixels)) {
                 ppu->fetcher_state = FETCH_TILE_MAP;
                 ppu->fetcher_x++; 
-            } else {
-                // FIFO full, stall
-            }
+            } 
+            // else FIFO full, stall
             break;
             
         case FETCH_SLEEP:
@@ -224,9 +316,43 @@ void ppu_tick(PPU *ppu, CPU *cpu) {
         }
         break;
     case 2: // OAM Scan - 80
+        if (ppu->mode_cycles == 1) { 
+            ppu->sprites.count = 0;
+            uint8_t obj_height = (ppu->lcdc & 0x04) ? 16 : 8;
+            
+            for (int i = 0; i < 40; i++) { 
+                uint8_t sprite_y = cpu->memory[0xFE00 + (i * 4)];
+                uint8_t sprite_x = cpu->memory[0xFE00 + (i * 4) + 1];
+                
+                if (ppu->ly + 16 >= sprite_y && ppu->ly + 16 < sprite_y + obj_height) {
+                    
+                    if (ppu->sprites.count < 10) { 
+                        Sprite new_sprite;
+                        new_sprite.y = sprite_y;
+                        new_sprite.x = sprite_x;
+                        new_sprite.tile_index = cpu->memory[0xFE00 + (i * 4) + 2];
+                        new_sprite.flags = cpu->memory[0xFE00 + (i * 4) + 3];
+                        
+                        // LSB is ignored if 8x16
+                        if (obj_height == 16) {
+                            new_sprite.tile_index &= 0xFE; 
+                        }
+                        
+                        ppu->sprites.entries[ppu->sprites.count] = new_sprite;
+                        ppu->sprites.fetched_data[ppu->sprites.count].index = i;
+                        ppu->sprites.fetched_data[ppu->sprites.count].x_pos = sprite_x;
+                        ppu->sprites.fetched_data[ppu->sprites.count].fetched = false;
+                        
+                        ppu->sprites.count++;
+                    }
+                }
+            }
+        }
+
+        
         if (ppu->line_ticks >= 80) {
             ppu->mode_cycles = 0;
-            
+            sort_sprites(ppu);
             // Switch to Mode 3
             ppu->stat = (ppu->stat & 0xFC) | 0x03;
             
@@ -237,21 +363,76 @@ void ppu_tick(PPU *ppu, CPU *cpu) {
             ppu->fetcher_cycles = 0;
             fifo_clear(ppu);
         }
+        
         break;
 
     case 3: // Drawing - 172-289
         fetcher_step(ppu, cpu);
 
-        if (ppu->bg_fifo.size > 0) {
-            
-            Pixel p = fifo_pop(ppu);
+        if ((ppu->lcdc & 0x20) && (ppu->ly >= ppu->wy) && (ppu->lx + 7 == ppu->wx)) {
+            ppu->window_visible = true;
+            ppu->fetcher_state = FETCH_TILE_MAP;
+            ppu->fetcher_x = 0; 
+            fifo_clear(ppu);
+        }
+        for (int i = 0; i < ppu->sprites.count; i++) {
+            Sprite_FIFO_Entry *entry_data = &ppu->sprites.fetched_data[i];
+            if (!entry_data->fetched && (entry_data->x_pos / 8) == ppu->fetcher_x) {
+                fetch_sprite_data(ppu, cpu, i);
+            }
+        }
 
-            // If SCX % 8 != 0, we need to discard the first few pixels of the first tile.
-            if (ppu->lx >= (ppu->scx % 8)) {
+        
+        if (ppu->bg_fifo.size > 0) {
+            Pixel bg_p = fifo_pop(ppu);
+            Pixel final_p = bg_p;
+            
+            if (ppu->lcdc & 0x02) {
+                uint8_t winning_x_pos = 168;
+                uint8_t winning_oam_index = 40;
+
+                // for all sprites
+                for (int i = 0; i < ppu->sprites.count; i++) {
+                    Sprite_FIFO_Entry *obj_data = &ppu->sprites.fetched_data[i];
+                    uint8_t screen_x = ppu->pushed_x; 
+
+                    if (obj_data->x_pos > 0 && screen_x + 8 >= obj_data->x_pos && screen_x + 8 < obj_data->x_pos + 8) {
+                    
+                        int sprite_pixel_offset = screen_x + 8 - obj_data->x_pos; 
+                        Pixel obj_p = obj_data->pixels[sprite_pixel_offset];
+                        
+                        if (obj_p.color > 0) {
+                            
+                            if (final_p.palette == ppu->bgp) {
+                                bool bg_priority = obj_p.priority;
+                                
+                                if (!(bg_priority && bg_p.color != 0)) {
+                                    final_p = obj_p;
+                                    winning_x_pos = obj_data->x_pos;
+                                    winning_oam_index = obj_data->index;
+                                }
+                            
+                            } else {
+                                if (obj_data->x_pos < winning_x_pos || 
+                                (obj_data->x_pos == winning_x_pos && obj_data->index < winning_oam_index)) {
+                                    final_p = obj_p;
+                                    winning_x_pos = obj_data->x_pos;
+                                    winning_oam_index = obj_data->index;
+                                }
+                            }
+                        }
+                    }
                 
-                // get colour from Palette
-                uint8_t color_id = p.color;
-                uint8_t shade = (p.palette >> (color_id * 2)) & 0x03;
+                }
+            }
+
+            if (ppu->lx >= (ppu->scx % 8)) {
+        
+                uint8_t color_id = final_p.color;
+                uint8_t shade;
+
+                // Determine shade based on the palette stored in the final_p pixel
+                shade = (final_p.palette >> (color_id * 2)) & 0x03;
                 
                 // Write to framebuffer
                 int fb_idx = ppu->ly * SCREEN_WIDTH + ppu->pushed_x;
@@ -263,9 +444,11 @@ void ppu_tick(PPU *ppu, CPU *cpu) {
             ppu->lx++;
         }
 
-        // 3. Check for End of Scanline
         if (ppu->pushed_x >= 160) {
             ppu->stat = (ppu->stat & 0xFC) | 0x00; // Switch to HBlank
+            if (ppu->window_visible) {
+                ppu->wly++;
+            }
             
             // Check for HBlank
             if (ppu->stat & 0x08) {
