@@ -16,8 +16,9 @@ Audio support should come soon!
 - Get bank switching/ MBC working :white_check_mark:
 - Handle audio :white_check_mark:
 - Implement MBC2 and onwards <--- [You are here]
-- Overhaul the PPU <--- [and also here] 
-- Add a GUI
+- Overhaul the PPU <--- [and also here]
+- Saves and Save states (forgot about this :pensive:)
+- Add a GUI (Immediate mode using DearImGui (OR) web UI using Emscripten)
 
 (updates will be less frequent and scattered now)
 

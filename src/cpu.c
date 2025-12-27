@@ -99,7 +99,7 @@ void start_cpu_noboot(CPU *cpu) {
     cpu->div = cpu->memory[0xFF04] = 0xAB;  
     cpu->tima = cpu->memory[0xFF05] = 0x00; 
     cpu->tma = cpu->memory[0xFF06] = 0x00;  
-    cpu->tac = cpu->memory[0xFF04] = 0xF8;
+    cpu->tac = cpu->memory[0xFF07] = 0xF8;
     cpu->timer_counter = 0;
     cpu->div_counter = 0;
 
@@ -213,6 +213,7 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
         } else {
             cpu->tima++; 
         }
+        cpu->memory[0xFF05] = cpu->tima;
     }
 }
 

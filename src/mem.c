@@ -81,7 +81,7 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
             // MBC2
             if (cpu->mbc_type == 0x05 || cpu->mbc_type == 0x06) {
                 // MBC2 ram is mirrored.
-                uint16_t offset = (addr - 0xA000) % 0x200;
+                uint16_t offset = addr & 0x01FF;
                 return cpu->mbc2_ram[offset] | 0xF0; 
             }
             // All other MBCs
@@ -155,6 +155,9 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
 
     if (addr == 0xFF04) 
         return cpu->div;
+
+    if (addr == 0xFF05) 
+        return cpu->tima;
 
     if (addr == 0xFF06) {
         return cpu->tma;
@@ -245,9 +248,8 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
                 else { 
                     uint8_t bank = value & 0x0F;
                     
-                    if (bank == 0) {
+                    if (bank == 0)
                         bank = 1;
-                    }
 
                     cpu->curr_rom_bank = bank; 
                     return;
