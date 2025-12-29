@@ -46,35 +46,38 @@ void lcd_off(PPU *ppu){
 
 }
 
+void check_coincidence(PPU *ppu, CPU *cpu) {
+    if (ppu->ly == ppu->lyc) {
+        ppu->stat |= 0x04; // Set coincidence flag (Bit 2)
+        if (ppu->stat & 0x40)
+            cpu->iflag |= 0x02; // Request STAT interrupt
+    } 
+    else
+        ppu->stat &= ~0x04; // Clear coincidence flag
+}
+
 void ppu_step(PPU *ppu, CPU *cpu) {
     ppu->mode_cycles += cpu->cycles*4;
 
     //OAM
     switch (ppu->stat & 0x03) {
     case 0: // HBlank
-        //printf("Enter HBlank\n");
         if (ppu->mode_cycles >= 204) {
             ppu->mode_cycles -= 204;
             ppu->ly++;
+            check_coincidence(ppu, cpu);
 
             if (ppu->ly == 144) {
                 // Enter V-Blank
                 ppu->stat = (ppu->stat & 0xFC) | 0x01;
                 cpu->iflag |= 0x01; // Request V-Blank Interrupt
                 present_screen(ppu);
-            } else {
+            } 
+            else {
                 // Enter OAM Scan for the next scanline
                 ppu->stat = (ppu->stat & 0xFC) | 0x02;
+                if (ppu->stat & 0x20) cpu->iflag |= 0x02;
             }
-        }
-
-        if (ppu->ly == ppu->lyc) {
-            ppu->stat |= 0x04; // Set coincidence flag
-            if (ppu->stat & 0x40) { // If LYC=LY interrupt is enabled
-                cpu->iflag |= 0x02; // Request STAT interrupt
-            }
-        } else {
-            ppu->stat &= ~0x04; // Clear coincidence flag
         }
         break;
 
@@ -89,6 +92,10 @@ void ppu_step(PPU *ppu, CPU *cpu) {
                 ppu->wly_latch = false;
                 // Frame finished, now set mode back to OAM Scan
                 ppu->stat = (ppu->stat & 0xFC) | 0x02;
+                if (ppu->stat & 0x20) 
+                    cpu->iflag |= 0x02;
+                else 
+                    check_coincidence(ppu, cpu);
             }
         }
         break;
@@ -108,6 +115,7 @@ void ppu_step(PPU *ppu, CPU *cpu) {
             ppu->mode_cycles -= 172;
             // Enter H-Blank
             ppu->stat = (ppu->stat & 0xFC) | 0x00;
+            if (ppu->stat & 0x08) cpu->iflag |= 0x02;
             render_scanline(ppu, cpu);
         }
         break;

@@ -151,7 +151,7 @@ void handle_input(CPU* cpu) {
                 case SDLK_RETURN:
                     is_pressed ? (cpu->joypad &= ~BUTTON_ST) : (cpu->joypad |= BUTTON_ST);
                     break;
-                case SDLK_RSHIFT:
+                case SDLK_BACKSPACE:
                     is_pressed ? (cpu->joypad &= ~BUTTON_SL) : (cpu->joypad |= BUTTON_SL);
                     break;
             }
