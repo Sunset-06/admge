@@ -210,7 +210,10 @@ typedef struct {
     uint8_t curr_ram_bank;
     uint8_t external_ram[EX_RAM_SIZE];
     uint8_t mbc2_ram[512];
-    
+    // rtc
+    uint8_t rtc_regs[5];
+    uint8_t rtc_latch;
+    uint8_t rtc_register_sel;
 
     // storing the state of all 8 buttons together
     // St Sl B A - upper nibble is buttons
@@ -256,6 +259,7 @@ extern uint16_t stack_pop(CPU *cpu);
 extern void start_cpu(CPU *cpu);
 extern void start_cpu_noboot(CPU *cpu);
 extern void cpu_step(CPU *cpu);
+extern void update_rtc(CPU *cpu);
 
 // --------------------- instructions
 extern void run_inst(uint8_t opcode, CPU *cpu);

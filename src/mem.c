@@ -105,6 +105,22 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
         return cpu->memory[addr];
     }
 
+    // MBC3
+    if (addr >= 0xA000 && addr <= 0xBFFF) {
+        if (cpu->ram_enabled) {
+            // RTC registers
+            if (cpu->rtc_register_sel >= 0x08 && cpu->rtc_register_sel <= 0x0C) {
+                return cpu->rtc_regs[cpu->rtc_register_sel - 0x08];
+            }
+            // RAM banking
+            uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
+            if (ram_offset < EX_RAM_SIZE) {
+                return cpu->external_ram[ram_offset];
+            }
+        }
+        return 0xFF;
+    }
+
 
     // Echo RAM
     if (addr >= 0xE000 && addr <= 0xFDFF) {
@@ -255,6 +271,37 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
                     return;
                 }
             }
+        }
+
+        // ------------------- MBC3 
+        if (cpu->mbc_type >= 0x0F && cpu->mbc_type <= 0x13) {
+            // RAM Enable
+            if (addr <= 0x1FFF) {
+                cpu->ram_enabled = ((value & 0x0F) == 0x0A);
+            }
+            else if (addr >= 0x2000 && addr <= 0x3FFF) {
+                uint8_t bank = value & 0x7F;
+                if (bank == 0) bank = 1;
+                cpu->curr_rom_bank = bank;
+            }
+            // ram bank or RTC reg Select
+            else if (addr >= 0x4000 && addr <= 0x5FFF) {
+                if (value <= 0x07) {
+                    cpu->curr_ram_bank = value;
+                    cpu->rtc_register_sel = 0; // Unselect RTC
+                }
+                else if (value >= 0x08 && value <= 0x0C)
+                    cpu->rtc_register_sel = value;
+            }
+            // Latch Clock
+            else if (addr >= 0x6000 && addr <= 0x7FFF) {
+                if (cpu->rtc_latch == 0x00 && value == 0x01) {
+                    // implement this v  | basically update the rtc val from the system clock every frame
+                    //update_rtc(cpu); 
+                }
+                cpu->rtc_latch = value;
+            }
+            return;
         }
         return;
 

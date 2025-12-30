@@ -1,5 +1,20 @@
 #include "cpu.h"
 #include "emu.h"
+//#include <time.h>
+
+/* void update_rtc(CPU *cpu) {
+    time_t now = time(NULL);
+    struct tm *lt = localtime(&now);
+
+    cpu->rtc_regs[0] = lt->tm_sec;
+    cpu->rtc_regs[1] = lt->tm_min;
+    cpu->rtc_regs[2] = lt->tm_hour;
+    
+    // days are split across two registers
+    int days = lt->tm_yday; 
+    cpu->rtc_regs[3] = days & 0xFF;         // 0x0B: Lower 8 bits of days
+    cpu->rtc_regs[4] = (days >> 8) & 0x01;  // 0x0C: 9th bit of days
+} */
 
 // initializes emu state
 void start_cpu(CPU *cpu) {
