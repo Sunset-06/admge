@@ -107,7 +107,7 @@ typedef struct {
     uint8_t ch1_envelope_volume;
     bool ch1_sweep_enabled;
     int ch1_sweep_timer;
-    uint16_t ch1_sweep_frequency; 
+    uint16_t ch1_sweep_frequency;
 
     // CH2 State 
     bool ch2_enabled;

@@ -50,6 +50,7 @@ bool load_rom(CPU *cpu, const char* filename) {
     printf("Successfully loaded ROM. Size: %zu bytes\n", rom_size);
     cpu->mbc_type = rom[0x0147];
     printf("Cartridge Type: 0x%02X\n", cpu->mbc_type);
+    load_sav(cpu, filename);
     return true;
 }
 
@@ -90,6 +91,14 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
                 if (ram_offset < EX_RAM_SIZE) {
                     return cpu->external_ram[ram_offset];
                 }
+                // RTC registers
+                if (cpu->rtc_register_sel >= 0x08 && cpu->rtc_register_sel <= 0x0C) {
+                    return cpu->rtc_regs[cpu->rtc_register_sel - 0x08];
+                }
+                // RAM banking
+                if (ram_offset < EX_RAM_SIZE) {
+                    return cpu->external_ram[ram_offset];
+                }
             }
         }
         return 0xFF;
@@ -104,23 +113,6 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
         }
         return cpu->memory[addr];
     }
-
-    // MBC3
-    if (addr >= 0xA000 && addr <= 0xBFFF) {
-        if (cpu->ram_enabled) {
-            // RTC registers
-            if (cpu->rtc_register_sel >= 0x08 && cpu->rtc_register_sel <= 0x0C) {
-                return cpu->rtc_regs[cpu->rtc_register_sel - 0x08];
-            }
-            // RAM banking
-            uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
-            if (ram_offset < EX_RAM_SIZE) {
-                return cpu->external_ram[ram_offset];
-            }
-        }
-        return 0xFF;
-    }
-
 
     // Echo RAM
     if (addr >= 0xE000 && addr <= 0xFDFF) {
@@ -218,7 +210,11 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
         if (cpu->mbc_type >= 0x01 && cpu->mbc_type <= 0x03) {
 
             if (addr <= 0x1FFF) {
+                bool was_enabled = cpu->ram_enabled;
                 cpu->ram_enabled = ((value & 0x0F) == 0x0A);
+                if (was_enabled && !cpu->ram_enabled) {
+                    save_sav(cpu, inputRom);
+                }
                 return;
             }
 
@@ -277,7 +273,12 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
         if (cpu->mbc_type >= 0x0F && cpu->mbc_type <= 0x13) {
             // RAM Enable
             if (addr <= 0x1FFF) {
+                bool was_enabled = cpu->ram_enabled;
                 cpu->ram_enabled = ((value & 0x0F) == 0x0A);
+
+                if (was_enabled && !cpu->ram_enabled) {
+                    save_sav(cpu, inputRom);
+                }
             }
             else if (addr >= 0x2000 && addr <= 0x3FFF) {
                 uint8_t bank = value & 0x7F;

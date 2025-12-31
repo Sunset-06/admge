@@ -6,7 +6,7 @@ bool ime_enable = false;
 bool quit_flag = false;
 bool bootrom_flag = true;
 
-
+char* inputRom;
 char serial_log[65536];  
 size_t serial_len = 0;
 uint8_t *rom = NULL;
@@ -163,6 +163,56 @@ void handle_input(CPU* cpu) {
 
 }
 
+void name_sav(const char* romFile, char* saveFile) {
+    strcpy(saveFile, romFile);
+    char* dot = strrchr(saveFile, '.');
+    if (dot) {
+        strcpy(dot, ".sav");
+    } else {
+        strcat(saveFile, ".sav");
+    }
+}
+
+void save_sav(CPU *cpu, const char* romFile) {
+    char save_path[256];
+    name_sav(romFile, save_path);
+
+    FILE* f = fopen(save_path, "wb");
+    if (!f) {
+        printf("Failed to open save: %s\n", save_path);
+        return;
+    }
+    //mbc2
+    if (cpu->mbc_type == 0x05 || cpu->mbc_type == 0x06) {
+        fwrite(cpu->mbc2_ram, 1, sizeof(cpu->mbc2_ram), f);
+    } 
+    // everything else
+    else
+        fwrite(cpu->external_ram, 1, EX_RAM_SIZE, f);
+
+    fclose(f);
+    printf("Saved at %s\n", save_path);
+}
+
+void load_sav(CPU *cpu, const char* romFile) {
+    char save_path[256];
+    name_sav(romFile, save_path);
+
+    FILE* f = fopen(save_path, "rb");
+    if (!f) {
+        return;
+    }
+
+    if (cpu->mbc_type == 0x05 || cpu->mbc_type == 0x06) {
+        fread(cpu->mbc2_ram, 1, sizeof(cpu->mbc2_ram), f);
+    } else {
+        fread(cpu->external_ram, 1, EX_RAM_SIZE, f);
+    }
+
+    fclose(f);
+    printf("Save loaded from %s\n", save_path);
+}
+
 int main(int argc, char *argv[]) {
     if(argc < 2){
         printf("Wrong start, use it like this:\n admge path/to/your/rom -noboot(optional)\n Aborting...");
@@ -173,7 +223,7 @@ int main(int argc, char *argv[]) {
         bootrom_flag = false;
 
     CPU cpu;
-    char* inputRom = argv[1];
+    inputRom = argv[1];
     if(bootrom_flag)
         start_cpu(&cpu); // This initializes everything normally - expects a bootrom
     else
