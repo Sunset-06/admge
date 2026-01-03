@@ -1,9 +1,7 @@
 # admge
 A simple emulator for the original GameBoy (and hopefully CGB too) in C.
 
-Massive WIP, so this project ~~will take some time to even reach playable state~~ can run MBC1 games now!
-
-Audio support should come soon!
+Massive WIP, but this project can run games (unstably) now!
 
 ## Work left:
 
@@ -15,16 +13,14 @@ Audio support should come soon!
 - Pass PPU tests :white_check_mark:
 - Get bank switching/ MBC working :white_check_mark:
 - Handle audio :white_check_mark:
-- Implement MBC3 and onwards <--- [You are here]
+- Fix MBCs <--- [You are here]
 - Saves and Save states (forgot about this :pensive:)
 - Fix or Overhaul the PPU
-- Add a GUI (Immediate mode using DearImGui (OR) web UI using Emscripten)
+- Add a GUI (I'll do this whenever I feel like it honestly)
 
 (updates will be less frequent and scattered now)
 
 ## Issues:
-
-There is a ppu overhaul being worked on the ppu/accurate branch. This will however take some time, and won't be merged till I am convinced that it is a better implementation.
 
 Note: I'm relying on Vsync to limit the framerate. While untested, this should break on monitors with refresh rate above 60Hz.  
 What if you've disabled VSync for your graphics driver? Well, enjoy the raw speed of your CPU then :D
@@ -55,5 +51,8 @@ Then to run it:
 
 ```
 
+Also, you need to pray (to your preferred deity) that the rom you selected runs properly. Consider this a formal Step 3.
+
+There is a ppu overhaul being worked on the ppu/accurate branch. This will however take some time, and won't be merged till I am convinced that it is a better implementation.
 
 There's a bootrom in this repo, shamelessly sourced from [Hacktix](https://github.com/Hacktix/Bootix). If you want to use your own, change the path on **line 6** of `mem.c`

@@ -3,7 +3,7 @@
 
 BIN="./bin/admge" 
 
-ROMS_DIR="./roms/acceptance/ppu"
+ROMS_DIR="./roms/blaarg"
 
 find "$ROMS_DIR" -maxdepth 1 -type f -name "*.gb" -print0 | while IFS= read -r -d $'\0' rom_file; do
     echo "================================================="
