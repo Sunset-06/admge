@@ -1,5 +1,5 @@
 # admge
-A simple emulator for the original GameBoy (and hopefully CGB too) in C.
+A simple emulator for the original GameBoy (and eventually CGB too) in C.
 
 Massive WIP, but this project can run games (unstably) now!
 
@@ -13,9 +13,9 @@ Massive WIP, but this project can run games (unstably) now!
 - Pass PPU tests :white_check_mark:
 - Get bank switching/ MBC working :white_check_mark:
 - Handle audio :white_check_mark:
-- Fix MBCs <--- [You are here]
+- Go through the entire thing because you forgot about this <--- [You are here]
+- Fix MBCs
 - Saves and Save states (forgot about this :pensive:)
-- Fix or Overhaul the PPU
 - Add a GUI (I'll do this whenever I feel like it honestly)
 
 (updates will be less frequent and scattered now)

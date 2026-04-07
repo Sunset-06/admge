@@ -104,7 +104,7 @@ void start_cpu_noboot(CPU *cpu) {
     
     cpu->bootrom_flag = true;
     // Interrupts and states
-    cpu->ime = false;  
+    cpu->ime = false;
     cpu->ie = 0x00;  
     cpu->iflag = 0x00;  
 
