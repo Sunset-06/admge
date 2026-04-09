@@ -6,6 +6,11 @@
 #include <SDL2/SDL.h>
 #include "cpu.h"
 
+enum emu_mode{
+  PLAYER,
+  DEBUG
+};
+
 extern bool quit_flag;
 extern bool bootrom_flag;
 extern char serial_log[65536];
