@@ -1,19 +1,19 @@
 #include "cpu.h"
 #include "platform.h"
 
-static const uint32_t GAMEBOY_COLOURS[4] = {
+/* static const uint32_t GAMEBOY_COLOURS[4] = {
     0xFFFFFFFF, // White
     0xFFAAAAAA, // Light Gray
     0xFF555555, // Dark Gray
     0xFF000000  // Black
-};
+}; */
 
-/* static const uint32_t GREEN_COLOURS[4] = {
+ static const uint32_t GAMEBOY_COLOURS[4] = {
     0xFF9BBC0F, // Lightest Green
     0xFF8BAC0F, // Light Green
     0xFF306230, // Dark Green
     0xFF0F380F  // Darkest Green
-}; */
+};
 
 void ppu_init(PPU *ppu) {
     // Default values for LCD registers 

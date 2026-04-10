@@ -16,8 +16,8 @@ bool init_screen(int scale) {
         "admge",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        900, 600,
-        SDL_WINDOW_SHOWN
+        1236*0.7, 1072*0.7,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS
     );
     if (!window) return false;
 
