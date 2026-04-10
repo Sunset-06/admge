@@ -1,7 +1,19 @@
 #ifndef UI_H
 #define UI_H
 
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
+#include <SDL.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void ui_init(SDL_Window* window, SDL_Renderer* renderer);
+extern void ui_render(SDL_Texture* emu_texture);
+extern void ui_cleanup();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

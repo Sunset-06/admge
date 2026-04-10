@@ -1,8 +1,10 @@
-#include "peripherals.h"
+#include "platform.h"
+#include "ui.h"
 
-static SDL_Window *window = NULL;
-static SDL_Renderer *renderer = NULL;
-static SDL_Texture *texture = NULL;
+SDL_Window *window = NULL;
+SDL_Renderer *renderer = NULL;
+SDL_Texture *texture = NULL;
+SDL_Texture* outer_shell = NULL;
 
 bool init_screen(int scale) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -14,8 +16,7 @@ bool init_screen(int scale) {
         "admge",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        SCREEN_WIDTH * scale,
-        SCREEN_HEIGHT * scale,
+        900, 600,
         SDL_WINDOW_SHOWN
     );
     if (!window) return false;
@@ -31,6 +32,15 @@ bool init_screen(int scale) {
     );
     if (!texture) return false;
 
+    printf("before img\n");
+
+    outer_shell = IMG_LoadTexture(renderer, "assets/dmg.png");
+    if (!outer_shell) {
+        printf("Texture load failed: %s", IMG_GetError());
+    }
+    printf("All ok\n");
+    ui_init(window, renderer);
+
     return true;
 }
 
@@ -38,12 +48,14 @@ void present_screen(PPU *ppu) {
     ////printf("Presenting...\n");
     SDL_UpdateTexture(texture, NULL, ppu->framebuffer, SCREEN_WIDTH * sizeof(uint32_t));
     SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    // SDL_RenderCopy(renderer, texture, NU LL, NULL);
+    ui_render_frame(texture, outer_shell, renderer);
     SDL_RenderPresent(renderer);
 }
 
 void destroy_screen() {
     if (texture) SDL_DestroyTexture(texture);
+    if (outer_shell) SDL_DestroyTexture(outer_shell);
     if (renderer) SDL_DestroyRenderer(renderer);
     if (window) SDL_DestroyWindow(window);
     SDL_Quit();

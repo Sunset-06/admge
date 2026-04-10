@@ -1,6 +1,7 @@
 #include "emu.h"
 #include "cpu.h"
-#include "peripherals.h"
+#include "ui.h"
+#include "platform.h"
 
 bool ime_enable = false;
 bool quit_flag = false;
@@ -11,7 +12,6 @@ char serial_log[65536];
 size_t serial_len = 0;
 uint8_t *rom = NULL;
 size_t rom_size = 0;
-
 
 
 void dump_serial_log(const char *filename) {
@@ -110,52 +110,58 @@ void handle_input(CPU* cpu) {
     SDL_Event event;
     uint8_t last_joypad = cpu->joypad;
     while (SDL_PollEvent(&event)) {
+        // ImGui_ImplSDL2_ProcessEvent(&event);
         if (event.type == SDL_QUIT)
             quit_flag = true; 
-        else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-            //printf("Joypad state: %04x\n\n", cpu->joypad);
-            bool is_pressed = (event.type == SDL_KEYDOWN);
-            
-            switch (event.key.keysym.sym) {
-                // exit
-                case SDLK_ESCAPE:
-                    quit_flag = true;
-                    break;
-                // for logging
-                case SDLK_SPACE:
-                    dump_vram(cpu, "vram.bin");
-                    dump_oam(cpu, "oam.bin");
-                    dump_header(cpu, "header.bin");
-                    dump_serial_log("serial.txt");
-                    break;
-                // DPad
-                case SDLK_RIGHT:
-                    is_pressed ? (cpu->joypad &= ~BUTTON_R) : (cpu->joypad |= BUTTON_R);
-                    break;
-                case SDLK_LEFT:
-                    is_pressed ? (cpu->joypad &= ~BUTTON_L) : (cpu->joypad |= BUTTON_L);
-                    break;
-                case SDLK_UP:
-                    is_pressed ? (cpu->joypad &= ~BUTTON_U) : (cpu->joypad |= BUTTON_U);
-                    break;
-                case SDLK_DOWN:
-                    is_pressed ? (cpu->joypad &= ~BUTTON_D) : (cpu->joypad |= BUTTON_D);
-                    break;
-                // Buttons (A, B, Sl, St)
-                case SDLK_z:
-                    is_pressed ? (cpu->joypad &= ~BUTTON_A) : (cpu->joypad |= BUTTON_A);
-                    break;
-                case SDLK_x:
-                    is_pressed ? (cpu->joypad &= ~BUTTON_B) : (cpu->joypad |= BUTTON_B);
-                    break;
-                case SDLK_RETURN:
-                    is_pressed ? (cpu->joypad &= ~BUTTON_ST) : (cpu->joypad |= BUTTON_ST);
-                    break;
-                case SDLK_BACKSPACE:
-                    is_pressed ? (cpu->joypad &= ~BUTTON_SL) : (cpu->joypad |= BUTTON_SL);
-                    break;
+
+        // ImGuiIO& io = ImGui::GetIO();
+
+        // if (!io.WantCaptureKeyboard) {
+            if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+                //printf("Joypad state: %04x\n\n", cpu->joypad);
+                bool is_pressed = (event.type == SDL_KEYDOWN);
+                
+                switch (event.key.keysym.sym) {
+                    // exit
+                    case SDLK_ESCAPE:
+                        quit_flag = true;
+                        break;
+                    // for logging
+                    case SDLK_SPACE:
+                        dump_vram(cpu, "vram.bin");
+                        dump_oam(cpu, "oam.bin");
+                        dump_header(cpu, "header.bin");
+                        dump_serial_log("serial.txt");
+                        break;
+                    // DPad
+                    case SDLK_RIGHT:
+                        is_pressed ? (cpu->joypad &= ~BUTTON_R) : (cpu->joypad |= BUTTON_R);
+                        break;
+                    case SDLK_LEFT:
+                        is_pressed ? (cpu->joypad &= ~BUTTON_L) : (cpu->joypad |= BUTTON_L);
+                        break;
+                    case SDLK_UP:
+                        is_pressed ? (cpu->joypad &= ~BUTTON_U) : (cpu->joypad |= BUTTON_U);
+                        break;
+                    case SDLK_DOWN:
+                        is_pressed ? (cpu->joypad &= ~BUTTON_D) : (cpu->joypad |= BUTTON_D);
+                        break;
+                    // Buttons (A, B, Sl, St)
+                    case SDLK_z:
+                        is_pressed ? (cpu->joypad &= ~BUTTON_A) : (cpu->joypad |= BUTTON_A);
+                        break;
+                    case SDLK_x:
+                        is_pressed ? (cpu->joypad &= ~BUTTON_B) : (cpu->joypad |= BUTTON_B);
+                        break;
+                    case SDLK_RETURN:
+                        is_pressed ? (cpu->joypad &= ~BUTTON_ST) : (cpu->joypad |= BUTTON_ST);
+                        break;
+                    case SDLK_BACKSPACE:
+                        is_pressed ? (cpu->joypad &= ~BUTTON_SL) : (cpu->joypad |= BUTTON_SL);
+                        break;
+                }
             }
-        }
+        //}
     }
     // request an interrupt if theres a change
     if (((last_joypad ^ cpu->joypad) & last_joypad) > 0)
@@ -242,7 +248,7 @@ int main(int argc, char *argv[]) {
         handle_input(&cpu);
         cpu_step(&cpu);
         //log_cpu_state(&cpu, full_dump);
-
+        
         // Sleep if the audio buffer is too full lol
         int read_pos = atomic_load(&cpu.apu.read_pos);
         int write_pos = atomic_load(&cpu.apu.write_pos);

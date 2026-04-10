@@ -1,5 +1,5 @@
 #include "cpu.h"
-#include "peripherals.h"
+#include "platform.h"
 
 static const uint32_t GAMEBOY_COLOURS[4] = {
     0xFFFFFFFF, // White
