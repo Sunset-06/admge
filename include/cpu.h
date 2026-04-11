@@ -45,6 +45,8 @@
 #define AUDIO_BUFFER_SIZE 4096
 #define CYCLES_PER_SAMPLE (CPU_FREQUENCY / SAMPLE_RATE)
 
+extern const uint32_t* GAMEBOY_COLOURS;
+
 
 // Sprite struct
 typedef struct {

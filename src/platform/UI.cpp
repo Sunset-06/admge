@@ -19,7 +19,7 @@ extern "C" void ui_render_frame(SDL_Texture* emu_texture, SDL_Texture* shell_tex
     // no title or bg
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     // send size of the frame
-    ImGui::SetNextWindowSize(ImVec2(1236*0.7, 1072*0.7));
+    ImGui::SetNextWindowSize(ImVec2(1236*tex_scale, 1072*tex_scale));
     // send padding = 0
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
@@ -35,7 +35,7 @@ extern "C" void ui_render_frame(SDL_Texture* emu_texture, SDL_Texture* shell_tex
     // outer border image
     ImGui::GetWindowDrawList()->AddImage((ImTextureID)shell_texture, p, ImVec2(p.x + 900, p.y + 750));
     // inner screen texture
-    ImVec2 screen_pos_min = ImVec2(p.x+205, p.y+185);  // p.x+205 and p.y+185 are the actual offsets
+    ImVec2 screen_pos_min = ImVec2(p.x+205, p.y+185);  // DMG : p.x+205 and p.y+185 | SGB : p.x+0 and p.y+0
     ImVec2 screen_pos_max = ImVec2(p.x + 205 + 485, p.y + 185 + 420); //
     
     ImGui::GetWindowDrawList()->AddImage((ImTextureID)emu_texture, screen_pos_min, screen_pos_max);

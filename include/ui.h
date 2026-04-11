@@ -8,6 +8,8 @@
 extern "C" {
 #endif
 
+extern float tex_scale;
+
 extern void ui_init(SDL_Window* window, SDL_Renderer* renderer);
 extern void ui_render(SDL_Texture* emu_texture);
 extern void ui_cleanup();

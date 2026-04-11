@@ -6,10 +6,17 @@
 #include <SDL2/SDL.h>
 #include "cpu.h"
 
-enum emu_mode{
-  PLAYER,
-  DEBUG
-};
+typedef enum {
+  DMG,
+  SGB,
+  DEBUG,
+  TEST
+} emu_mode;
+
+extern emu_mode current_mode;
+
+extern const uint32_t SGB_COLOURS[4];
+extern const uint32_t DMG_COLOURS[4];
 
 extern bool quit_flag;
 extern bool bootrom_flag;
@@ -24,5 +31,6 @@ extern bool load_rom(CPU *cpu, const char* filename);
 extern void name_sav(const char* romFile, char* saveFile) ;
 extern void load_sav(CPU *cpu, const char* romFile);
 extern void save_sav(CPU *cpu, const char* romFile);
+extern void handle_input(CPU* cpu);
 
 #endif  
