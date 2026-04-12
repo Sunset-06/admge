@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "platform.h"
+static uint8_t bg_indices[SCREEN_WIDTH];
 
 void ppu_init(PPU *ppu) {
     // Default values for LCD registers 
@@ -200,6 +201,9 @@ void render_bg(PPU *ppu, CPU *cpu){
     // Check if the window is enabled and visible on this scanline
     bool window_visible = (ppu->lcdc & 0x20) && ppu->wly_latch && (ppu->wx < 166);
 
+    // just initialising here
+    uint8_t colour_id = 0;
+
     // Rendering BG and Window
     // for every pixel in this scanline
     for (int i = 0; i < SCREEN_WIDTH; i++) {
@@ -226,7 +230,7 @@ void render_bg(PPU *ppu, CPU *cpu){
  
             // Combine the bytes to get the colour ID
             uint8_t bit = 7 - (window_x % 8);
-            uint8_t colour_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
+            colour_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
 
             // Get the actual colour from the palette and write to the framebuffer
             uint8_t shade = (ppu->bgp >> (colour_id * 2)) & 0x03;
@@ -258,12 +262,17 @@ void render_bg(PPU *ppu, CPU *cpu){
             
             // Combine the bytes to get the colour ID
             uint8_t bit = 7 - (scrolled_x % 8);
-            uint8_t colour_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
+            colour_id = ((byte2 >> bit) & 1) << 1 | ((byte1 >> bit) & 1);
 
             // Get the actual colour from the palette and write to the framebuffer
             uint8_t shade = (ppu->bgp >> (colour_id * 2)) & 0x03;
             ppu->framebuffer[ppu->ly * SCREEN_WIDTH + i] = GAMEBOY_COLOURS[shade];
         }
+        else{
+            ppu->framebuffer[ppu->ly * SCREEN_WIDTH + i] = GAMEBOY_COLOURS[ppu->bgp & 0x03];
+            colour_id = 0;
+        }
+        bg_indices[i] = colour_id;
     }
     // Incrementing window line counter
     // If the window exists in this scanline
@@ -366,10 +375,13 @@ void render_objects(PPU *ppu, CPU *cpu){
             if (screen_x < 0 || screen_x >= 160) continue;
             // --------------------------------------------------------
 
-            uint32_t index = ppu->ly * SCREEN_WIDTH + screen_x;
-            uint8_t shade_index = (palette >> (colour_id * 2)) & 0x03;
-            if (priority && ppu->framebuffer[index] != GAMEBOY_COLOURS[0]) continue;
-            ppu->framebuffer[index] = GAMEBOY_COLOURS[shade_index];
+            bool bg_priority = (curr_sprite.flags & 0x80) && (bg_indices[screen_x] != 0);
+            if(!bg_priority){
+                uint32_t index = ppu->ly * SCREEN_WIDTH + screen_x;
+                uint8_t shade_index = (palette >> (colour_id * 2)) & 0x03;
+                //if(priority && ppu->framebuffer[index] != GAMEBOY_COLOURS[0]) continue;
+                ppu->framebuffer[index] = GAMEBOY_COLOURS[shade_index];
+            }
 
         }
     }
