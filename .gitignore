@@ -1,6 +1,7 @@
 full_dump.txt
 serial.txt
 *.bin
+imgui.ini
 gearboy
 /roms
 /bin

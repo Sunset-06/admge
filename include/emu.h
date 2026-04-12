@@ -4,18 +4,20 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
-#include "cpu.h"
+
+struct CPU;
+typedef struct CPU CPU;
 
 typedef enum {
   DMG,
-  SGB,
+  MGB,
   DEBUG,
   TEST
 } emu_mode;
 
 extern emu_mode current_mode;
 
-extern const uint32_t SGB_COLOURS[4];
+extern const uint32_t MGB_COLOURS[4];
 extern const uint32_t DMG_COLOURS[4];
 
 extern bool quit_flag;

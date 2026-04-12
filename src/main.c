@@ -3,7 +3,7 @@
 #include "ui.h"
 #include "platform.h"
 
-float tex_scale = 0.7;
+float win_scale = 0.7;
 bool ime_enable = false;
 bool quit_flag = false;
 bool bootrom_flag = true;
@@ -16,7 +16,7 @@ size_t rom_size = 0;
 
 // Palettes
 const uint32_t* GAMEBOY_COLOURS = NULL;
-const uint32_t SGB_COLOURS[4] = {
+const uint32_t MGB_COLOURS[4] = {
     0xFFFFFFFF, // White
     0xFFAAAAAA, // Light Gray
     0xFF555555, // Dark Gray
@@ -65,13 +65,13 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[i], "-noboot") == 0) bootrom_flag = false;
         else if (strcmp(argv[i], "-debug") == 0) current_mode = DEBUG;
         else if (strcmp(argv[i], "-test")  == 0) current_mode = TEST;
-        else if (strcmp(argv[i], "-sgb")   == 0) current_mode = SGB;
+        else if (strcmp(argv[i], "-mgb")   == 0) current_mode = MGB;
     }
 
     CPU cpu;
     inputRom = argv[1];
-    tex_scale = (current_mode == SGB)? 0.6 : 0.7;
-    GAMEBOY_COLOURS = (current_mode == SGB)? SGB_COLOURS : DMG_COLOURS;
+    //tex_scale = (current_mode == MGB)? 0.9 : 0.7;
+    GAMEBOY_COLOURS = (current_mode == MGB)? MGB_COLOURS : DMG_COLOURS;
 
     if(bootrom_flag)
         start_cpu(&cpu); // This initializes everything normally - expects a bootrom

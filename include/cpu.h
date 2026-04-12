@@ -58,7 +58,7 @@ typedef struct {
 
 
 /* Struct for the PPU */
-typedef struct {
+typedef struct PPU{
 
     // LCD Registers
     uint8_t lcdc; // LCDControl.  All 8 bits do something, Note to self: Check PanDocs for reference
@@ -86,7 +86,7 @@ typedef struct {
 } PPU;
 
 /* Struct for the APU */
-typedef struct {
+typedef struct APU{
     int main_clock;
     int frame_seq_clock;
     
@@ -148,7 +148,7 @@ typedef struct {
 } APU;
 
 /* Struct for the Registers a,f,b,c,d,e,h,l */
-typedef struct {
+typedef struct Registers{
     union {
         struct {
             uint8_t f, a;
@@ -177,7 +177,7 @@ typedef struct {
 
 
 /* The main CPU struct */
-typedef struct {
+typedef struct CPU {
     Registers regs;
     PPU ppu;
     APU apu;

@@ -71,6 +71,6 @@ clean:
 
 # tests
 test-%: all
-	./$(TARGET) ./roms/$*-test.gb
+	./$(TARGET) ./roms/$*-test.gb -mgb
 
 .PHONY: all clean test

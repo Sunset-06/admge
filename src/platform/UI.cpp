@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "emu.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
@@ -19,7 +20,7 @@ extern "C" void ui_render_frame(SDL_Texture* emu_texture, SDL_Texture* shell_tex
     // no title or bg
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     // send size of the frame
-    ImGui::SetNextWindowSize(ImVec2(1236*tex_scale, 1072*tex_scale));
+    ImGui::SetNextWindowSize(ImVec2(1236*win_scale, 1072*win_scale));
     // send padding = 0
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
@@ -30,13 +31,30 @@ extern "C" void ui_render_frame(SDL_Texture* emu_texture, SDL_Texture* shell_tex
 
     // outer gb decoration
     if(!shell_texture)
-        printf("no outer image mate\n");
+        printf("no outer image found\n");
+
+    // for the modes
+    float shell_w, shell_h;
+    float offset_x, offset_y;
+    float screen_w, screen_h;
     
+    switch(current_mode){
+        case MGB: shell_w = 872; shell_h = 800;
+                  offset_x = 158; offset_y = 152;
+                  screen_w = 557; screen_h= 492;
+                  break;
+
+        case DMG:
+        default:  shell_w = 900; shell_h =750;
+                  offset_x = 205; offset_y = 185;
+                  screen_w = 485; screen_h = 420;
+    }
     // outer border image
-    ImGui::GetWindowDrawList()->AddImage((ImTextureID)shell_texture, p, ImVec2(p.x + 900, p.y + 750));
+    ImGui::GetWindowDrawList()->AddImage((ImTextureID)shell_texture, p, ImVec2(p.x + shell_w, p.y + shell_h));
     // inner screen texture
-    ImVec2 screen_pos_min = ImVec2(p.x+205, p.y+185);  // DMG : p.x+205 and p.y+185 | SGB : p.x+0 and p.y+0
-    ImVec2 screen_pos_max = ImVec2(p.x + 205 + 485, p.y + 185 + 420); //
+    ImVec2 screen_pos_min = ImVec2(p.x + offset_x, p.y + offset_y);  // DMG : p.x+205 and p.y+185 | MGB : p.x+0 and p.y+0
+    ImVec2 screen_pos_max = ImVec2(p.x + offset_x + screen_w,  p.y + offset_y + screen_h);
+    // DMG : p.x + 205 + 485 and p.y + 185 + 420
     
     ImGui::GetWindowDrawList()->AddImage((ImTextureID)emu_texture, screen_pos_min, screen_pos_max);
 

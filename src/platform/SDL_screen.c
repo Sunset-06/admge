@@ -1,5 +1,6 @@
 #include "platform.h"
 #include "ui.h"
+#include "emu.h"
 
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
@@ -12,11 +13,15 @@ bool init_screen(int scale) {
         return false;
     }
 
+    int win_w = (current_mode == MGB) ? MGB_WIDTH : DMG_WIDTH;
+    int win_h = (current_mode == MGB) ? MGB_HEIGHT : DMG_HEIGHT;
+
+
     window = SDL_CreateWindow(
         "admge",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        1236*0.7, 1072*0.7,
+        win_w*win_scale, win_h*win_scale,
         SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS
     );
     if (!window) return false;
@@ -34,7 +39,7 @@ bool init_screen(int scale) {
 
     printf("before img\n");
 
-    outer_shell = IMG_LoadTexture(renderer, "assets/dmg.png");
+    outer_shell = (current_mode == MGB)? IMG_LoadTexture(renderer, "assets/mgb.png") : IMG_LoadTexture(renderer, "assets/dmg.png");
     if (!outer_shell) {
         printf("Texture load failed: %s", IMG_GetError());
     }

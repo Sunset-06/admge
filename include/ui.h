@@ -8,7 +8,12 @@
 extern "C" {
 #endif
 
-extern float tex_scale;
+#define DMG_WIDTH 1236
+#define DMG_HEIGHT 1072
+#define MGB_WIDTH 1236
+#define MGB_HEIGHT 1072
+
+extern float win_scale;
 
 extern void ui_init(SDL_Window* window, SDL_Renderer* renderer);
 extern void ui_render(SDL_Texture* emu_texture);
