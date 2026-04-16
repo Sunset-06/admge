@@ -5,9 +5,14 @@
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct CPU;
 typedef struct CPU CPU;
-
+  
 typedef enum {
   DMG,
   MGB,
@@ -16,6 +21,7 @@ typedef enum {
 } emu_mode;
 
 extern emu_mode current_mode;
+extern bool rom_loaded;
 
 extern const uint32_t MGB_COLOURS[4];
 extern const uint32_t DMG_COLOURS[4];
@@ -35,4 +41,8 @@ extern void load_sav(CPU *cpu, const char* romFile);
 extern void save_sav(CPU *cpu, const char* romFile);
 extern void handle_input(CPU* cpu);
 
-#endif  
+#ifdef __cplusplus
+}
+#endif
+
+#endif

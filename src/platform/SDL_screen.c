@@ -49,12 +49,12 @@ bool init_screen(int scale) {
     return true;
 }
 
-void present_screen(PPU *ppu) {
+void present_screen(PPU *ppu, CPU *cpu) {
     ////printf("Presenting...\n");
     SDL_UpdateTexture(texture, NULL, ppu->framebuffer, SCREEN_WIDTH * sizeof(uint32_t));
     SDL_RenderClear(renderer);
-    // SDL_RenderCopy(renderer, texture, NU LL, NULL);
-    ui_render_frame(texture, outer_shell, renderer);
+    // SDL_RenderCopy(renderer, texture, NULL, NULL);
+    ui_render(texture, outer_shell, renderer, cpu);
     SDL_RenderPresent(renderer);
 }
 

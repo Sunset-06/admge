@@ -1,5 +1,6 @@
 #include "emu.h"
 #include "cpu.h"
+#include "ui.h"
 
 void dump_serial_log(const char *filename) {
     FILE *f = fopen(filename, "w");
@@ -97,13 +98,11 @@ void handle_input(CPU* cpu) {
     SDL_Event event;
     uint8_t last_joypad = cpu->joypad;
     while (SDL_PollEvent(&event)) {
-        // ImGui_ImplSDL2_ProcessEvent(&event);
+         ui_handle_event(&event);
         if (event.type == SDL_QUIT)
             quit_flag = true; 
 
-        // ImGuiIO& io = ImGui::GetIO();
-
-        // if (!io.WantCaptureKeyboard) {
+        if (!ui_want_capture()) {
             if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
                 //printf("Joypad state: %04x\n\n", cpu->joypad);
                 bool is_pressed = (event.type == SDL_KEYDOWN);
@@ -149,7 +148,7 @@ void handle_input(CPU* cpu) {
                         break;
                 }
             }
-        //}
+        }
     }
     // request an interrupt if theres a change
     if (((last_joypad ^ cpu->joypad) & last_joypad) > 0)

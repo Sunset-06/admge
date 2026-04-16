@@ -7,6 +7,7 @@ float win_scale = 0.7;
 bool ime_enable = false;
 bool quit_flag = false;
 bool bootrom_flag = true;
+bool rom_loaded = false;
 
 char* inputRom;
 char serial_log[65536];  
@@ -38,6 +39,12 @@ void main_loop(CPU *cpu){
             // test mode
         }
         else{
+            if(!rom_loaded){
+                present_screen(&cpu->ppu, cpu);
+                handle_input(cpu);
+                SDL_Delay(16);
+                continue;
+            }
             handle_input(cpu);
             cpu_step(cpu);
             //log_cpu_state(&cpu, full_dump);
@@ -56,10 +63,6 @@ void main_loop(CPU *cpu){
 
 
 int main(int argc, char *argv[]) {
-    if(argc < 2){
-        printf("Wrong start, use it like this:\n admge path/to/your/rom -noboot(optional)\n Aborting...");
-        return 1;
-    }
         
     for (int i = 2; i < argc; i++) {
         if (strcmp(argv[i], "-noboot") == 0) bootrom_flag = false;
@@ -69,7 +72,6 @@ int main(int argc, char *argv[]) {
     }
 
     CPU cpu;
-    inputRom = argv[1];
     //tex_scale = (current_mode == MGB)? 0.9 : 0.7;
     GAMEBOY_COLOURS = (current_mode == MGB)? MGB_COLOURS : DMG_COLOURS;
 
@@ -77,13 +79,17 @@ int main(int argc, char *argv[]) {
         start_cpu(&cpu); // This initializes everything normally - expects a bootrom
     else
         start_cpu_noboot(&cpu); // This one does not need a bootrom
+
     
-    if(!load_rom(&cpu, inputRom)){
-        printf("Aborting...");
-        return 1;
+    if (argc >= 2) {
+        inputRom = argv[1];
+        printf("%s", inputRom);
+        if (load_rom(&cpu, inputRom)) {
+            rom_loaded = true;
+        }
     }
-
-
+    
+    
     if (current_mode != TEST){
         init_screen(4);
         init_audio(&cpu);
