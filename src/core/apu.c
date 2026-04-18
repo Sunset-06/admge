@@ -9,6 +9,7 @@ static const int DUTY_TABLE[4][8] = {
     {0, 1, 1, 1, 1, 1, 1, 0}  // 75%
 };
 
+extern bool muted;
 static const int NOISE_TIMERS[8] = {8, 16, 32, 48, 64, 80, 96, 112};
 
 void apu_init(APU *apu) {
@@ -19,6 +20,7 @@ void apu_init(APU *apu) {
     apu->sample_counter = 0.0;
     apu->frame_seq_clock = 0;
     apu->frame_seq = 0;
+    //apu->muted = false;
 }
 
 static void ch1_trigger(APU *apu) {
@@ -256,7 +258,7 @@ static int16_t generate_mixed_sample(APU *apu) {
     return (int16_t)(sin(phase) * AMPLITUDE); */
 
     // If master APU switch is off, return silence
-    if ((apu->nr52 & 0x80) == 0) {
+    if ((apu->nr52 & 0x80) == 0 || muted) {
         return 0;
     }
 

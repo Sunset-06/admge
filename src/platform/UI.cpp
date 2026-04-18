@@ -65,7 +65,7 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
         ImGui::GetWindowDrawList()->AddImage((ImTextureID)emu_texture, screen_pos_min, screen_pos_max);
     }
     else {
-      ImGui::SetCursorScreenPos(ImVec2(shell_w/2, shell_h/2));
+      ImGui::SetCursorScreenPos(ImVec2(0,0));
       if (ImGui::Button("Load a Cartridge")){
         const char* filters[] = {"*.gb"};
         const char* path = tinyfd_openFileDialog(
@@ -77,10 +77,16 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
             0
         );
 
+
         if(path){
           load_rom(cpu, path);
           rom_loaded = true;
         }
+      }
+
+    
+      if (ImGui::Button(muted ? "Unmute" : "Mute")) {
+        muted = !muted;
       }
     }
     ImGui::End();

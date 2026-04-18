@@ -13,7 +13,7 @@
     // days are split across two registers
     int days = lt->tm_yday; 
     cpu->rtc_regs[3] = days & 0xFF;         // 0x0B: Lower 8 bits of days
-    cpu->rtc_regs[4] = (days >> 8) & 0x01;  // 0x0C: 9th bit of days
+    cpu->rtc_regs[4] = (days >> 8) & 0x01;  // 0x0C: 9th bit ov days
 } */
 
 // initializes emu state

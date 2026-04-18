@@ -8,7 +8,7 @@ bool ime_enable = false;
 bool quit_flag = false;
 bool bootrom_flag = true;
 bool rom_loaded = false;
-
+bool muted = false;
 char* inputRom;
 char serial_log[65536];  
 size_t serial_len = 0;
@@ -31,7 +31,6 @@ const uint32_t DMG_COLOURS[4] = {
 };
 
 emu_mode current_mode = DMG;
-
 
 void main_loop(CPU *cpu){
     while(!quit_flag){
@@ -64,7 +63,7 @@ void main_loop(CPU *cpu){
 
 int main(int argc, char *argv[]) {
         
-    for (int i = 2; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-noboot") == 0) bootrom_flag = false;
         else if (strcmp(argv[i], "-debug") == 0) current_mode = DEBUG;
         else if (strcmp(argv[i], "-test")  == 0) current_mode = TEST;
