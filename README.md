@@ -48,4 +48,6 @@ Then to run it:
 
 Also, you need to pray (to your preferred deity) that the rom you selected runs properly. Consider this a formal Step 3.
 
+The border assets used in this repo are sourced from the [BGB Reality page](https://bgb.bircd.org/reality/index.html)
+
 There's a bootrom in this repo, shamelessly sourced from [Hacktix](https://github.com/Hacktix/Bootix). If you want to use your own, change the path on **line 6** of `mem.c`

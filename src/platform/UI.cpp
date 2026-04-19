@@ -83,11 +83,6 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
           rom_loaded = true;
         }
       }
-
-    
-      if (ImGui::Button(muted ? "Unmute" : "Mute")) {
-        muted = !muted;
-      }
     }
     ImGui::End();
     ImGui::PopStyleVar();

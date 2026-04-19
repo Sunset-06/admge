@@ -109,7 +109,7 @@ void handle_input(CPU* cpu) {
                 
                 switch (event.key.keysym.sym) {
                     // exit
-                    case SDLK_ESCAPE:
+                    case SDLK_q:
                         quit_flag = true;
                         break;
                     // for logging
@@ -138,6 +138,9 @@ void handle_input(CPU* cpu) {
                         break;
                     case SDLK_x:
                         is_pressed ? (cpu->joypad &= ~BUTTON_B) : (cpu->joypad |= BUTTON_B);
+                        break;
+                    case SDLK_m:
+                        if(is_pressed) muted = !muted;
                         break;
                     case SDLK_RETURN:
                         is_pressed ? (cpu->joypad &= ~BUTTON_ST) : (cpu->joypad |= BUTTON_ST);

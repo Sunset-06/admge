@@ -64,7 +64,11 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
     if (addr <= 0x7FFF) {
         // Bank 00 is fixed
         if (addr <= 0x3FFF) {
-            return rom[addr];
+          if ((cpu->mbc_type >= 0x01 && cpu->mbc_type <= 0x03) && cpu->bank_mode == 1) {
+            uint32_t bank_offset = (cpu->curr_ram_bank << 5) * 0x4000;
+            return rom[(bank_offset + addr) % rom_size];
+          }
+          return rom[addr];
         }
         // 0x4000-0x7FFF --> switchable banks
         else {
@@ -232,11 +236,9 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
             }
 
             if (addr >= 0x4000 && addr <= 0x5FFF) {
-                if (cpu->bank_mode == 0) { 
-                    cpu->curr_rom_bank = (cpu->curr_rom_bank & 0x1F) | ((value & 0x03) << 5);
-                } else { 
-                    cpu->curr_ram_bank = value & 0x03;
-                }
+                uint8_t bits = value & 0x03;
+                cpu->curr_ram_bank = bits;
+                cpu->curr_rom_bank = (cpu->curr_rom_bank & 0x1F) | (bits << 5);
                 return;
             }
             
