@@ -48,7 +48,7 @@
 extern const uint32_t* GAMEBOY_COLOURS;
 
 
-// Sprite struct
+// Sprite struct - used in PPU
 typedef struct {
     uint8_t y;
     uint8_t x;
@@ -56,6 +56,14 @@ typedef struct {
     uint8_t flags;
 } Sprite;
 
+// Real Time Clock - used in MBC3
+typedef struct{
+    uint8_t main[5]; // sec, min, hour, day low, day high
+    uint8_t latch[5];
+    uint8_t sel;
+    uint8_t latch_val;
+    long last;
+} RTC;
 
 /* Struct for the PPU */
 typedef struct PPU{
@@ -181,6 +189,7 @@ typedef struct CPU {
     Registers regs;
     PPU ppu;
     APU apu;
+    RTC rtc;
 
     //stack pointer and program counter
     uint16_t sp;
@@ -212,10 +221,6 @@ typedef struct CPU {
     uint8_t curr_ram_bank;
     uint8_t external_ram[EX_RAM_SIZE];
     uint8_t mbc2_ram[512];
-    // rtc
-    uint8_t rtc_regs[5];
-    uint8_t rtc_latch;
-    uint8_t rtc_register_sel;
 
     // storing the state of all 8 buttons together
     // St Sl B A - upper nibble is buttons

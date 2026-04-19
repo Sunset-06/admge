@@ -1,21 +1,6 @@
 #include "cpu.h"
 #include "emu.h"
-//#include <time.h>
-
-/* void update_rtc(CPU *cpu) {
-    time_t now = time(NULL);
-    struct tm *lt = localtime(&now);
-
-    cpu->rtc_regs[0] = lt->tm_sec;
-    cpu->rtc_regs[1] = lt->tm_min;
-    cpu->rtc_regs[2] = lt->tm_hour;
-    
-    // days are split across two registers
-    int days = lt->tm_yday; 
-    cpu->rtc_regs[3] = days & 0xFF;         // 0x0B: Lower 8 bits of days
-    cpu->rtc_regs[4] = (days >> 8) & 0x01;  // 0x0C: 9th bit ov days
-} */
-
+#include <time.h>
 // initializes emu state
 void start_cpu(CPU *cpu) {
     ////printf("Starting CPU init\n");
@@ -232,6 +217,44 @@ void update_timers(CPU *cpu, uint16_t tcycles) {
     }
 }
 
+void update_rtc(CPU *cpu) {
+    if (cpu->rtc.main[4] & 0x40) {
+        cpu->rtc.last = time(NULL);
+        return;
+    }
+
+    time_t now = time(NULL);
+    if (cpu->rtc.last == 0) {
+        cpu->rtc.last = now;
+        return;
+    }
+
+    long diff = now - cpu->rtc.last;
+    if (diff <= 0) return; 
+
+    cpu->rtc.last = now;
+
+    uint32_t seconds = cpu->rtc.main[0] + diff;
+    cpu->rtc.main[0] = seconds % 60;
+    
+    uint32_t minutes = cpu->rtc.main[1] + (seconds / 60);
+    cpu->rtc.main[1] = minutes % 60;
+    
+    uint32_t hours = cpu->rtc.main[2] + (minutes / 60);
+    cpu->rtc.main[2] = hours % 24;
+    
+    uint32_t days_to_add = hours / 24;
+    uint16_t days = cpu->rtc.main[3] | ((cpu->rtc.main[4] & 0x01) << 8);
+    uint32_t total_days = days + days_to_add;
+
+    if (total_days > 511) {
+        cpu->rtc.main[4] |= 0x80; // Set Day Carry Bit (Bit 7)
+        total_days %= 512;
+    }
+
+    cpu->rtc.main[3] = total_days & 0xFF;
+    cpu->rtc.main[4] = (cpu->rtc.main[4] & 0xFE) | ((total_days >> 8) & 0x01);
+}
 
 /* Basically the main function that drives the emu. In every step, fetch opcode
     1. Fetch opcode from memory

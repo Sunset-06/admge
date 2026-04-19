@@ -96,8 +96,8 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
                     return cpu->external_ram[ram_offset];
                 }
                 // RTC registers
-                if (cpu->rtc_register_sel >= 0x08 && cpu->rtc_register_sel <= 0x0C) {
-                    return cpu->rtc_regs[cpu->rtc_register_sel - 0x08];
+                if (cpu->rtc.sel >= 0x08 && cpu->rtc.sel <= 0x0C) {
+                    return cpu->rtc.latch[cpu->rtc.sel - 0x08];
                 }
                 // RAM banking
                 if (ram_offset < EX_RAM_SIZE) {
@@ -291,18 +291,20 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
             else if (addr >= 0x4000 && addr <= 0x5FFF) {
                 if (value <= 0x07) {
                     cpu->curr_ram_bank = value;
-                    cpu->rtc_register_sel = 0; // Unselect RTC
+                    cpu->rtc.sel = 0; // Unselect RTC
                 }
                 else if (value >= 0x08 && value <= 0x0C)
-                    cpu->rtc_register_sel = value;
+                    cpu->rtc.sel = value;
             }
             // Latch Clock
             else if (addr >= 0x6000 && addr <= 0x7FFF) {
-                if (cpu->rtc_latch == 0x00 && value == 0x01) {
-                    // implement this v  | basically update the rtc val from the system clock every frame
-                    //update_rtc(cpu); 
+                if (cpu->rtc.latch_val == 0x00 && value == 0x01) {
+                    update_rtc(cpu);
+                    for (int i = 0; i < 5; i++) {
+                        cpu->rtc.latch[i] = cpu->rtc.main[i]; //copying values to the latch (snapshot of rtc)
+                    }
                 }
-                cpu->rtc_latch = value;
+                cpu->rtc.latch_val = value;
             }
             return;
         }
