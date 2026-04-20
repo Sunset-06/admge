@@ -134,68 +134,78 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
         return 0xFF;
     }
 
-    // Inputs
-    if (addr == 0xFF00){
-        //0x20 - Select Buttons
-        //0x10 - Select Dpad
-        //0x8 - Start / D
-        //0x4 - Select / U
-        //0x2 - B / L
-        //0x1 - A / R
-        // Lower Nibble is Read-only
-        //  0 is pressed and 1 is not
-        // This extends to the two selection bits as well 
-        uint8_t selection = cpu->memory[0xFF00];
-        uint8_t result = 0xFF;
+    if (addr >= 0xFF00 && addr <= 0xFF7F){
+        switch (addr){
+            //Inputs
+            case 0xFF00:
 
-        result = (result & 0xCF) | (selection & 0x30);
+                //0x20 - Select Buttons
+                //0x10 - Select Dpad
+                //0x8 - Start / D
+                //0x4 - Select / U
+                //0x2 - B / L
+                //0x1 - A / R
+                // Lower Nibble is Read-only
+                //  0 is pressed and 1 is not
+                // This extends to the two selection bits as well 
+                uint8_t selection = cpu->memory[0xFF00];
+                uint8_t result = 0xFF;
 
-        if ((selection & 0x10) == 0) {
-            // Get D-pad state (Right, Left, Up, Down -> bits 0-3)
-            uint8_t dpad_state = cpu->joypad & 0x0F;
-            result &= (dpad_state | 0xF0); 
+                result = (result & 0xCF) | (selection & 0x30);
+
+                if ((selection & 0x10) == 0) {
+                    // Get D-pad state (Right, Left, Up, Down -> bits 0-3)
+                    uint8_t dpad_state = cpu->joypad & 0x0F;
+                    result &= (dpad_state | 0xF0); 
+                }
+
+                if ((selection & 0x20) == 0) {
+                    // Get button state (A,B,Select,Start -> bits 4-7)
+                    uint8_t button_state = (cpu->joypad >> 4) & 0x0F;
+                    result &= (button_state | 0xF0);
+                }
+
+                return result;
+
+            // Serial Control
+            case 0xFF02:
+                return cpu->memory[0xFF02] | 0x7E;
+            
+            case 0xFF04: 
+                return cpu->div;
+
+            case 0xFF05: 
+                return cpu->tima;
+
+            case 0xFF06:
+                return cpu->tma;
+            
+            case 0xFF07:
+                return cpu->tac | 0xF8;
+            
+            case 0xFF0F:
+                return cpu->iflag | 0xE0;
+            
+            // Sound
+            case 0xFF10 ... 0xFF3F:
+                return apu_read(cpu, addr);
+            
+            // VRAM
+            case 0xFF40:
+                return ppu_read(cpu, addr);
+
+            case 0xFF41: // STAT - Bit 7 is always 1
+                return ppu_read(cpu, addr) | 0x80;
+            
+            case 0xFF42 ... 0xFF4B:
+                return ppu_read(cpu, addr);
+            
+            default: return 0xFF;
         }
-
-        if ((selection & 0x20) == 0) {
-            // Get button state (A,B,Select,Start -> bits 4-7)
-            uint8_t button_state = (cpu->joypad >> 4) & 0x0F;
-            result &= (button_state | 0xF0);
-        }
-
-        return result;
     }
-
-    if (addr == 0xFF04) 
-        return cpu->div;
-
-    if (addr == 0xFF05) 
-        return cpu->tima;
-
-    if (addr == 0xFF06) {
-        return cpu->tma;
-    }
-
-    if (addr == 0xFF07) {
-        return cpu->tac;
-    }
-    
-    if (addr == 0xFF0F) {
-        return cpu->iflag;
-    }
-
-    // Sound
-    if (addr >= 0xFF10 && addr <= 0xFF3F) return apu_read(cpu, addr); 
-
-    // VRAM
-    if (addr >= 0xFF40 && addr <= 0xFF4B) return ppu_read(cpu, addr);
     
     if (addr == 0xFFFF) {
         return cpu->ie;
-    }
-
-    // PPU registers
-    if (addr >= 0xFF40 && addr <= 0xFF4B) {
-        return ppu_read(cpu, addr);
     }
 
     return cpu->memory[addr];
@@ -356,12 +366,11 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
     }
 
     if (addr == 0xFF02) { // SC (Serial control)
-        // If transfer start (bit 7 set, and using internal clock bit 0)
-        if (value == 0x81) {
+        if (value & 0x80) {
             uint8_t c = cpu->memory[0xFF01]; // read SB
             serial_write(c);
 
-            cpu->memory[0xFF02] = 0; // clear SC
+            cpu->memory[0xFF02] = value & 0x7F; // clear SC
             return;
         }
     }

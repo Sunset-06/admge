@@ -2050,7 +2050,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
         case 0xE8:  //ADD SP, i8
             // 16bit ADD - signed i8 to sp
-            set_Z(1, cpu);
+            set_Z(99, cpu); //This clears the z flag
             set_N(0, cpu);
             offset  = (int8_t)read8(cpu, cpu->pc+1);
             uint8_t low_sp = cpu->sp & 0xFF;

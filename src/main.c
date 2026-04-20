@@ -25,7 +25,7 @@ const uint32_t MGB_COLOURS[4] = {
 };
 const uint32_t DMG_COLOURS[4] = {
     0xFF9BBC0F, // Lightest Green
-    0xFF8BAC0F, // Light Green
+    0xFF8BAC0F, // Light GreenT
     0xFF306230, // Dark Green
     0xFF0F380F  // Darkest Green
 };
@@ -33,9 +33,48 @@ const uint32_t DMG_COLOURS[4] = {
 emu_mode current_mode = DMG;
 
 void main_loop(CPU *cpu){
+    // for test mode
+    uint64_t total_cycles = 0;
+    const uint64_t TIMEOUT_CYCLES = 20000000;
     while(!quit_flag){
         if(current_mode == TEST){
-            // test mode
+            // headless test mode
+            uint8_t opcode = read8(cpu, cpu->pc);
+            // mooneye breakpoint
+            if (opcode == 0x40) {
+                uint8_t b = (cpu->regs.bc >> 8) & 0xFF;
+                uint8_t c = cpu->regs.bc & 0xFF;
+                uint8_t d = (cpu->regs.de >> 8) & 0xFF;
+                uint8_t e = cpu->regs.de & 0xFF;
+                uint8_t h = (cpu->regs.hl >> 8) & 0xFF;
+                uint8_t l = cpu->regs.hl & 0xFF;
+
+                bool success = (b == 0x03 && c == 0x05 && d == 0x08 && 
+                                e == 0x0D && h == 0x15 && l == 0x22);
+
+                printf("\n--- Test Result ---\n");
+                if (success) {
+                    printf("RESULT: PASSED\n");
+                    exit(0); 
+                } else {
+                    printf("RESULT: FAILED\n");
+                    printf("Expected: 03 05 08 0D 15 22\n");
+                    printf("Actual:   %02X %02X %02X %02X %02X %02X\n", b, c, d, e, h, l);
+                    
+                    // Print serial output
+                    if (serial_len > 0) {
+                        printf("Serial Output: %s\n", serial_log);
+                    }
+                    exit(1);
+                }
+            }
+            cpu_step(cpu);
+            
+            total_cycles++;
+            if (total_cycles > TIMEOUT_CYCLES) {
+                printf("RESULT: TIMEOUT\n");
+                exit(1);
+            }
         }
         else{
             if(!rom_loaded){
@@ -82,7 +121,7 @@ int main(int argc, char *argv[]) {
     
     if (argc >= 2) {
         inputRom = argv[1];
-        printf("%s", inputRom);
+        printf("%s\n", inputRom);
         if (load_rom(&cpu, inputRom)) {
             rom_loaded = true;
         }

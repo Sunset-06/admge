@@ -50,6 +50,7 @@ bool init_screen(int scale) {
 }
 
 void present_screen(PPU *ppu, CPU *cpu) {
+    if (current_mode == TEST) return;
     ////printf("Presenting...\n");
     SDL_UpdateTexture(texture, NULL, ppu->framebuffer, SCREEN_WIDTH * sizeof(uint32_t));
     SDL_RenderClear(renderer);
