@@ -40,77 +40,81 @@ emu_mode current_mode = DMG;
 int core_thread(void *ptr){
 
     CPU *cpu = (CPU *) ptr;
-    uint64_t total_cycles = 0;
+    uint64_t freq = SDL_GetPerformanceFrequency();
+    uint64_t last_time = SDL_GetPerformanceCounter();
+    double cycle_ctr = 0;
+    uint64_t test_cycles = 0;
+
     while(!quit_flag){
         
         if(!rom_loaded){
             SDL_Delay(10);
+            last_time = SDL_GetPerformanceCounter();
             continue;
         }
-        
-        uint32_t frame_start = SDL_GetTicks();
 
-        if(current_mode == TEST){
-            // headless test mode
-            uint8_t opcode = read8(cpu, cpu->pc);
-            // mooneye breakpoint
-            if (opcode == 0x40) {
-                uint8_t b = (cpu->regs.bc >> 8) & 0xFF;
-                uint8_t c = cpu->regs.bc & 0xFF;
-                uint8_t d = (cpu->regs.de >> 8) & 0xFF;
-                uint8_t e = cpu->regs.de & 0xFF;
-                uint8_t h = (cpu->regs.hl >> 8) & 0xFF;
-                uint8_t l = cpu->regs.hl & 0xFF;
+        uint64_t curr_time = SDL_GetPerformanceCounter();
+        uint64_t ticks = curr_time - last_time;
+        last_time = curr_time;
+        cycle_ctr += ((double)ticks / (double)freq) * GB_CLOCK_SPEED;
 
-                bool success = (b == 0x03 && c == 0x05 && d == 0x08 && 
-                                e == 0x0D && h == 0x15 && l == 0x22);
+        if(cycle_ctr > 70224 * 2)
+            cycle_ctr = 70224 * 2;
 
-                printf("\n--- Test Result ---\n");
-                if (success) {
-                    printf("RESULT: PASSED\n");
-                    exit(0); 
-                } else {
-                    printf("RESULT: FAILED\n");
-                    printf("Expected: 03 05 08 0D 15 22\n");
-                    printf("Actual:   %02X %02X %02X %02X %02X %02X\n", b, c, d, e, h, l);
-                    
-                    // Print serial output
-                    if (serial_len > 0) {
-                        printf("Serial Output: %s\n", serial_log);
+        while(cycle_ctr > 0){
+            if(current_mode == TEST){
+                // headless test mode
+                uint8_t opcode = read8(cpu, cpu->pc);
+                // mooneye breakpoint
+                if (opcode == 0x40) {
+                    uint8_t b = (cpu->regs.bc >> 8) & 0xFF;
+                    uint8_t c = cpu->regs.bc & 0xFF;
+                    uint8_t d = (cpu->regs.de >> 8) & 0xFF;
+                    uint8_t e = cpu->regs.de & 0xFF;
+                    uint8_t h = (cpu->regs.hl >> 8) & 0xFF;
+                    uint8_t l = cpu->regs.hl & 0xFF;
+
+                    bool success = (b == 0x03 && c == 0x05 && d == 0x08 && 
+                                    e == 0x0D && h == 0x15 && l == 0x22);
+
+                    printf("\n--- Test Result ---\n");
+                    if (success) {
+                        printf("RESULT: PASSED\n");
+                        exit(0); 
+                    } else {
+                        printf("RESULT: FAILED\n");
+                        printf("Expected: 03 05 08 0D 15 22\n");
+                        printf("Actual:   %02X %02X %02X %02X %02X %02X\n", b, c, d, e, h, l);
+                        
+                        // Print serial output
+                        if (serial_len > 0) {
+                            printf("Serial Output: %s\n", serial_log);
+                        }
+                        exit(1);
                     }
+                }
+                cpu_step(cpu);
+                
+                test_cycles++;
+                if (test_cycles > TIMEOUT_CYCLES) {
+                    printf("RESULT: TIMEOUT\n");
                     exit(1);
                 }
             }
-            cpu_step(cpu);
-            
-            total_cycles++;
-            if (total_cycles > TIMEOUT_CYCLES) {
-                printf("RESULT: TIMEOUT\n");
-                exit(1);
-            }
-        }
-        else{ // ALL MODES THAT ARE NOT TEST
-            int cycles_to_run = CYCLES_PER_FRAME;
-            while (cycles_to_run > 0) {
+            else{ // ALL MODES THAT ARE NOT TEST
                 cpu_step(cpu);
-                cycles_to_run -= cpu->cycles; 
-            }
+                //log_cpu_state(&cpu, full_dump);
+                int read_pos = atomic_load(&cpu->apu.read_pos);
+                int write_pos = atomic_load(&cpu->apu.write_pos);
+                int buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
 
-            uint32_t frame_time = SDL_GetTicks() - frame_start;
-
-            if (frame_time < 16) {
-                SDL_Delay(16 - frame_time);
+                while (buffer_fullness > (AUDIO_BUFFER_SIZE * 3 / 4)) {
+                    SDL_Delay(1); 
+                    read_pos = atomic_load(&cpu->apu.read_pos);
+                    buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
+                }
             }
-            //log_cpu_state(&cpu, full_dump);
-            int read_pos = atomic_load(&cpu->apu.read_pos);
-            int write_pos = atomic_load(&cpu->apu.write_pos);
-            int buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
-
-            while (buffer_fullness > (AUDIO_BUFFER_SIZE * 3 / 4)) {
-                SDL_Delay(1); 
-                read_pos = atomic_load(&cpu->apu.read_pos);
-                buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
-            }
+            cycle_ctr -= cpu->cycles;
         }
     }
     return 0;

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
-
+#define GB_CLOCK_SPEED 4194304
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +41,8 @@ extern void name_sav(const char* romFile, char* saveFile) ;
 extern void load_sav(CPU *cpu, const char* romFile);
 extern void save_sav(CPU *cpu, const char* romFile);
 extern void handle_input(CPU* cpu);
+
+extern int core_thread(void *ptr);
 
 #ifdef __cplusplus
 }
