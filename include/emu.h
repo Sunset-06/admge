@@ -26,14 +26,15 @@ extern bool rom_loaded;
 extern const uint32_t MGB_COLOURS[4];
 extern const uint32_t DMG_COLOURS[4];
 
-extern bool quit_flag;
+extern SDL_atomic_t quit_flag;
+extern SDL_atomic_t muted;
+
 extern bool bootrom_flag;
 extern char serial_log[65536];
 extern char* inputRom;
 extern size_t serial_len;
 extern uint8_t *rom;
 extern size_t rom_size;
-extern bool muted;
 
 extern void serial_write(uint8_t value);
 extern bool load_rom(CPU *cpu, const char* filename);

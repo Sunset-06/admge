@@ -7,7 +7,7 @@ SDL_Renderer *renderer = NULL;
 SDL_Texture *texture = NULL;
 SDL_Texture* outer_shell = NULL;
 
-bool init_screen(int scale) {
+bool init_screen() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         SDL_Log("SDL could not initialize! SDL_Error: %s", SDL_GetError());
         return false;

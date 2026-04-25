@@ -100,7 +100,7 @@ void handle_input(CPU* cpu) {
     while (SDL_PollEvent(&event)) {
          ui_handle_event(&event);
         if (event.type == SDL_QUIT)
-            quit_flag = true; 
+            SDL_AtomicSet(&quit_flag, 1);
 
         if (!ui_want_capture()) {
             if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
@@ -110,7 +110,7 @@ void handle_input(CPU* cpu) {
                 switch (event.key.keysym.sym) {
                     // exit
                     case SDLK_q:
-                        quit_flag = true;
+                        SDL_AtomicSet(&quit_flag, 1);
                         break;
                     // for logging
                     case SDLK_SPACE:
@@ -140,7 +140,7 @@ void handle_input(CPU* cpu) {
                         is_pressed ? (cpu->joypad &= ~BUTTON_B) : (cpu->joypad |= BUTTON_B);
                         break;
                     case SDLK_m:
-                        if(is_pressed) muted = !muted;
+                        if(is_pressed) SDL_AtomicSet(&muted, !SDL_AtomicGet(&muted));
                         break;
                     case SDLK_RETURN:
                         is_pressed ? (cpu->joypad &= ~BUTTON_ST) : (cpu->joypad |= BUTTON_ST);

@@ -6,12 +6,13 @@
 const uint64_t TIMEOUT_CYCLES = 20000000;
 const int CYCLES_PER_FRAME = 70224;
 
+SDL_atomic_t quit_flag = {0};
+SDL_atomic_t muted = {0};
+
 float win_scale = 0.7;
 bool ime_enable = false;
-bool quit_flag = false;
 bool bootrom_flag = true;
 bool rom_loaded = false;
-bool muted = false;
 char* inputRom;
 char serial_log[65536];  
 size_t serial_len = 0;
@@ -45,7 +46,7 @@ int core_thread(void *ptr){
     double cycle_ctr = 0;
     uint64_t test_cycles = 0;
 
-    while(!quit_flag){
+    while(SDL_AtomicGet(&quit_flag) == 0){
         
         if(!rom_loaded){
             SDL_Delay(10);
@@ -61,7 +62,7 @@ int core_thread(void *ptr){
         if(cycle_ctr > 70224 * 2)
             cycle_ctr = 70224 * 2;
 
-        while(cycle_ctr > 0){
+        while(SDL_AtomicGet(&quit_flag) == 0 && cycle_ctr > 0){
             if(current_mode == TEST){
                 // headless test mode
                 uint8_t opcode = read8(cpu, cpu->pc);
@@ -108,7 +109,7 @@ int core_thread(void *ptr){
                 int write_pos = atomic_load(&cpu->apu.write_pos);
                 int buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
 
-                while (buffer_fullness > (AUDIO_BUFFER_SIZE * 3 / 4)) {
+                while (SDL_AtomicGet(&quit_flag) == 0 && buffer_fullness > (AUDIO_BUFFER_SIZE * 3 / 4)) {
                     SDL_Delay(1); 
                     read_pos = atomic_load(&cpu->apu.read_pos);
                     buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
@@ -157,7 +158,7 @@ int main(int argc, char *argv[]) {
     //FILE *full_dump = fopen("full_dump.txt", "w");
     SDL_Thread *emu_thread = SDL_CreateThread(core_thread, "admgeCore", &cpu);
 
-    while (!quit_flag) {
+    while (SDL_AtomicGet(&quit_flag) == 0){
         if (current_mode != TEST) {
             handle_input(&cpu);
             present_screen(&cpu.ppu, &cpu);

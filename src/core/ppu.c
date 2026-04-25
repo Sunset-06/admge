@@ -338,7 +338,7 @@ void render_objects(PPU *ppu, CPU *cpu){
         uint8_t palette = palette_num ? ppu->obp1 : ppu->obp0;
         bool y_flip = (curr_sprite.flags & 0x40);
         bool x_flip = (curr_sprite.flags & 0x20);
-        bool priority = (curr_sprite.flags & 0x80);
+        //bool priority = (curr_sprite.flags & 0x80);
 
         uint8_t tile_y = (ppu->ly - curr_sprite.y + 16);
 
