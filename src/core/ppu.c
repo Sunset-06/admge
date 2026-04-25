@@ -65,7 +65,7 @@ void ppu_step(PPU *ppu, CPU *cpu) {
                 // Enter V-Blank
                 ppu->stat = (ppu->stat & 0xFC) | 0x01;
                 cpu->iflag |= 0x01; // Request V-Blank Interrupt
-                present_screen(ppu, cpu);
+                //present_screen(ppu, cpu);
             } 
             else {
                 // Enter OAM Scan for the next scanline

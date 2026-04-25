@@ -3,6 +3,9 @@
 #include "ui.h"
 #include "platform.h"
 
+const uint64_t TIMEOUT_CYCLES = 20000000;
+const int CYCLES_PER_FRAME = 70224;
+
 float win_scale = 0.7;
 bool ime_enable = false;
 bool quit_flag = false;
@@ -14,6 +17,7 @@ char serial_log[65536];
 size_t serial_len = 0;
 uint8_t *rom = NULL;
 size_t rom_size = 0;
+
 
 // Palettes
 const uint32_t* GAMEBOY_COLOURS = NULL;
@@ -32,11 +36,20 @@ const uint32_t DMG_COLOURS[4] = {
 
 emu_mode current_mode = DMG;
 
-void main_loop(CPU *cpu){
-    // for test mode
+
+int core_thread(void *ptr){
+
+    CPU *cpu = (CPU *) ptr;
     uint64_t total_cycles = 0;
-    const uint64_t TIMEOUT_CYCLES = 20000000;
     while(!quit_flag){
+        
+        if(!rom_loaded){
+            SDL_Delay(10);
+            continue;
+        }
+        
+        uint32_t frame_start = SDL_GetTicks();
+
         if(current_mode == TEST){
             // headless test mode
             uint8_t opcode = read8(cpu, cpu->pc);
@@ -76,29 +89,33 @@ void main_loop(CPU *cpu){
                 exit(1);
             }
         }
-        else{
-            if(!rom_loaded){
-                present_screen(&cpu->ppu, cpu);
-                handle_input(cpu);
-                SDL_Delay(16);
-                continue;
+        else{ // ALL MODES THAT ARE NOT TEST
+            int cycles_to_run = CYCLES_PER_FRAME;
+            while (cycles_to_run > 0) {
+                cpu_step(cpu);
+                cycles_to_run -= cpu->cycles; 
             }
-            handle_input(cpu);
-            cpu_step(cpu);
+
+            uint32_t frame_time = SDL_GetTicks() - frame_start;
+
+            if (frame_time < 16) {
+                SDL_Delay(16 - frame_time);
+            }
             //log_cpu_state(&cpu, full_dump);
-            
-            // Sleep if the audio buffer is too full lol
             int read_pos = atomic_load(&cpu->apu.read_pos);
             int write_pos = atomic_load(&cpu->apu.write_pos);
             int buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
 
-            // more than 3/4th full = sleep() 
-            if (buffer_fullness > (AUDIO_BUFFER_SIZE * 3 / 4))
-                SDL_Delay(1);
+            while (buffer_fullness > (AUDIO_BUFFER_SIZE * 3 / 4)) {
+                SDL_Delay(1); 
+                read_pos = atomic_load(&cpu->apu.read_pos);
+                buffer_fullness = (write_pos - read_pos + AUDIO_BUFFER_SIZE) % AUDIO_BUFFER_SIZE;
+            }
         }
     }
-}
+    return 0;
 
+}
 
 int main(int argc, char *argv[]) {
         
@@ -134,8 +151,16 @@ int main(int argc, char *argv[]) {
     }
 
     //FILE *full_dump = fopen("full_dump.txt", "w");
+    SDL_Thread *emu_thread = SDL_CreateThread(core_thread, "admgeCore", &cpu);
 
-    main_loop(&cpu);
+    while (!quit_flag) {
+        if (current_mode != TEST) {
+            handle_input(&cpu);
+            present_screen(&cpu.ppu, &cpu);
+        }
+        SDL_Delay(1);
+    }
+    SDL_WaitThread(emu_thread, NULL);
 
     //fclose(full_dump);
     
