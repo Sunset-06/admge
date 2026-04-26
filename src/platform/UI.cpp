@@ -26,7 +26,7 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground;
 
-    if (rom_loaded) {
+    if (SDL_AtomicGet(&rom_loaded) == 1) {
         // This allows clicks to pass through the UI window to the game
         window_flags |= ImGuiWindowFlags_NoInputs;
     }
@@ -38,7 +38,7 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
 
     // outer gb decoration
     if(!shell_texture)
-        printf("no outer image found\n");
+        printf("Error: No outer image found! Check the assets directory!\n\n");
 
     // for the modes
     float shell_w, shell_h;
@@ -61,7 +61,7 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
     // inner screen texture
     ImVec2 screen_pos_min = ImVec2(p.x + offset_x, p.y + offset_y);
     ImVec2 screen_pos_max = ImVec2(p.x + offset_x + screen_w,  p.y + offset_y + screen_h);
-    if(rom_loaded){
+    if(SDL_AtomicGet(&rom_loaded) == 1){
         ImGui::GetWindowDrawList()->AddImage((ImTextureID)emu_texture, screen_pos_min, screen_pos_max);
     }
     else {
@@ -80,7 +80,7 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
 
         if(path){
           load_rom(cpu, path);
-          rom_loaded = true;
+          SDL_AtomicSet(&rom_loaded, 1);
         }
       }
     }

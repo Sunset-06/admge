@@ -4,9 +4,7 @@
 
 void dump_serial_log(const char *filename) {
     FILE *f = fopen(filename, "w");
-    if (!f) return;
-
-    
+    if (!f) return;  
     fwrite(serial_log, 1, serial_len, f);
     fclose(f);
 }
@@ -15,7 +13,7 @@ void dump_serial_log(const char *filename) {
 void dump_vram(CPU *cpu, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        printf("Failed to open %s for writing\n", filename);
+        printf("Error: Failed to open %s for writing\n", filename);
         return;
     }
 
@@ -28,7 +26,7 @@ void dump_vram(CPU *cpu, const char *filename) {
 void dump_oam(CPU *cpu, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        printf("Failed to open %s for writing\n", filename);
+        printf("Error: Failed to open %s for writing\n", filename);
         return;
     }
 
@@ -41,7 +39,7 @@ void dump_oam(CPU *cpu, const char *filename) {
 void dump_header(CPU *cpu, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        printf("Failed to open %s for writing\n", filename);
+        printf("Error: Failed to open %s for writing\n", filename);
         return;
     }
 
@@ -175,7 +173,7 @@ void save_sav(CPU *cpu, const char* romFile) {
 
     FILE* f = fopen(save_path, "wb");
     if (!f) {
-        printf("Failed to open save: %s\n", save_path);
+        printf("Error: Failed to open save: %s\n", save_path);
         return;
     }
     //mbc2
@@ -206,5 +204,5 @@ void load_sav(CPU *cpu, const char* romFile) {
     }
 
     fclose(f);
-    printf("Save loaded from %s\n", save_path);
+    // printf("Save loaded from %s\n", save_path);
 }

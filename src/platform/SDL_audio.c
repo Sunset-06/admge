@@ -34,7 +34,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
 
 void init_audio(CPU *cpu) {
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
-        printf("Failed to initialize SDL Audio: %s\n", SDL_GetError());
+        printf("Error: Failed to initialize SDL Audio: %s\n", SDL_GetError());
         return;
     }
 
@@ -51,12 +51,12 @@ void init_audio(CPU *cpu) {
     audio_device = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
 
     if (audio_device == 0) {
-        printf("Failed to open audio device: %s\n", SDL_GetError());
+        printf("Error: Failed to open audio device: %s\n", SDL_GetError());
         return;
     }
 
     SDL_PauseAudioDevice(audio_device, 0);
-    printf("Audio initialized.\n");
+    // printf("Audio initialized.\n");
 }
 
 void destroy_audio() {

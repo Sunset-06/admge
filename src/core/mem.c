@@ -3,24 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define BOOT_ROM "./bootrom/bootix_dmg.bin"
-#define BOOT_ROM "./bootrom/dmg_boot.bin"
-
 void serial_write(uint8_t value) {
     if (serial_len < sizeof(serial_log) - 1) {
         serial_log[serial_len++] = (char)value;
     }
 }
 
-bool load_rom(CPU *cpu, const char* filename) {
-    FILE *bootromFile = fopen(BOOT_ROM, "rb");
-    if (bootromFile == NULL) {
-        printf("Error: Could not load boot ROM.\n");
-        return false;
-    }
-    fread(cpu->bootrom, 1, 0x0100, bootromFile);
-    fclose(bootromFile);
-    
+bool load_rom(CPU *cpu, const char* filename) {    
     FILE* romFile = fopen(filename, "rb");
     if (!romFile) {
         printf("Error reading ROM. Please check ROM file\n");
@@ -412,7 +401,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
     }
 
     // Boot ROM disable
-    if (addr == 0xFF50 && cpu->bootrom_flag) {
+    if (addr == 0xFF50 && bootrom_flag) {
         bootrom_flag = false;
         return;
     }

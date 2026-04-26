@@ -21,13 +21,13 @@ typedef enum {
 } emu_mode;
 
 extern emu_mode current_mode;
-extern bool rom_loaded;
 
 extern const uint32_t MGB_COLOURS[4];
 extern const uint32_t DMG_COLOURS[4];
 
 extern SDL_atomic_t quit_flag;
 extern SDL_atomic_t muted;
+extern SDL_atomic_t rom_loaded;
 
 extern bool bootrom_flag;
 extern char serial_log[65536];

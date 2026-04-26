@@ -32,7 +32,7 @@ void start_cpu(CPU *cpu) {
     ppu_init(&cpu->ppu);
     apu_init(&cpu->apu);  
     
-    cpu->bootrom_flag = true;
+    // cpu->bootrom_flag = true;
     // Interrupts and states
     cpu->ime = false;  
     cpu->ie = 0x00;  
@@ -87,7 +87,7 @@ void start_cpu_noboot(CPU *cpu) {
     ppu_init(&cpu->ppu);  
     apu_init(&cpu->apu);
     
-    cpu->bootrom_flag = true;
+    // cpu->bootrom_flag = true;
     // Interrupts and states
     cpu->ime = false;
     cpu->ie = 0x00;  

@@ -3,16 +3,18 @@
 #include "ui.h"
 #include "platform.h"
 
+#define BOOT_ROM "./bootrom/boot.bin"
+
 const uint64_t TIMEOUT_CYCLES = 20000000;
 const int CYCLES_PER_FRAME = 70224;
 
 SDL_atomic_t quit_flag = {0};
 SDL_atomic_t muted = {0};
+SDL_atomic_t rom_loaded = {0};
 
 float win_scale = 0.7;
 bool ime_enable = false;
 bool bootrom_flag = true;
-bool rom_loaded = false;
 char* inputRom;
 char serial_log[65536];  
 size_t serial_len = 0;
@@ -48,7 +50,7 @@ int core_thread(void *ptr){
 
     while(SDL_AtomicGet(&quit_flag) == 0){
         
-        if(!rom_loaded){
+        if(SDL_AtomicGet(&rom_loaded) == 0){
             SDL_Delay(10);
             last_time = SDL_GetPerformanceCounter();
             continue;
@@ -132,30 +134,41 @@ int main(int argc, char *argv[]) {
     }
 
     CPU cpu;
-    //tex_scale = (current_mode == MGB)? 0.9 : 0.7;
     GAMEBOY_COLOURS = (current_mode == MGB)? MGB_COLOURS : DMG_COLOURS;
 
-    if(bootrom_flag)
+    // CPU gets started here
+    FILE *bootromFile = fopen(BOOT_ROM, "rb");
+    if (bootrom_flag && bootromFile == NULL) {
+        printf("Could not load boot ROM.\nPut one into /bootrom as \"boot.bin\" if you wish to use one.\n\n");
+        bootrom_flag = false;
+        start_cpu_noboot(&cpu); // This one does not need a bootrom
+    }
+    else if(bootrom_flag){
+        fread(&cpu.bootrom, 1, 0x0100, bootromFile);
+        fclose(bootromFile);
         start_cpu(&cpu); // This initializes everything normally - expects a bootrom
+    }
     else
         start_cpu_noboot(&cpu); // This one does not need a bootrom
 
-    
-    if (argc >= 2) {
+    // If path is available, rom gets loaded here.
+    // more than one arg, and the second arg does not start with '-'
+    if (argc >= 2 && argv[1][0] != '-'){
         inputRom = argv[1];
         printf("%s\n", inputRom);
         if (load_rom(&cpu, inputRom)) {
-            rom_loaded = true;
+            SDL_AtomicSet(&rom_loaded, 1);
         }
     }
     
-    
+    // only need screen and audio if not in test mode
     if (current_mode != TEST){
         init_screen(4);
         init_audio(&cpu);
     }
 
     //FILE *full_dump = fopen("full_dump.txt", "w");
+    //Starting the Emulator thread
     SDL_Thread *emu_thread = SDL_CreateThread(core_thread, "admgeCore", &cpu);
 
     while (SDL_AtomicGet(&quit_flag) == 0){

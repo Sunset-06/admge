@@ -204,7 +204,7 @@ typedef struct CPU {
     bool halted;
     bool stopped;
     bool ime_enable;
-    bool bootrom_flag;
+    // bool bootrom_flag;
     uint8_t bootrom[BOOTROM_SIZE];
 
     //timers

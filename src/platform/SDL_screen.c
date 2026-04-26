@@ -37,13 +37,10 @@ bool init_screen() {
     );
     if (!texture) return false;
 
-    printf("before img\n");
-
     outer_shell = (current_mode == MGB)? IMG_LoadTexture(renderer, "assets/mgb.png") : IMG_LoadTexture(renderer, "assets/dmg.png");
     if (!outer_shell) {
-        printf("Texture load failed: %s", IMG_GetError());
+        printf("Error: Texture load failed: %s\n", IMG_GetError());
     }
-    printf("All ok\n");
     ui_init(window, renderer);
 
     return true;
