@@ -14,11 +14,12 @@ Since this was achieved, the project will only get intermittent updates dependin
 - Pass acid2 :white_check_mark:
 - Get bank switching/ MBC working :white_check_mark:
 - Handle audio :white_check_mark:
+- Add a GUI :white_check_mark:
 - Fix MBCs <--- [You are here]
-- Pass Mooneye tests
-- Add a GUI (I'll do this whenever I feel like it honestly)
 - Save States
 ## Issues:
+
+The emulator is only minimally accurate, some games do not work perfectly, and may have minor issues. However, all blaarg tests pass, so it should support most games. MBC5 support is still incredibly buggy.
 
 Note: I'm relying on Vsync to limit the framerate. While untested, this should break on monitors with refresh rate above 60Hz.  
 What if you've disabled VSync for your graphics driver? Well, enjoy the raw speed of your CPU then :D
@@ -30,7 +31,7 @@ For now just use VSync with a 60Hz refresh rate
 > _~someone who I should've encountered earlier in my life_
 
 ## Get it to Work
-You need SDL2 to run this emulator.
+You need SDL2 and SDL_Image to run this emulator.
 then, use flag -libsdl2 when compiling. However due to how messy the directory is, I recommend using the provided makefile
 ```bash
 make # compiles the emu into the /bin directory
@@ -44,6 +45,11 @@ Then to run it:
 
 ./bin/admge /path/to/your/rom.gb -noboot # run without a bootrom
 
+./bin/admge /path/to/your/rom.gb -test # run in headless mode
+
+./bin/admge /path/to/your/rom.gb -mgb # run in mgb mode (only cosmetic)
+
+./bin/admge # start through UI
 ```
 
 Also, you need to pray (to your preferred deity) that the rom you selected runs properly. Consider this a formal Step 3.
@@ -52,3 +58,5 @@ The border assets used in this repo are sourced from the [BGB Reality page](http
 
 If you wish to use a bootrom with this, put it into /bootrom in the root of the project.
 I recommend using [Hacktix](https://github.com/Hacktix/Bootix).
+
+By default, the emulator looks for `/bootrom/boot.bin` Ensure this file exists to use a bootrom.

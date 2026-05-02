@@ -96,8 +96,11 @@ void handle_input(CPU* cpu) {
     SDL_Event event;
     uint8_t last_joypad = cpu->joypad;
     while (SDL_PollEvent(&event)) {
-         ui_handle_event(&event);
+        ui_handle_event(&event);
         if (event.type == SDL_QUIT)
+            SDL_AtomicSet(&quit_flag, 1);
+
+        if((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.keysym.sym == SDLK_q)
             SDL_AtomicSet(&quit_flag, 1);
 
         if (!ui_want_capture()) {
@@ -106,10 +109,6 @@ void handle_input(CPU* cpu) {
                 bool is_pressed = (event.type == SDL_KEYDOWN);
                 
                 switch (event.key.keysym.sym) {
-                    // exit
-                    case SDLK_q:
-                        SDL_AtomicSet(&quit_flag, 1);
-                        break;
                     // for logging
                     case SDLK_SPACE:
                         dump_vram(cpu, "vram.bin");

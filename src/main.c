@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
         
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-noboot") == 0) bootrom_flag = false;
-        else if (strcmp(argv[i], "-debug") == 0) current_mode = DEBUG;
+        // else if (strcmp(argv[i], "-debug") == 0) current_mode = DEBUG;   
         else if (strcmp(argv[i], "-test")  == 0) current_mode = TEST;
         else if (strcmp(argv[i], "-mgb")   == 0) current_mode = MGB;
     }

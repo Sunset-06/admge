@@ -21,8 +21,15 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     // send size of the frame
     ImGui::SetNextWindowSize(ImVec2(1236*win_scale, 1072*win_scale));
-    // send padding = 0
+    // ImGui styling
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20, 10));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.7f, 0.3f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.7f, 0.5f, 1.0f));
+
 
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground;
 
@@ -48,7 +55,7 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
     switch(current_mode){
         case MGB: shell_w = 872; shell_h = 800;
                   offset_x = 158; offset_y = 152;
-                  screen_w = 557; screen_h= 492;
+                  screen_w = 557; screen_h = 492;
                   break;
 
         case DMG:
@@ -56,6 +63,10 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
                   offset_x = 205; offset_y = 185;
                   screen_w = 485; screen_h = 420;
     }
+
+    float button_x = p.x + offset_x + (screen_w / 2.0f) - 75;
+    float button_y = p.y + offset_y + (screen_h / 2.0f) - 20;
+    
     // outer border image
     ImGui::GetWindowDrawList()->AddImage((ImTextureID)shell_texture, p, ImVec2(p.x + shell_w, p.y + shell_h));
     // inner screen texture
@@ -65,8 +76,8 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
         ImGui::GetWindowDrawList()->AddImage((ImTextureID)emu_texture, screen_pos_min, screen_pos_max);
     }
     else {
-      ImGui::SetCursorScreenPos(ImVec2(0,0));
-      if (ImGui::Button("Load a Cartridge")){
+        ImGui::SetCursorScreenPos(ImVec2(button_x, button_y));
+        if (ImGui::Button("Load a Cartridge")){
         const char* filters[] = {"*.gb"};
         const char* path = tinyfd_openFileDialog(
             "Select your ROM",
@@ -79,13 +90,20 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
 
 
         if(path){
-          load_rom(cpu, path);
-          SDL_AtomicSet(&rom_loaded, 1);
+            inputRom = strdup(path);
+            load_rom(cpu, path);
+            SDL_AtomicSet(&rom_loaded, 1);
         }
-      }
+        }
+
+        const char* subText = "Press Q to quit and M to mute";
+        ImGui::SetCursorScreenPos(ImVec2(button_x - 30, button_y + 45));
+        ImGui::Text("%s", subText);
     }
+
     ImGui::End();
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(3);
+    ImGui::PopStyleColor(3);
     ImGui::Render();
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
 }
