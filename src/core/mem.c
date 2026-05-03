@@ -61,7 +61,20 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
         }
         // 0x4000-0x7FFF --> switchable banks
         else {
-            uint32_t offset = (cpu->curr_rom_bank * 0x4000) + (addr - 0x4000);
+            uint32_t bank = cpu->curr_rom_bank;
+            //mbc1
+            if(cpu->mbc_type >= 0x01 && cpu->mbc_type <= 0x03){
+                uint32_t low = bank & 0x1F;
+                if(low == 0) low = 1;
+                bank = ((cpu->curr_ram_bank & 0x03) << 5) | low;
+            }
+            //mbc3
+            else if(cpu->mbc_type >= 0x0F && cpu->mbc_type <= 0x13){
+                bank &= 0x7F;
+                if(bank == 0) bank = 1;
+            }
+
+            uint32_t offset = (bank * 0x4000) + (addr - 0x4000);
             if (offset < rom_size) {
                 return rom[offset];
             }
@@ -80,17 +93,15 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
             }
             // All other MBCs
             else{
-                uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
-                if (ram_offset < EX_RAM_SIZE) {
-                    return cpu->external_ram[ram_offset];
+                if(cpu->curr_ram_bank <= 0x03){
+                    uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
+                    if (ram_offset < EX_RAM_SIZE) {
+                        return cpu->external_ram[ram_offset];
+                    }
                 }
                 // RTC registers
-                if (cpu->rtc.sel >= 0x08 && cpu->rtc.sel <= 0x0C) {
-                    return cpu->rtc.latch[cpu->rtc.sel - 0x08];
-                }
-                // RAM banking
-                if (ram_offset < EX_RAM_SIZE) {
-                    return cpu->external_ram[ram_offset];
+                if (cpu->curr_ram_bank >= 0x08 && cpu->curr_ram_bank <= 0x0C) {
+                    return cpu->rtc.latch[cpu->curr_ram_bank - 0x08];
                 }
             }
         }
@@ -288,12 +299,12 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
             }
             // ram bank or RTC reg Select
             else if (addr >= 0x4000 && addr <= 0x5FFF) {
-                if (value <= 0x07) {
+//                if (value <= 0x07) {
                     cpu->curr_ram_bank = value;
-                    cpu->rtc.sel = 0; // Unselect RTC
-                }
-                else if (value >= 0x08 && value <= 0x0C)
-                    cpu->rtc.sel = value;
+//                    cpu->rtc.sel = 0; // Unselect RTC
+//                }
+//                else if (value >= 0x08 && value <= 0x0C)
+//                    cpu->rtc.sel = value;
             }
             // Latch Clock
             else if (addr >= 0x6000 && addr <= 0x7FFF) {
@@ -326,12 +337,15 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
                 cpu->mbc2_ram[offset] = value & 0x0F;
             }
             // Other MBCs
-            else{
+            if (cpu->curr_ram_bank <= 0x03) {
                 uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
-                
-                if (ram_offset < EX_RAM_SIZE) { 
+                if (ram_offset < EX_RAM_SIZE) {
                     cpu->external_ram[ram_offset] = value;
                 }
+            }
+            else if (cpu->curr_ram_bank >= 0x08 && cpu->curr_ram_bank <= 0x0C) {
+                uint8_t masks[] = {0x3F, 0x3F, 0x1F, 0xFF, 0xC1};
+                cpu->rtc.main[cpu->curr_ram_bank - 0x08] = value & masks[cpu->curr_ram_bank - 0x08];
             }
         }
         return;

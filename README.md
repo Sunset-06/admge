@@ -60,3 +60,14 @@ If you wish to use a bootrom with this, put it into /bootrom in the root of the 
 I recommend using [Hacktix](https://github.com/Hacktix/Bootix).
 
 By default, the emulator looks for `/bootrom/boot.bin` Ensure this file exists to use a bootrom.
+
+## Test it
+During development, the following test roms were used:
+
+[Blaarg's Gameboy Test Roms](https://github.com/retrio/gb-test-roms/)
+
+[dmg-acid2](https://github.com/mattcurrie/dmg-acid2)
+
+[mooneye test suite](https://github.com/Gekkio/mooneye-test-suite/)
+
+[MBC3 RTC test roms](https://github.com/aaaaaa123456789/rtc3test/)

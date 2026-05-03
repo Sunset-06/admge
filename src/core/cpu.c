@@ -30,7 +30,16 @@ void start_cpu(CPU *cpu) {
 
     // initializes ppu and apu state
     ppu_init(&cpu->ppu);
-    apu_init(&cpu->apu);  
+    apu_init(&cpu->apu);
+
+    // initializes the rtc state
+    for (int i = 0; i < 5; i++) {
+        cpu->rtc.main[i] = 0x00;
+        cpu->rtc.latch[i] = 0x00;
+    }
+    cpu->rtc.sel = 0x00;
+    cpu->rtc.latch_val = 0xFF;
+    cpu->rtc.last = time(NULL);  
     
     // cpu->bootrom_flag = true;
     // Interrupts and states
@@ -86,6 +95,15 @@ void start_cpu_noboot(CPU *cpu) {
     // initializes ppu and apu state
     ppu_init(&cpu->ppu);  
     apu_init(&cpu->apu);
+
+    // initializes the rtc state
+    for (int i = 0; i < 5; i++) {
+        cpu->rtc.main[i] = 0x00;
+        cpu->rtc.latch[i] = 0x00;
+    }
+    cpu->rtc.sel = 0x00;
+    cpu->rtc.latch_val = 0xFF;
+    cpu->rtc.last = time(NULL);
     
     // cpu->bootrom_flag = true;
     // Interrupts and states
@@ -224,36 +242,40 @@ void update_rtc(CPU *cpu) {
     }
 
     time_t now = time(NULL);
-    if (cpu->rtc.last == 0) {
-        cpu->rtc.last = now;
-        return;
-    }
-
     long diff = now - cpu->rtc.last;
     if (diff <= 0) return; 
 
     cpu->rtc.last = now;
 
-    uint32_t seconds = cpu->rtc.main[0] + diff;
-    cpu->rtc.main[0] = seconds % 60;
-    
-    uint32_t minutes = cpu->rtc.main[1] + (seconds / 60);
-    cpu->rtc.main[1] = minutes % 60;
-    
-    uint32_t hours = cpu->rtc.main[2] + (minutes / 60);
-    cpu->rtc.main[2] = hours % 24;
-    
-    uint32_t days_to_add = hours / 24;
-    uint16_t days = cpu->rtc.main[3] | ((cpu->rtc.main[4] & 0x01) << 8);
-    uint32_t total_days = days + days_to_add;
-
-    if (total_days > 511) {
-        cpu->rtc.main[4] |= 0x80; // Set Day Carry Bit (Bit 7)
-        total_days %= 512;
+    for (long i = 0; i < diff; i++) {
+        cpu->rtc.main[0]++;
+        
+        if (cpu->rtc.main[0] == 60) {
+            cpu->rtc.main[0] = 0;
+            cpu->rtc.main[1]++;
+            
+            if (cpu->rtc.main[1] == 60) {
+                cpu->rtc.main[1] = 0;
+                cpu->rtc.main[2]++;
+                
+                if (cpu->rtc.main[2] == 24) {
+                    cpu->rtc.main[2] = 0;
+                    
+                    uint16_t days = cpu->rtc.main[3] | ((cpu->rtc.main[4] & 0x01) << 8);
+                    days++;
+                    if (days >= 512) {
+                        cpu->rtc.main[4] |= 0x80;
+                        days %= 512;
+                    }
+                    cpu->rtc.main[3] = days & 0xFF;
+                    cpu->rtc.main[4] = (cpu->rtc.main[4] & 0xFE) | ((days >> 8) & 0x01);
+                }
+            }
+        }
     }
-
-    cpu->rtc.main[3] = total_days & 0xFF;
-    cpu->rtc.main[4] = (cpu->rtc.main[4] & 0xFE) | ((total_days >> 8) & 0x01);
+    cpu->rtc.main[0] &= 0x3F;
+    cpu->rtc.main[1] &= 0x3F;
+    cpu->rtc.main[2] &= 0x1F;
 }
 
 /* Basically the main function that drives the emu. In every step, fetch opcode
