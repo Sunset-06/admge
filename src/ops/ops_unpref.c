@@ -12,6 +12,7 @@ void run_inst(uint8_t opcode, CPU *cpu){
 
     switch(opcode){
         case 0x00:  //NOP
+            printf("Hit a NOP!!\n");
             cpu->pc += 1;
             break;
 

@@ -32,12 +32,14 @@ void start_cpu(CPU *cpu) {
     ppu_init(&cpu->ppu);
     apu_init(&cpu->apu);
 
+    cpu->bank_mode = 0x00;
+
     // initializes the rtc state
     for (int i = 0; i < 5; i++) {
         cpu->rtc.main[i] = 0x00;
         cpu->rtc.latch[i] = 0x00;
     }
-    cpu->rtc.sel = 0x00;
+    // cpu->rtc.sel = 0x00;
     cpu->rtc.latch_val = 0xFF;
     cpu->rtc.last = time(NULL);  
     
@@ -96,12 +98,14 @@ void start_cpu_noboot(CPU *cpu) {
     ppu_init(&cpu->ppu);  
     apu_init(&cpu->apu);
 
+    cpu->bank_mode = 0x00;
+
     // initializes the rtc state
     for (int i = 0; i < 5; i++) {
         cpu->rtc.main[i] = 0x00;
         cpu->rtc.latch[i] = 0x00;
     }
-    cpu->rtc.sel = 0x00;
+    // cpu->rtc.sel = 0x00;
     cpu->rtc.latch_val = 0xFF;
     cpu->rtc.last = time(NULL);
     

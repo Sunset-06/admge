@@ -35,7 +35,7 @@ bool load_rom(CPU *cpu, const char* filename) {
     }
     fclose(romFile);
     
-    memcpy(cpu->memory, rom, 0x8000);
+    memcpy(cpu->memory, rom, rom_size > 0x8000 ? 0x8000 : rom_size);
     printf("Successfully loaded ROM. Size: %zu bytes\n", rom_size);
     cpu->mbc_type = rom[0x0147];
     printf("Cartridge Type: 0x%02X\n", cpu->mbc_type);
@@ -73,6 +73,10 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
                 bank &= 0x7F;
                 if(bank == 0) bank = 1;
             }
+            //mbc5
+            else if (cpu->mbc_type >= 0x19 && cpu->mbc_type <= 0x1E) {
+                bank = cpu->curr_rom_bank & 0x1FF;
+            }
 
             uint32_t offset = (bank * 0x4000) + (addr - 0x4000);
             if (offset < rom_size) {
@@ -93,7 +97,8 @@ uint8_t read8(CPU *cpu, uint16_t addr) {
             }
             // All other MBCs
             else{
-                if(cpu->curr_ram_bank <= 0x03){
+                uint32_t max_banks = (cpu->mbc_type >= 0x19) ? 0x0F : 0x03;
+                if(cpu->curr_ram_bank <= max_banks){
                     uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
                     if (ram_offset < EX_RAM_SIZE) {
                         return cpu->external_ram[ram_offset];
@@ -318,6 +323,37 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
             }
             return;
         }
+
+        // ------------------- MBC5 
+        if (cpu->mbc_type >= 0x19 && cpu->mbc_type <= 0x1E) {
+
+            if (addr <= 0x1FFF) {
+                bool was_enabled = cpu->ram_enabled;
+                cpu->ram_enabled = ((value & 0x0F) == 0x0A);
+                if (was_enabled && !cpu->ram_enabled) {
+                    save_sav(cpu, inputRom);
+                }
+                return;
+            }
+
+            else if (addr >= 0x2000 && addr <= 0x2FFF) {
+                cpu->curr_rom_bank = (cpu->curr_rom_bank & 0x100) | value;
+            }
+
+            else if (addr >= 0x3000 && addr <= 0x3FFF) {
+                cpu->curr_rom_bank = (cpu->curr_rom_bank & 0x0FF) | ((value & 0x01) << 8);
+            }
+
+            if (addr >= 0x4000 && addr <= 0x5FFF) {
+                cpu->curr_ram_bank = value & 0x0F;
+                return;
+            }
+            
+            if(addr >= 0x6000){
+                cpu->bank_mode = value & 0x01;
+                return;
+            }
+        }
         return;
 
     }
@@ -337,7 +373,9 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
                 cpu->mbc2_ram[offset] = value & 0x0F;
             }
             // Other MBCs
-            if (cpu->curr_ram_bank <= 0x03) {
+            uint32_t max_banks = (cpu->mbc_type >= 0x19) ? 0x0F : 0x03;
+
+            if (cpu->curr_ram_bank <= max_banks) {
                 uint32_t ram_offset = (cpu->curr_ram_bank * 0x2000) + (addr - 0xA000);
                 if (ram_offset < EX_RAM_SIZE) {
                     cpu->external_ram[ram_offset] = value;

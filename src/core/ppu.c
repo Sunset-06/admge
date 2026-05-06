@@ -119,7 +119,11 @@ void ppu_step(PPU *ppu, CPU *cpu) {
 void dma_transfer(CPU *cpu, uint8_t value) {
     //printf("Hit a DMA\n");
     uint16_t src = value << 8;
-    memcpy(&cpu->memory[0xFE00], &cpu->memory[src], 0xA0);
+    for (uint16_t i = 0; i < 0xA0; i++) {
+        uint8_t data = read8(cpu, src + i); 
+        write8(cpu, 0xFE00 + i, data);
+    }
+    // memcpy(&cpu->memory[0xFE00], &cpu->memory[src], 0xA0);
 }
 
 uint8_t ppu_read(CPU *cpu, uint16_t addr) {
@@ -214,7 +218,7 @@ void render_bg(PPU *ppu, CPU *cpu){
             
             //8 bits per tile and 
             uint16_t tile_map_addr = window_tile_map_base  + ((ppu->wly / 8) * 32) + (window_x / 8);
-            uint8_t tile_number = cpu->memory[tile_map_addr];
+            uint8_t tile_number = read8(cpu, tile_map_addr);
             
             uint16_t tile_addr;
             // Choose signed or unsigned addressing
@@ -225,8 +229,8 @@ void render_bg(PPU *ppu, CPU *cpu){
             }
 
             uint8_t line_in_tile = ppu->wly % 8;
-            uint8_t byte1 = cpu->memory[tile_addr + line_in_tile * 2];
-            uint8_t byte2 = cpu->memory[tile_addr + line_in_tile * 2 + 1];
+            uint8_t byte1 = read8(cpu, tile_addr + line_in_tile * 2);
+            uint8_t byte2 = read8(cpu, tile_addr + line_in_tile * 2 + 1);
  
             // Combine the bytes to get the colour ID
             uint8_t bit = 7 - (window_x % 8);
@@ -245,7 +249,7 @@ void render_bg(PPU *ppu, CPU *cpu){
             
             // Get tile from the background tile map
             uint16_t tile_index_addr = bg_tile_map_base + ((scrolled_y / 8) * 32) + (scrolled_x / 8);
-            uint8_t tile_number = cpu->memory[tile_index_addr];
+            uint8_t tile_number = read8(cpu, tile_index_addr);
             
             // Calculate the address of the tile's pixel data
             uint16_t tile_addr;
@@ -257,8 +261,8 @@ void render_bg(PPU *ppu, CPU *cpu){
             
             // Get the two bytes for the current line of the tile
             uint8_t tile_line = scrolled_y % 8;
-            uint8_t byte1 = cpu->memory[tile_addr + tile_line * 2];
-            uint8_t byte2 = cpu->memory[tile_addr + tile_line * 2 + 1];
+            uint8_t byte1 = read8(cpu, tile_addr + tile_line * 2);
+            uint8_t byte2 = read8(cpu, tile_addr + tile_line * 2 + 1);
             
             // Combine the bytes to get the colour ID
             uint8_t bit = 7 - (scrolled_x % 8);
@@ -358,8 +362,8 @@ void render_objects(PPU *ppu, CPU *cpu){
         uint16_t tile_addr = 0x8000 + (tile_index * 16) + (tile_y * 2);
 
         // This is pixel data (2bpp)
-        uint8_t bytelo = cpu->memory[tile_addr];
-        uint8_t bytehi = cpu->memory[tile_addr + 1];
+        uint8_t bytelo = read8(cpu, tile_addr);
+        uint8_t bytehi = read8(cpu, tile_addr + 1);
 
         for(int j=0;  j<8; j++){
             int pixel_index = x_flip ? 7 - j : j;  
