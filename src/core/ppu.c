@@ -4,17 +4,17 @@ static uint8_t bg_indices[SCREEN_WIDTH];
 
 void ppu_init(PPU *ppu) {
     // Default values for LCD registers 
-    ppu->lcdc = 0x00; 
-    ppu->stat = 0x85; 
-    ppu->scy  = 0x00; 
-    ppu->scx  = 0x00; 
+    ppu->lcdc = 0x00;
+    ppu->stat = 0x85;
+    ppu->scy  = 0x00;
+    ppu->scx  = 0x00;
     ppu->ly   = 0x00;
-    ppu->lyc  = 0x00; 
-    ppu->wy   = 0x00; 
-    ppu->wx   = 0x00; 
+    ppu->lyc  = 0x00;
+    ppu->wy   = 0x00;
+    ppu->wx   = 0x00;
     ppu->bgp  = 0xFC;
-    ppu->obp0 = 0xFF; 
-    ppu->obp1 = 0xFF; 
+    ppu->obp0 = 0xFF;
+    ppu->obp1 = 0xFF;
     ppu->wly  = 0x00;
     ppu->wly_latch = false;
 

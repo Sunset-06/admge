@@ -36,6 +36,9 @@ extern size_t serial_len;
 extern uint8_t *rom;
 extern size_t rom_size;
 
+extern FILE *log_file;
+extern bool enable_logging;
+
 extern void serial_write(uint8_t value);
 extern bool load_rom(CPU *cpu, const char* filename);
 extern void name_sav(const char* romFile, char* saveFile) ;

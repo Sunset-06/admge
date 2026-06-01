@@ -20,7 +20,8 @@ char serial_log[65536];
 size_t serial_len = 0;
 uint8_t *rom = NULL;
 size_t rom_size = 0;
-
+bool enable_logging;
+FILE *log_file;
 
 // Palettes
 const uint32_t* GAMEBOY_COLOURS = NULL;
@@ -136,6 +137,12 @@ int main(int argc, char *argv[]) {
     CPU cpu;
     GAMEBOY_COLOURS = (current_mode == MGB)? MGB_COLOURS : DMG_COLOURS;
 
+    enable_logging = false;
+    log_file = fopen("crash_log.txt", "w");
+    if (!log_file) {
+        printf("Warning: Could not open cpu_log.txt for writing.\n");
+    }
+
     // CPU gets started here
     FILE *bootromFile = fopen(BOOT_ROM, "rb");
     if (bootrom_flag && bootromFile == NULL) {
@@ -181,6 +188,9 @@ int main(int argc, char *argv[]) {
     SDL_WaitThread(emu_thread, NULL);
 
     //fclose(full_dump);
+    if (log_file) {
+        fclose(log_file);
+    }
     
     if (current_mode != TEST) {
         destroy_audio();

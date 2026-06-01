@@ -1,5 +1,4 @@
-full_dump.txt
-serial.txt
+*.txt
 *.bin
 imgui.ini
 gearboy

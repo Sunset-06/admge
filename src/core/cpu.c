@@ -95,9 +95,11 @@ void start_cpu_noboot(CPU *cpu) {
     }
 
     // initializes ppu and apu state
-    ppu_init(&cpu->ppu);  
+    ppu_init(&cpu->ppu);
     apu_init(&cpu->apu);
-
+    cpu->ppu.lcdc = 0x91;
+    cpu->ppu.stat = 0x85;
+    cpu->ppu.bgp  = 0xFC;
     cpu->bank_mode = 0x00;
 
     // initializes the rtc state
@@ -289,11 +291,6 @@ void update_rtc(CPU *cpu) {
     4. Do a PPU step
 */
 void cpu_step(CPU *cpu){
-    if (cpu->ime_enable) {
-        //printf("ime_enable hit true. Enabling ime now\n");
-        cpu->ime = true;
-        cpu->ime_enable = false;
-    }
 
     if(handle_interrupts(cpu)){
         ppu_step(&cpu->ppu, cpu);
@@ -302,6 +299,8 @@ void cpu_step(CPU *cpu){
         cpu->cycles = 0;
         return; 
     }
+    
+    bool pending_ei = cpu->ime_enable;
     
     if (cpu->halted) {
         //printf("The CPU was halted!\n\n");
@@ -316,8 +315,26 @@ void cpu_step(CPU *cpu){
     //printf("Starting a step.\n");
     uint8_t opcode = read8(cpu, cpu->pc);
     //printf("Current op: %02x \n", opcode);
+/* 
+    if (cpu->pc == 0x0100 && !enable_logging) {
+        enable_logging = true;
+    }
+
+    if (enable_logging && log_file) {
+        fprintf(log_file, 
+            "PC:%04X OP:%02X | AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X\n", 
+            cpu->pc, opcode, 
+            cpu->regs.af, cpu->regs.bc, cpu->regs.de, cpu->regs.hl, cpu->sp);
+    } */
     run_inst(opcode, cpu);
     //printf("pc post inst %02x \n\n", cpu->pc);
+    if (pending_ei) {
+        //printf("ime_enable hit true. Enabling ime now\n");
+        cpu->ime = true;
+        cpu->ime_enable = false;
+    }
+
+
     ppu_step(&cpu->ppu, cpu);
     apu_step(&cpu->apu, cpu);
     update_timers(cpu, cpu->cycles*4);

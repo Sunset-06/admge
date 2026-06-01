@@ -419,20 +419,29 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
     // Write to DIV - resetting DIV
     if (addr == 0xFF04) {
         cpu->div = 0;
+        return;
+    }
+
+    if (addr == 0xFF05) {
+        cpu->tima = value;
+        return;
     }
 
     // Write to TMA
     if (addr == 0xFF06) {
         cpu->tma = value;
+        return;
     }
 
     // Write to TAC
     if (addr == 0xFF07) {
-        cpu->tac = value;
+        cpu->tac = value & 0x07;
+        return;
     }
 
     if (addr == 0xFF00) {
         cpu->memory[0xFF00] = (value & 0x30) | 0xCF; // lower nibble is read only here
+        return;
     }
 
     // Interrupt Flag Register
@@ -455,6 +464,7 @@ void write8(CPU *cpu, uint16_t addr, uint8_t value) {
     // Boot ROM disable
     if (addr == 0xFF50 && bootrom_flag) {
         bootrom_flag = false;
+        printf("bootrom flag set to false");
         return;
     }
 
