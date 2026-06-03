@@ -51,6 +51,7 @@ void check_coincidence(PPU *ppu, CPU *cpu) {
 }
 
 void ppu_step(PPU *ppu, CPU *cpu) {
+    if (!(ppu->lcdc & 0x80)) return;
     ppu->mode_cycles += cpu->cycles*4;
 
     //OAM
@@ -164,7 +165,7 @@ void ppu_write(CPU *cpu, uint16_t addr, uint8_t value) {
                     if (!(value & 0x80))// Bit 7 is the LCD enable bit
                         lcd_off(ppu);
                     break;
-        case 0xFF41: ppu->stat = value; break;
+        case 0xFF41: ppu->stat = (value & 0xF8) | (ppu->stat & 0x07) | 0x80; break;
         case 0xFF42: ppu->scy  = value; break;
         case 0xFF43: ppu->scx  = value; break;
         case 0xFF44:ppu->ly = 0;     

@@ -1,11 +1,11 @@
 CC := gcc
 CXX := g++
-CFLAGS := -Wall -Wextra -std=c11
-CXXFLAGS := -Wall -Wextra -std=c++17
+CFLAGS := -Wall -Wextra -std=c11 -g -fsanitize=address -fno-omit-frame-pointer
+CXXFLAGS := -Wall -Wextra -std=c++17 -g -fsanitize=address -fno-omit-frame-pointer
 SDL_CFLAGS := `sdl2-config --cflags`
 SDL_LIBS := `sdl2-config --libs`
 
-LDFLAGS := $(SDL_LIBS) -lSDL2_image -lm
+LDFLAGS := $(SDL_LIBS) -lSDL2_image -lm -fsanitize=address
 
 INCLUDES := -Iinclude \
             -Ilibraries/imgui/include \

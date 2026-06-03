@@ -566,8 +566,12 @@ void apu_write(CPU *cpu, uint16_t addr, uint8_t value) {
         apu->nr52 = (value & 0x80) | (apu->nr52 & 0x0F);
         
         if ((apu->nr52 & 0x80) == 0) {
-            // Clear everything.
-            memset(&apu->nr10, 0, 0xFF26 - 0xFF10);
+            // Clear everything
+            apu->nr10 = 0; apu->nr11 = 0; apu->nr12 = 0; apu->nr13 = 0; apu->nr14 = 0;
+            apu->nr21 = 0; apu->nr22 = 0; apu->nr23 = 0; apu->nr24 = 0;
+            apu->nr30 = 0; apu->nr31 = 0; apu->nr32 = 0; apu->nr33 = 0; apu->nr34 = 0;
+            apu->nr41 = 0; apu->nr42 = 0; apu->nr43 = 0; apu->nr44 = 0;
+            apu->nr50 = 0; apu->nr51 = 0;
         }
         return;
     }
