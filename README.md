@@ -3,8 +3,34 @@ A simple and (I like to think) lightweight emulator for the original GameBoy in 
 
 This was started as a way to play a specific game and has reached a baseline level. From here on, the project will only get intermittent updates depending on my free time.
 
+## Showcase
+
+<p align="center">
+  <img src="showcase/01.png" width="49%" alt="game running in dmg mode" />
+  <img src="showcase/02.png" width="49%" alt="game running in mgb mode" />
+</p>
+
+<p align="center">
+  <img src="showcase/03.png" width="49%" alt="game running with MBC3 support" />
+  <img src="showcase/04.png" width="49%" alt="game running with MBC1 support" />
+</p>
+
+<p align="center">
+  <img src="showcase/05.png" width="49%" alt="passing cpu tests" />
+  <img src="showcase/06.png" width="49%" alt="passing ppu tests" />
+</p>
+
 ## Controls
 
+| Game Boy | Keyboard |
+| :--- | :--- |
+| **D-Pad** | `Arrow Keys` |
+| **A** | `Z` |
+| **B** | `X` |
+| **Start** | `Enter` |
+| **Select** | `Any Shift` |
+| Mute | `M` |
+| Quit | `Q` |
 
 
 ## Issues:
@@ -19,12 +45,18 @@ What if you've disabled VSync for your graphics driver? Well, enjoy the raw spee
 For now just use VSync with a 60Hz refresh rate  
 <img src="https://i.pinimg.com/474x/3b/bb/db/3bbbdbca9e30c5dc52b069320aa54ab7.jpg" height="60" width="60" style="vertical-align: middle;" />
 
-> "You shouldn't implement 255 instructions at once. It becomes hell to debug later" <br/>
-> _~someone who I should've encountered earlier in my life_
+If you do encounter any isssues, feel free to contact me with feedback.
 
 ## Get it to Work
-You need SDL2 and SDL_Image to run this emulator.
+### Specific Dependencies are: 
+- SDL2
+- SDL_Image
+- tinyfileldialogs
+- Dear ImGUI
+
+of these, SDL2 and SDL_Image are not bundled, install it for your system.
 then, use flag -libsdl2 when compiling. However due to how messy the directory is, I recommend using the provided makefile
+
 ```bash
 make # compiles the emu into the /bin directory
 
@@ -33,7 +65,9 @@ make clean # deletes /bin and its contents
 
 Then to run it:
 ```bash
-./bin/admge /path/to/your/rom.gb # run with the provided bootrom
+./bin/admge # start through UI
+
+./bin/admge /path/to/your/rom.gb # run with the provided bootrom (if available)
 
 ./bin/admge /path/to/your/rom.gb -noboot # run without a bootrom
 
@@ -41,17 +75,12 @@ Then to run it:
 
 ./bin/admge /path/to/your/rom.gb -mgb # run in mgb mode (only cosmetic)
 
-./bin/admge # start through UI
 ```
 
-Also, you need to pray (to your preferred deity) that the rom you selected runs properly. Consider this a formal Step 3.
-
-The border assets used in this repo are sourced from the [BGB Reality page](https://bgb.bircd.org/reality/index.html)
-
-If you wish to use a bootrom with this, put it into /bootrom in the root of the project.
+By default, the emulator looks for `/bootrom/boot.bin` in the root directory. Ensure this file exists to use a bootrom.
 I recommend using [Hacktix](https://github.com/Hacktix/Bootix).
 
-By default, the emulator looks for `/bootrom/boot.bin` Ensure this file exists to use a bootrom.
+Also, you need to pray (to your preferred deity) that the rom you selected runs properly. Consider this a formal Step 3.
 
 ## Test it
 During development, the following test roms were used:
@@ -63,3 +92,23 @@ During development, the following test roms were used:
 [mooneye test suite](https://github.com/Gekkio/mooneye-test-suite/)
 
 [MBC3 RTC test roms](https://github.com/aaaaaa123456789/rtc3test/)
+
+## Thanks
+
+There were many many resources used during this educational project.
+
+While not all, here are some of the best ones:
+
+[Pan Docs](https://gbdev.io/pandocs/)
+
+[Game Boy / Color Architecture | A practical analysis by Rodrigo Copetti](https://www.copetti.org/writings/consoles/game-boy/)
+
+[CPU Opcode Reference](https://rgbds.gbdev.io/docs/v0.9.2/gbz80.7)
+
+[gbops](https://izik1.github.io/gbops/index.html)
+
+[Gameboy 2BPP Graphics Format](https://www.huderlem.com/demos/gameboy2bpp.html)
+
+and of course, all the helpful people on the [EmuDev Discord](https://discord.com/invite/muWhAGteq8)
+
+The border assets used in this repo are sourced from the [BGB Reality page](https://bgb.bircd.org/reality/index.html)

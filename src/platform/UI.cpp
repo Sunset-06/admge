@@ -78,11 +78,11 @@ extern "C" void ui_render(SDL_Texture* emu_texture, SDL_Texture* shell_texture, 
     else {
         ImGui::SetCursorScreenPos(ImVec2(button_x, button_y));
         if (ImGui::Button("Load a Cartridge")){
-        const char* filters[] = {"*.gb"};
+        const char* filters[] = {"*.gb", "*.gbc"};
         const char* path = tinyfd_openFileDialog(
             "Select your ROM",
             "",
-            1,
+            2,
             filters,
             "ROM Files",
             0
