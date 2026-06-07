@@ -184,7 +184,7 @@ void save_sav(CPU *cpu, const char* romFile) {
         fwrite(cpu->external_ram, 1, EX_RAM_SIZE, f);
 
     fclose(f);
-    printf("Saved at %s\n", save_path);
+    //printf("Saved at %s\n", save_path);
 }
 
 void load_sav(CPU *cpu, const char* romFile) {

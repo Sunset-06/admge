@@ -1,25 +1,17 @@
 # admge
-A simple emulator for the original GameBoy (and hopefully eventually CGB too) in C.
+A simple and (I like to think) lightweight emulator for the original GameBoy in C.
 
-This was started as a way to play a specific game.
-Since this was achieved, the project will only get intermittent updates depending on my free time.
+This was started as a way to play a specific game and has reached a baseline level. From here on, the project will only get intermittent updates depending on my free time.
 
-## Work left:
+## Controls
 
-- Get all instructions done :white_check_mark:
-- Get a game to boot :white_check_mark:
-- Get a boootrom working :white_check_mark:
-- Pass blaarg :white_check_mark: 
-- Handle inputs :white_check_mark:
-- Pass acid2 :white_check_mark:
-- Get bank switching/ MBC working :white_check_mark:
-- Handle audio :white_check_mark:
-- Add a GUI :white_check_mark:
-- Fix MBCs <--- [You are here]
-- Save States
+
+
 ## Issues:
 
-The emulator is only minimally accurate, some games do not work perfectly, and may have minor issues. However, all blaarg tests pass, so it should support most games. MBC5 support is still incredibly buggy.
+The emulator is only minimally accurate, some games do not work perfectly, and may have minor issues. However, all blaarg tests pass, so it should support most games.
+
+It isn't completely cycle accurate (The cycles get added after the instructions are carried out).
 
 Note: I'm relying on Vsync to limit the framerate. While untested, this should break on monitors with refresh rate above 60Hz.  
 What if you've disabled VSync for your graphics driver? Well, enjoy the raw speed of your CPU then :D

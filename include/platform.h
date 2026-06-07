@@ -21,4 +21,6 @@ extern void destroy_screen(void);
 extern void init_audio(CPU *cpu);
 extern void destroy_audio();
 
+SDL_HitTestResult drag_hit_test(SDL_Window* win, const SDL_Point* area, void* data);
+
 #endif

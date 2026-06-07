@@ -26,6 +26,8 @@ bool init_screen() {
     );
     if (!window) return false;
 
+    SDL_SetWindowHitTest(window, drag_hit_test, NULL);
+
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) return false;
 
@@ -62,4 +64,14 @@ void destroy_screen() {
     if (renderer) SDL_DestroyRenderer(renderer);
     if (window) SDL_DestroyWindow(window);
     SDL_Quit();
+}
+
+
+SDL_HitTestResult drag_hit_test(SDL_Window* win, const SDL_Point* area, void* data) {
+    if (SDL_AtomicGet(&rom_loaded) == 0) {
+        if (area->x > 200 && area->x < 700 && area->y > 200 && area->y < 550) {
+            return SDL_HITTEST_NORMAL;
+        }
+    }
+    return SDL_HITTEST_DRAGGABLE;
 }
