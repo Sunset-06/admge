@@ -39,11 +39,25 @@ bool init_screen() {
     );
     if (!texture) return false;
 
-    outer_shell = (current_mode == MGB)? IMG_LoadTexture(renderer, "assets/mgb.png") : IMG_LoadTexture(renderer, "assets/dmg.png");
+    char *base = SDL_GetBasePath();
+
+    char shellPath[1024];
+    snprintf(
+        shellPath,
+        sizeof(shellPath),
+        "%sassets/%s",
+        base,
+        (current_mode == MGB) ? "mgb.png" : "dmg.png"
+    );
+
+    outer_shell = IMG_LoadTexture(renderer, shellPath);
+
     if (!outer_shell) {
         printf("Error: Texture load failed: %s\n", IMG_GetError());
     }
     ui_init(window, renderer);
+
+    SDL_free(base);
 
     return true;
 }

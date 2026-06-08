@@ -142,9 +142,21 @@ int main(int argc, char *argv[]) {
     if (!log_file) {
         printf("Warning: Could not open cpu_log.txt for writing.\n");
     }
+    
+    char *base = SDL_GetBasePath();
+
+    char bootromPath[1024];
+    snprintf(
+        bootromPath,
+        sizeof(bootromPath),
+        "%sbootrom/boot.bin",
+        base
+    );
 
     // CPU gets started here
-    FILE *bootromFile = fopen(BOOT_ROM, "rb");
+    FILE *bootromFile = fopen(bootromPath, "rb");
+    SDL_free(base);
+
     if (bootrom_flag && bootromFile == NULL) {
         printf("Could not load boot ROM.\nPut one into /bootrom as \"boot.bin\" if you wish to use one.\n\n");
         bootrom_flag = false;
@@ -170,7 +182,7 @@ int main(int argc, char *argv[]) {
     
     // only need screen and audio if not in test mode
     if (current_mode != TEST){
-        init_screen(4);
+        init_screen();
         init_audio(&cpu);
     }
 

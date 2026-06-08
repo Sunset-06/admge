@@ -7,12 +7,12 @@ This was started as a way to play a specific game and has reached a baseline lev
 
 <p align="center">
   <img src="showcase/01.png" width="49%" alt="game running in dmg mode" />
-  <img src="showcase/02.png" width="49%" alt="game running in mgb mode" />
+  <img src="showcase/02.png" width="49%" alt="game running with MBC1 support" />
 </p>
 
 <p align="center">
   <img src="showcase/03.png" width="49%" alt="game running with MBC3 support" />
-  <img src="showcase/04.png" width="49%" alt="game running with MBC1 support" />
+  <img src="showcase/04.png" width="49%" alt="game running in mgb mode" />
 </p>
 
 <p align="center">
@@ -78,7 +78,7 @@ Then to run it:
 ```
 
 By default, the emulator looks for `/bootrom/boot.bin` in the root directory. Ensure this file exists to use a bootrom.
-I recommend using [Hacktix](https://github.com/Hacktix/Bootix).
+I recommend using [Bootix](https://github.com/Hacktix/Bootix).
 
 Also, you need to pray (to your preferred deity) that the rom you selected runs properly. Consider this a formal Step 3.
 

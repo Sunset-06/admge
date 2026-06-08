@@ -16,6 +16,7 @@ INC_DIR := include
 LIB_DIR := libraries
 BIN_DIR := bin
 ASSET_DIR = assets
+BOOTROM_DIR := bootrom
 
 TARGET := $(BIN_DIR)/admge
 
@@ -48,7 +49,9 @@ $(TARGET): $(OBJS) | $(BIN_DIR)
 
 copy_assets:
 	@mkdir -p $(BIN_DIR)/assets
+	@mkdir -p $(BIN_DIR)/bootrom
 	@cp -rf $(ASSET_DIR)/* $(BIN_DIR)/assets/
+	@cp -rf $(BOOTROM_DIR)/* $(BIN_DIR)/bootrom/	
 	@echo "Assets synced to $(BIN_DIR)/assets/"
 
 # Compile C
