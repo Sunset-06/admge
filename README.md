@@ -33,17 +33,18 @@ This was started as a way to play a specific game and has reached a baseline lev
 | Quit | `Q` |
 
 
-## Issues:
+## Issues and Nitpicks:
 
-The emulator is only minimally accurate, some games do not work perfectly, and may have minor issues. However, all blaarg tests pass, so it should support most games.
+The emulator isn't completely dot accurate (The cycles get added as one batch after the instructions are carried out). Keep this in mind, especially when running mooneye tests.
 
-It isn't completely cycle accurate (The cycles get added after the instructions are carried out).
+> ~~this should break on monitors with refresh rate above 60Hz.
+What if you've disabled VSync for your graphics driver? Well, enjoy the raw speed of your CPU then :D~~
 
-Note: I'm relying on Vsync to limit the framerate. While untested, this should break on monitors with refresh rate above 60Hz.  
-What if you've disabled VSync for your graphics driver? Well, enjoy the raw speed of your CPU then :D
+This statement was made before separating the emulator onto two threads. However, It has not been tested without VSync. What if you have VSync disabled? Well, who knows what might happen. 
 
-For now just use VSync with a 60Hz refresh rate  
 <img src="https://i.pinimg.com/474x/3b/bb/db/3bbbdbca9e30c5dc52b069320aa54ab7.jpg" height="60" width="60" style="vertical-align: middle;" />
+
+Supports: `MBC1, MBC2, MBC3 (RTC) and MBC5.`
 
 If you do encounter any isssues, feel free to contact me with feedback.
 
@@ -62,12 +63,13 @@ make # compiles the emu into the /bin directory
 
 make clean # deletes /bin and its contents 
 ```
+This defaults to GUI, but there is an optional way to run through CLI with options.
 
 Then to run it:
 ```bash
 ./bin/admge # start through UI
 
-./bin/admge /path/to/your/rom.gb # run with the provided bootrom (if available)
+./bin/admge /path/to/your/rom.gb # run with the provided rom
 
 ./bin/admge /path/to/your/rom.gb -noboot # run without a bootrom
 
@@ -77,10 +79,14 @@ Then to run it:
 
 ```
 
+These options can be mixed and matched.
+
 By default, the emulator looks for `/bootrom/boot.bin` in the root directory. Ensure this file exists to use a bootrom.
 I recommend using [Bootix](https://github.com/Hacktix/Bootix).
 
-Also, you need to pray (to your preferred deity) that the rom you selected runs properly. Consider this a formal Step 3.
+If file is not present, the emulator defaults to the `-noboot` option
+
+Also, you need to pray (to your preferred deity) that the rom you selected runs properly. Consider this a formal Step.
 
 ## Test it
 During development, the following test roms were used:
@@ -112,3 +118,7 @@ While not all, here are some of the best ones:
 and of course, all the helpful people on the [EmuDev Discord](https://discord.com/invite/muWhAGteq8)
 
 The border assets used in this repo are sourced from the [BGB Reality page](https://bgb.bircd.org/reality/index.html)
+
+## Note
+
+This project is an educational program designed to run software originally written for the Gameboy. There is no distributed binary, No intended copyright infringement and no restriction or claim on any usage of the code. You can use it, package it, boil it, mash it or stick it in a stew. Just have fun with it. 
